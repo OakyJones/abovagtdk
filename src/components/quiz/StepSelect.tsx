@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   services,
   Service,
@@ -30,6 +30,9 @@ const categoryIcons: Record<string, string> = {
   dating: "💜",
   misc: "📦",
 };
+
+// All categories + "custom" at the end
+const allTabs = [...categoryOrder, "custom"] as const;
 
 export default function StepSelect({
   selectedServices,
@@ -65,15 +68,22 @@ export default function StepSelect({
     setCustomServices(customServices.filter((c) => c.name !== name));
   };
 
-  // Scroll active tab into view
-  useEffect(() => {
-    if (tabsRef.current) {
-      const activeTab = tabsRef.current.querySelector('[data-active="true"]');
-      if (activeTab) {
-        activeTab.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  const switchCategory = (cat: string) => {
+    setActiveCategory(cat);
+    // Scroll the tab into view within the container only (not the page)
+    requestAnimationFrame(() => {
+      if (!tabsRef.current) return;
+      const tab = tabsRef.current.querySelector(`[data-cat="${cat}"]`) as HTMLElement | null;
+      if (tab) {
+        const container = tabsRef.current;
+        const tabLeft = tab.offsetLeft;
+        const tabWidth = tab.offsetWidth;
+        const containerWidth = container.offsetWidth;
+        const scrollLeft = tabLeft - containerWidth / 2 + tabWidth / 2;
+        container.scrollTo({ left: scrollLeft, behavior: "smooth" });
       }
-    }
-  }, [activeCategory]);
+    });
+  };
 
   const totalSelected = selectedServices.length + customServices.length;
   const monthlyTotal =
@@ -88,20 +98,19 @@ export default function StepSelect({
     services.filter((s) => s.category === cat && selectedServices.includes(s.id))
       .length;
 
-  const activeCatIndex = categoryOrder.indexOf(activeCategory);
+  const activeTabIndex = allTabs.indexOf(activeCategory);
+  const isFirstTab = activeTabIndex <= 0;
+  const isLastTab = activeTabIndex >= allTabs.length - 1;
 
-  const goToPrevCategory = () => {
-    if (activeCatIndex > 0) {
-      setActiveCategory(categoryOrder[activeCatIndex - 1]);
+  const goToPrevTab = () => {
+    if (!isFirstTab) {
+      switchCategory(allTabs[activeTabIndex - 1]);
     }
   };
 
-  const goToNextCategory = () => {
-    if (activeCategory === "custom") return;
-    if (activeCatIndex < categoryOrder.length - 1) {
-      setActiveCategory(categoryOrder[activeCatIndex + 1]);
-    } else {
-      setActiveCategory("custom");
+  const goToNextTab = () => {
+    if (!isLastTab) {
+      switchCategory(allTabs[activeTabIndex + 1]);
     }
   };
 
@@ -113,51 +122,20 @@ export default function StepSelect({
           Hvilke abonnementer har du?
         </h1>
         <p className="mt-2 text-gray-600 text-sm sm:text-base">
-          Vælg alle de tjenester du betaler for — gennemgå alle {categoryOrder.length} kategorier
+          Gennemgå alle {categoryOrder.length} kategorier og vælg dine tjenester
         </p>
       </div>
 
-      {/* Category counter */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-        {categoryOrder.map((cat, i) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
-              activeCategory === cat
-                ? "bg-[#1B7A6E] scale-125"
-                : selectedPerCategory(cat) > 0
-                ? "bg-[#1B7A6E]/40"
-                : "bg-gray-300"
-            }`}
-            title={categoryLabels[cat]}
-            aria-label={`Gå til ${categoryLabels[cat]} (${i + 1} af ${categoryOrder.length})`}
-          />
-        ))}
-        <button
-          onClick={() => setActiveCategory("custom")}
-          className={`w-2.5 h-2.5 rounded-full transition-all ${
-            activeCategory === "custom"
-              ? "bg-[#1B7A6E] scale-125"
-              : customServices.length > 0
-              ? "bg-[#1B7A6E]/40"
-              : "bg-gray-300"
-          }`}
-          title="Andet"
-          aria-label="Gå til Andet"
-        />
-      </div>
-
       {/* Category tabs — scrollable */}
-      <div className="mb-5 -mx-4 px-4 relative">
-        <div ref={tabsRef} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="mb-4 -mx-4 px-4 relative">
+        <div ref={tabsRef} className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}>
           {categoryOrder.map((cat) => {
             const count = selectedPerCategory(cat);
             return (
               <button
                 key={cat}
-                data-active={activeCategory === cat}
-                onClick={() => setActiveCategory(cat)}
+                data-cat={cat}
+                onClick={() => switchCategory(cat)}
                 className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all shrink-0 ${
                   activeCategory === cat
                     ? "bg-[#1B7A6E] text-white shadow-md shadow-teal-600/20"
@@ -183,7 +161,8 @@ export default function StepSelect({
             );
           })}
           <button
-            onClick={() => setActiveCategory("custom")}
+            data-cat="custom"
+            onClick={() => switchCategory("custom")}
             className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all shrink-0 ${
               activeCategory === "custom"
                 ? "bg-[#1B7A6E] text-white shadow-md shadow-teal-600/20"
@@ -206,16 +185,16 @@ export default function StepSelect({
             )}
           </button>
         </div>
-        {/* Fade indicators */}
+        {/* Fade indicator right */}
         <div className="absolute right-4 top-0 bottom-2 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
       </div>
 
-      {/* Active category label with nav arrows */}
+      {/* Active category header with prev/next arrows */}
       <div className="flex items-center justify-between mb-4">
         <button
-          onClick={goToPrevCategory}
-          disabled={activeCatIndex <= 0 && activeCategory !== "custom"}
-          className="p-2 rounded-lg text-gray-400 hover:text-[#1B7A6E] hover:bg-teal-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          onClick={goToPrevTab}
+          disabled={isFirstTab}
+          className="p-2 rounded-lg text-gray-400 hover:text-[#1B7A6E] hover:bg-teal-50 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
           aria-label="Forrige kategori"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,17 +202,17 @@ export default function StepSelect({
           </svg>
         </button>
         <h2 className="text-lg font-semibold text-[#1C2B2A]">
-          {activeCategory === "custom" ? "Andet" : `${categoryIcons[activeCategory]} ${categoryLabels[activeCategory]}`}
-          <span className="text-sm font-normal text-gray-500 ml-2">
-            {activeCategory === "custom"
-              ? ""
-              : `${activeCatIndex + 1} / ${categoryOrder.length}`}
+          {activeCategory === "custom"
+            ? "✏️ Andet"
+            : `${categoryIcons[activeCategory]} ${categoryLabels[activeCategory]}`}
+          <span className="text-sm font-normal text-gray-400 ml-2">
+            {activeTabIndex + 1} / {allTabs.length}
           </span>
         </h2>
         <button
-          onClick={goToNextCategory}
-          disabled={activeCategory === "custom" || activeCatIndex >= categoryOrder.length - 1}
-          className="p-2 rounded-lg text-gray-400 hover:text-[#1B7A6E] hover:bg-teal-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          onClick={goToNextTab}
+          disabled={isLastTab}
+          className="p-2 rounded-lg text-gray-400 hover:text-[#1B7A6E] hover:bg-teal-50 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
           aria-label="Næste kategori"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +223,7 @@ export default function StepSelect({
 
       {/* Service grid */}
       {activeCategory !== "custom" ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
           {catServices.map((service) => (
             <ServiceCard
               key={service.id}
@@ -255,7 +234,7 @@ export default function StepSelect({
           ))}
         </div>
       ) : (
-        <div className="mb-8">
+        <div className="mb-6">
           {customServices.length > 0 && (
             <div className="space-y-2 mb-6">
               {customServices.map((c) => (
@@ -307,8 +286,22 @@ export default function StepSelect({
         </div>
       )}
 
+      {/* Next-category button (when not on last tab and nothing selected yet) */}
+      {!isLastTab && totalSelected === 0 && (
+        <div className="text-center mb-4">
+          <button
+            onClick={goToNextTab}
+            className="text-[#1B7A6E] text-sm font-medium hover:underline"
+          >
+            Spring over til {activeTabIndex + 1 < categoryOrder.length
+              ? categoryLabels[categoryOrder[activeTabIndex + 1]]
+              : "Andet"} →
+          </button>
+        </div>
+      )}
+
       {/* Sticky bottom bar */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mt-4">
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div>
             <p className="text-sm text-gray-500">
@@ -325,7 +318,7 @@ export default function StepSelect({
             disabled={totalSelected === 0}
             className="px-8 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-teal-600/20"
           >
-            Videre &rarr;
+            Videre til forbrug →
           </button>
         </div>
       </div>
