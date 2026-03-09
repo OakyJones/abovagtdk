@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   services,
   Service,
@@ -24,15 +24,12 @@ const categoryIcons: Record<string, string> = {
   fitness: "💪",
   software: "💻",
   gaming: "🎮",
-  food: "🍽️",
+  food: "🍽",
   news: "📰",
   telecom: "📱",
   dating: "💜",
   misc: "📦",
 };
-
-// All categories + "custom" at the end
-const allTabs = [...categoryOrder, "custom"] as const;
 
 export default function StepSelect({
   selectedServices,
@@ -44,7 +41,6 @@ export default function StepSelect({
   const [activeCategory, setActiveCategory] = useState("streaming");
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState("");
-  const tabsRef = useRef<HTMLDivElement>(null);
 
   const toggle = (id: string) => {
     setSelectedServices(
@@ -68,23 +64,6 @@ export default function StepSelect({
     setCustomServices(customServices.filter((c) => c.name !== name));
   };
 
-  const switchCategory = (cat: string) => {
-    setActiveCategory(cat);
-    // Scroll the tab into view within the container only (not the page)
-    requestAnimationFrame(() => {
-      if (!tabsRef.current) return;
-      const tab = tabsRef.current.querySelector(`[data-cat="${cat}"]`) as HTMLElement | null;
-      if (tab) {
-        const container = tabsRef.current;
-        const tabLeft = tab.offsetLeft;
-        const tabWidth = tab.offsetWidth;
-        const containerWidth = container.offsetWidth;
-        const scrollLeft = tabLeft - containerWidth / 2 + tabWidth / 2;
-        container.scrollTo({ left: scrollLeft, behavior: "smooth" });
-      }
-    });
-  };
-
   const totalSelected = selectedServices.length + customServices.length;
   const monthlyTotal =
     services
@@ -98,128 +77,88 @@ export default function StepSelect({
     services.filter((s) => s.category === cat && selectedServices.includes(s.id))
       .length;
 
-  const activeTabIndex = allTabs.indexOf(activeCategory);
-  const isFirstTab = activeTabIndex <= 0;
-  const isLastTab = activeTabIndex >= allTabs.length - 1;
-
-  const goToPrevTab = () => {
-    if (!isFirstTab) {
-      switchCategory(allTabs[activeTabIndex - 1]);
-    }
-  };
-
-  const goToNextTab = () => {
-    if (!isLastTab) {
-      switchCategory(allTabs[activeTabIndex + 1]);
-    }
-  };
-
   return (
     <div>
-      <div className="text-center mb-6 sm:mb-8">
+      <div className="text-center mb-6">
         <Inspektoeren pose="searching" size={80} className="mb-3" />
         <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
           Hvilke abonnementer har du?
         </h1>
         <p className="mt-2 text-gray-600 text-sm sm:text-base">
-          Gennemgå alle {categoryOrder.length} kategorier og vælg dine tjenester
+          Tryk på en kategori for at se abonnementer
         </p>
       </div>
 
-      {/* Category tabs — scrollable */}
-      <div className="mb-4 -mx-4 px-4 relative">
-        <div ref={tabsRef} className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}>
-          {categoryOrder.map((cat) => {
-            const count = selectedPerCategory(cat);
-            return (
-              <button
-                key={cat}
-                data-cat={cat}
-                onClick={() => switchCategory(cat)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all shrink-0 ${
-                  activeCategory === cat
-                    ? "bg-[#1B7A6E] text-white shadow-md shadow-teal-600/20"
-                    : count > 0
-                    ? "bg-teal-50 text-[#1B7A6E] border border-[#1B7A6E]/20 hover:bg-teal-100"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                <span className="text-base">{categoryIcons[cat]}</span>
+      {/* Category grid — ALL visible, no scrolling */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mb-6">
+        {categoryOrder.map((cat) => {
+          const count = selectedPerCategory(cat);
+          const isActive = activeCategory === cat;
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveCategory(cat)}
+              className={`relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-center transition-all border-2 ${
+                isActive
+                  ? "bg-[#1B7A6E] text-white border-[#1B7A6E] shadow-md"
+                  : count > 0
+                  ? "bg-teal-50 text-[#1B7A6E] border-[#1B7A6E]/30"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <span className="text-xl">{categoryIcons[cat]}</span>
+              <span className="text-xs font-medium leading-tight">
                 {categoryLabels[cat]}
-                {count > 0 && (
-                  <span
-                    className={`inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full ${
-                      activeCategory === cat
-                        ? "bg-white/20 text-white"
-                        : "bg-[#1B7A6E] text-white"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-          <button
-            data-cat="custom"
-            onClick={() => switchCategory("custom")}
-            className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all shrink-0 ${
-              activeCategory === "custom"
-                ? "bg-[#1B7A6E] text-white shadow-md shadow-teal-600/20"
-                : customServices.length > 0
-                ? "bg-teal-50 text-[#1B7A6E] border border-[#1B7A6E]/20"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            ✏️ Andet
-            {customServices.length > 0 && (
-              <span
-                className={`inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full ${
-                  activeCategory === "custom"
-                    ? "bg-white/20 text-white"
-                    : "bg-[#1B7A6E] text-white"
-                }`}
-              >
-                {customServices.length}
               </span>
-            )}
-          </button>
-        </div>
-        {/* Fade indicator right */}
-        <div className="absolute right-4 top-0 bottom-2 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+              {count > 0 && (
+                <span
+                  className={`absolute -top-1.5 -right-1.5 w-5 h-5 text-[10px] font-bold rounded-full flex items-center justify-center ${
+                    isActive
+                      ? "bg-white text-[#1B7A6E]"
+                      : "bg-[#1B7A6E] text-white"
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+        {/* Custom / Andet */}
+        <button
+          type="button"
+          onClick={() => setActiveCategory("custom")}
+          className={`relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-center transition-all border-2 ${
+            activeCategory === "custom"
+              ? "bg-[#1B7A6E] text-white border-[#1B7A6E] shadow-md"
+              : customServices.length > 0
+              ? "bg-teal-50 text-[#1B7A6E] border-[#1B7A6E]/30"
+              : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+          }`}
+        >
+          <span className="text-xl">✏️</span>
+          <span className="text-xs font-medium leading-tight">Andet</span>
+          {customServices.length > 0 && (
+            <span
+              className={`absolute -top-1.5 -right-1.5 w-5 h-5 text-[10px] font-bold rounded-full flex items-center justify-center ${
+                activeCategory === "custom"
+                  ? "bg-white text-[#1B7A6E]"
+                  : "bg-[#1B7A6E] text-white"
+              }`}
+            >
+              {customServices.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* Active category header with prev/next arrows */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={goToPrevTab}
-          disabled={isFirstTab}
-          className="p-2 rounded-lg text-gray-400 hover:text-[#1B7A6E] hover:bg-teal-50 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-          aria-label="Forrige kategori"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <h2 className="text-lg font-semibold text-[#1C2B2A]">
-          {activeCategory === "custom"
-            ? "✏️ Andet"
-            : `${categoryIcons[activeCategory]} ${categoryLabels[activeCategory]}`}
-          <span className="text-sm font-normal text-gray-400 ml-2">
-            {activeTabIndex + 1} / {allTabs.length}
-          </span>
-        </h2>
-        <button
-          onClick={goToNextTab}
-          disabled={isLastTab}
-          className="p-2 rounded-lg text-gray-400 hover:text-[#1B7A6E] hover:bg-teal-50 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-          aria-label="Næste kategori"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
+      {/* Active category label */}
+      <h2 className="text-base font-semibold text-[#1C2B2A] mb-3">
+        {activeCategory === "custom"
+          ? "Tilføj egne abonnementer"
+          : categoryLabels[activeCategory]}
+      </h2>
 
       {/* Service grid */}
       {activeCategory !== "custom" ? (
@@ -236,7 +175,7 @@ export default function StepSelect({
       ) : (
         <div className="mb-6">
           {customServices.length > 0 && (
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mb-4">
               {customServices.map((c) => (
                 <div
                   key={c.name}
@@ -247,9 +186,9 @@ export default function StepSelect({
                     <p className="text-sm text-gray-500">{c.price} kr/md</p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => removeCustom(c.name)}
                     className="text-gray-400 hover:text-red-500 transition-colors"
-                    aria-label={`Fjern ${c.name}`}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -277,26 +216,13 @@ export default function StepSelect({
               className="w-24 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B7A6E]/30 focus:border-[#1B7A6E]"
             />
             <button
+              type="button"
               onClick={addCustom}
               className="px-4 py-2.5 bg-[#1B7A6E] text-white font-medium rounded-xl hover:bg-[#155F56] transition-colors text-sm"
             >
               Tilføj
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Next-category button (when not on last tab and nothing selected yet) */}
-      {!isLastTab && totalSelected === 0 && (
-        <div className="text-center mb-4">
-          <button
-            onClick={goToNextTab}
-            className="text-[#1B7A6E] text-sm font-medium hover:underline"
-          >
-            Spring over til {activeTabIndex + 1 < categoryOrder.length
-              ? categoryLabels[categoryOrder[activeTabIndex + 1]]
-              : "Andet"} →
-          </button>
         </div>
       )}
 
@@ -314,6 +240,7 @@ export default function StepSelect({
             </p>
           </div>
           <button
+            type="button"
             onClick={onNext}
             disabled={totalSelected === 0}
             className="px-8 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-teal-600/20"
@@ -337,6 +264,7 @@ function ServiceCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onToggle}
       className={`relative flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all text-center ${
         selected
