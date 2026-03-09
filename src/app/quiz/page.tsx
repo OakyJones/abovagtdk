@@ -8,6 +8,8 @@ import StepResult from "@/components/quiz/StepResult";
 import { UsageFrequency, services } from "@/lib/services";
 import { supabase } from "@/lib/supabase";
 
+const stepLabels = ["", "Vælg abonnementer", "Hvor tit bruger du dem?", "Resultat"];
+
 export default function QuizPage() {
   const [step, setStep] = useState(0); // 0=email, 1=select, 2=usage, 3=result
   const [email, setEmail] = useState("");
@@ -25,7 +27,6 @@ export default function QuizPage() {
     setEmail(userEmail);
 
     try {
-      // Upsert user — insert or get existing
       const { data: existing } = await supabase
         .from("users")
         .select("id")
@@ -60,7 +61,6 @@ export default function QuizPage() {
       const yearlySavings = monthlySavings * 12;
 
       try {
-        // Save quiz result
         const { data: quizResult } = await supabase
           .from("quiz_results")
           .insert({
@@ -75,7 +75,6 @@ export default function QuizPage() {
           .select("id")
           .single();
 
-        // Mark user as quiz completed
         if (userId) {
           await supabase
             .from("users")
@@ -83,7 +82,6 @@ export default function QuizPage() {
             .eq("id", userId);
         }
 
-        // Send result email
         if (quizResult) {
           const wastedNames = allServices.filter(
             (id) =>
@@ -122,9 +120,6 @@ export default function QuizPage() {
     [saved, selectedServices, customServices, usageFrequency, email, userId]
   );
 
-  const totalSteps = 4;
-  const displayStep = step === 0 ? 0 : step;
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50/30 to-white">
       {/* Header */}
@@ -144,13 +139,45 @@ export default function QuizPage() {
         </div>
       </header>
 
-      {/* Progress bar */}
-      <div className="w-full bg-gray-200 h-1">
-        <div
-          className="bg-[#1B7A6E] h-1 transition-all duration-500 ease-out"
-          style={{ width: `${(displayStep / totalSteps) * 100}%` }}
-        />
-      </div>
+      {/* Progress bar with step labels */}
+      {step > 0 && (
+        <div className="bg-white border-b border-gray-100">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center justify-between mb-2">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex items-center gap-1.5">
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      step >= s
+                        ? "bg-[#1B7A6E] text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
+                  >
+                    {step > s ? (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                    ) : (
+                      s
+                    )}
+                  </div>
+                  <span className={`text-xs font-medium hidden sm:inline ${
+                    step >= s ? "text-[#1B7A6E]" : "text-gray-400"
+                  }`}>
+                    {stepLabels[s]}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+              <div
+                className="bg-[#1B7A6E] h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${(step / 3) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Steps */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

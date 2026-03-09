@@ -1,5 +1,11 @@
 export type CancellationPeriod = "løbende" | "1 md opsigelse" | "12 md binding";
 
+export interface DowngradeOption {
+  fromLabel: string;
+  toLabel: string;
+  savingsPerMonth: number;
+}
+
 export interface Service {
   id: string;
   name: string;
@@ -8,6 +14,7 @@ export interface Service {
   priceNote?: string; // e.g. "9-79 kr/md"
   cancellation: CancellationPeriod;
   icon: string;
+  downgrade?: DowngradeOption;
 }
 
 export const categoryLabels: Record<string, string> = {
@@ -38,10 +45,10 @@ export const categoryOrder = [
 
 export const services: Service[] = [
   // STREAMING & TV
-  { id: "netflix", name: "Netflix", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "🎬" },
-  { id: "viaplay", name: "Viaplay", category: "streaming", monthlyPrice: 119, cancellation: "løbende", icon: "📺" },
+  { id: "netflix", name: "Netflix", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "🎬", downgrade: { fromLabel: "Premium", toLabel: "Standard", savingsPerMonth: 50 } },
+  { id: "viaplay", name: "Viaplay", category: "streaming", monthlyPrice: 119, cancellation: "løbende", icon: "📺", downgrade: { fromLabel: "Total", toLabel: "Film & Serier", savingsPerMonth: 300 } },
   { id: "disney", name: "Disney+", category: "streaming", monthlyPrice: 49, cancellation: "løbende", icon: "🏰" },
-  { id: "max-hbo", name: "Max/HBO", category: "streaming", monthlyPrice: 89, cancellation: "løbende", icon: "🎭" },
+  { id: "max-hbo", name: "Max/HBO", category: "streaming", monthlyPrice: 89, cancellation: "løbende", icon: "🎭", downgrade: { fromLabel: "Ultimate", toLabel: "Standard", savingsPerMonth: 40 } },
   { id: "tv2-play", name: "TV2 Play", category: "streaming", monthlyPrice: 69, cancellation: "løbende", icon: "📡" },
   { id: "amazon-prime-video", name: "Amazon Prime Video", category: "streaming", monthlyPrice: 59, cancellation: "løbende", icon: "▶️" },
   { id: "apple-tv", name: "Apple TV+", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "🍎" },
@@ -54,9 +61,9 @@ export const services: Service[] = [
   { id: "hayu", name: "Hayu", category: "streaming", monthlyPrice: 49, cancellation: "løbende", icon: "💅" },
 
   // MUSIK & LYDBØGER
-  { id: "spotify", name: "Spotify", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎵" },
-  { id: "apple-music", name: "Apple Music", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎶" },
-  { id: "youtube-premium", name: "YouTube Premium", category: "music", monthlyPrice: 79, cancellation: "løbende", icon: "🔴" },
+  { id: "spotify", name: "Spotify", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎵", downgrade: { fromLabel: "Family", toLabel: "Individual", savingsPerMonth: 80 } },
+  { id: "apple-music", name: "Apple Music", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎶", downgrade: { fromLabel: "Family", toLabel: "Individual", savingsPerMonth: 60 } },
+  { id: "youtube-premium", name: "YouTube Premium", category: "music", monthlyPrice: 79, cancellation: "løbende", icon: "🔴", downgrade: { fromLabel: "Family", toLabel: "Individual", savingsPerMonth: 50 } },
   { id: "tidal", name: "Tidal", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🌊" },
   { id: "mofibo", name: "Mofibo", category: "music", monthlyPrice: 149, cancellation: "løbende", icon: "📖" },
   { id: "audible", name: "Audible", category: "music", monthlyPrice: 149, cancellation: "løbende", icon: "🎧" },
@@ -66,7 +73,7 @@ export const services: Service[] = [
 
   // FITNESS
   { id: "fitness-world", name: "Fitness World", category: "fitness", monthlyPrice: 199, cancellation: "1 md opsigelse", icon: "💪" },
-  { id: "sats", name: "SATS", category: "fitness", monthlyPrice: 299, cancellation: "1 md opsigelse", icon: "🏋️" },
+  { id: "sats", name: "SATS", category: "fitness", monthlyPrice: 299, cancellation: "1 md opsigelse", icon: "🏋️", downgrade: { fromLabel: "All-in", toLabel: "Basis", savingsPerMonth: 100 } },
   { id: "fresh-fitness", name: "Fresh Fitness", category: "fitness", monthlyPrice: 149, cancellation: "1 md opsigelse", icon: "🏃" },
   { id: "loop-fitness", name: "Loop Fitness", category: "fitness", monthlyPrice: 199, cancellation: "1 md opsigelse", icon: "🔄" },
   { id: "dgi-fitness", name: "DGI Fitness", category: "fitness", monthlyPrice: 179, cancellation: "1 md opsigelse", icon: "🤸" },
@@ -76,9 +83,9 @@ export const services: Service[] = [
   // SOFTWARE & CLOUD
   { id: "microsoft365", name: "Microsoft 365", category: "software", monthlyPrice: 89, cancellation: "løbende", icon: "💼" },
   { id: "adobe", name: "Adobe Creative Cloud", category: "software", monthlyPrice: 189, cancellation: "12 md binding", icon: "🎨" },
-  { id: "icloud", name: "iCloud+", category: "software", monthlyPrice: 9, priceNote: "9-79 kr/md", cancellation: "løbende", icon: "☁️" },
-  { id: "google-one", name: "Google One", category: "software", monthlyPrice: 20, priceNote: "20-139 kr/md", cancellation: "løbende", icon: "🌐" },
-  { id: "dropbox", name: "Dropbox", category: "software", monthlyPrice: 99, cancellation: "løbende", icon: "📦" },
+  { id: "icloud", name: "iCloud+", category: "software", monthlyPrice: 9, priceNote: "9-79 kr/md", cancellation: "løbende", icon: "☁️", downgrade: { fromLabel: "200 GB", toLabel: "50 GB", savingsPerMonth: 20 } },
+  { id: "google-one", name: "Google One", category: "software", monthlyPrice: 20, priceNote: "20-139 kr/md", cancellation: "løbende", icon: "🌐", downgrade: { fromLabel: "200 GB", toLabel: "100 GB", savingsPerMonth: 10 } },
+  { id: "dropbox", name: "Dropbox", category: "software", monthlyPrice: 99, cancellation: "løbende", icon: "📦", downgrade: { fromLabel: "Plus", toLabel: "Basic (gratis)", savingsPerMonth: 99 } },
   { id: "1password", name: "1Password", category: "software", monthlyPrice: 29, cancellation: "løbende", icon: "🔐" },
   { id: "nordvpn", name: "NordVPN", category: "software", monthlyPrice: 49, cancellation: "løbende", icon: "🛡️" },
   { id: "chatgpt-plus", name: "ChatGPT Plus", category: "software", monthlyPrice: 149, cancellation: "løbende", icon: "🤖" },
@@ -86,7 +93,7 @@ export const services: Service[] = [
 
   // GAMING
   { id: "ps-plus", name: "PlayStation Plus", category: "gaming", monthlyPrice: 59, cancellation: "løbende", icon: "🎮" },
-  { id: "xbox-game-pass", name: "Xbox Game Pass", category: "gaming", monthlyPrice: 79, cancellation: "løbende", icon: "🟢" },
+  { id: "xbox-game-pass", name: "Xbox Game Pass", category: "gaming", monthlyPrice: 79, cancellation: "løbende", icon: "🟢", downgrade: { fromLabel: "Ultimate", toLabel: "Core", savingsPerMonth: 40 } },
   { id: "nintendo-online", name: "Nintendo Switch Online", category: "gaming", monthlyPrice: 29, cancellation: "løbende", icon: "🕹️" },
   { id: "ea-play", name: "EA Play", category: "gaming", monthlyPrice: 39, cancellation: "løbende", icon: "⚡" },
   { id: "geforce-now", name: "GeForce NOW", category: "gaming", monthlyPrice: 99, cancellation: "løbende", icon: "💚" },

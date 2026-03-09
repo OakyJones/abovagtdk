@@ -1,6 +1,7 @@
 "use client";
 
 import { services, UsageFrequency, frequencyLabels, formatPrice } from "@/lib/services";
+import Inspektoeren from "@/components/Inspektoeren";
 
 interface Props {
   selectedServices: string[];
@@ -14,17 +15,17 @@ interface Props {
 const frequencies: UsageFrequency[] = ["daily", "weekly", "rarely", "never"];
 
 const frequencyStyles: Record<UsageFrequency, string> = {
-  daily: "bg-green-100 text-green-700 border-green-300",
-  weekly: "bg-blue-100 text-blue-700 border-blue-300",
-  rarely: "bg-orange-100 text-orange-700 border-orange-300",
-  never: "bg-red-100 text-red-700 border-red-300",
+  daily: "bg-green-50 text-green-700 border-green-200",
+  weekly: "bg-blue-50 text-blue-700 border-blue-200",
+  rarely: "bg-orange-50 text-orange-700 border-orange-200",
+  never: "bg-red-50 text-red-700 border-red-200",
 };
 
 const frequencyActiveStyles: Record<UsageFrequency, string> = {
-  daily: "bg-green-500 text-white border-green-500",
-  weekly: "bg-blue-500 text-white border-blue-500",
-  rarely: "bg-orange-500 text-white border-orange-500",
-  never: "bg-red-500 text-white border-red-500",
+  daily: "bg-green-500 text-white border-green-500 shadow-sm",
+  weekly: "bg-blue-500 text-white border-blue-500 shadow-sm",
+  rarely: "bg-orange-500 text-white border-orange-500 shadow-sm",
+  never: "bg-red-500 text-white border-red-500 shadow-sm",
 };
 
 export default function StepUsage({
@@ -80,11 +81,21 @@ export default function StepUsage({
 
   return (
     <div>
-      <div className="text-center mb-8 sm:mb-10">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+      <div className="text-center mb-6 sm:mb-8">
+        <Inspektoeren
+          pose="pointing"
+          size={80}
+          speechBubble={
+            wastingCount > 0
+              ? `${wastingCount} abonnement${wastingCount !== 1 ? "er" : ""} ser mistænkeligt ud!`
+              : "Vær ærlig — det er her jeg finder besparelserne!"
+          }
+          className="mb-3"
+        />
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
           Hvor tit bruger du dem?
         </h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-2 text-gray-600 text-sm sm:text-base">
           Vær ærlig — det er her besparelserne gemmer sig
         </p>
       </div>
@@ -99,7 +110,7 @@ export default function StepUsage({
               key={item.id}
               className={`rounded-xl border-2 p-4 sm:p-5 transition-all ${
                 isWasting
-                  ? "border-orange-300 bg-orange-50"
+                  ? "border-orange-300 bg-orange-50/50"
                   : "border-gray-200 bg-white"
               }`}
             >
@@ -107,7 +118,7 @@ export default function StepUsage({
                 <div className="flex items-center gap-3 sm:min-w-[200px]">
                   <span className="text-2xl">{item.icon}</span>
                   <div>
-                    <p className="font-medium text-gray-900">{item.name}</p>
+                    <p className="font-medium text-[#1C2B2A]">{item.name}</p>
                     <p className="text-sm text-gray-500">{item.priceLabel}</p>
                   </div>
                 </div>
@@ -158,7 +169,7 @@ export default function StepUsage({
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <button
             onClick={onBack}
-            className="px-6 py-3 text-gray-600 font-medium hover:text-gray-900 transition-colors"
+            className="px-6 py-3 text-gray-600 font-medium hover:text-[#1C2B2A] transition-colors"
           >
             &larr; Tilbage
           </button>

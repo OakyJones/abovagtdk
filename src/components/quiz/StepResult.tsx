@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   services,
   UsageFrequency,
@@ -18,6 +18,8 @@ interface Props {
   onBack: () => void;
   onSave: (monthlyCost: number, monthlySavings: number) => void;
 }
+
+type ActionType = "cancel" | "downgrade" | "keep";
 
 export default function StepResult({
   selectedServices,
@@ -45,11 +47,32 @@ export default function StepResult({
       usageFrequency[c.name] === "never"
   );
   const customWaste = wastedCustom.reduce((sum, c) => sum + c.price, 0);
+
+  // Downgrade candidates: services used daily/weekly that have downgrade options
+  const downgradeServices = selectedServiceObjects.filter(
+    (s) =>
+      s.downgrade &&
+      (usageFrequency[s.id] === "daily" || usageFrequency[s.id] === "weekly")
+  );
+  const downgradeSavings = downgradeServices.reduce(
+    (sum, s) => sum + (s.downgrade?.savingsPerMonth || 0),
+    0
+  );
+
   const totalMonthlySavings = monthlySavings + customWaste;
   const totalYearlySavings = totalMonthlySavings * 12;
+  const totalDowngradeYearly = downgradeSavings * 12;
+  const grandTotalYearly = totalYearlySavings + totalDowngradeYearly;
+
+  // Track user actions per service
+  const [actions, setActions] = useState<Record<string, ActionType>>({});
+
+  const setAction = (id: string, action: ActionType) => {
+    setActions((prev) => ({ ...prev, [id]: action }));
+  };
 
   useEffect(() => {
-    onSave(totalMonthly, totalMonthlySavings);
+    onSave(totalMonthly, totalMonthlySavings + downgradeSavings);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allWasted = [
@@ -61,6 +84,7 @@ export default function StepResult({
       priceLabel: formatPrice(s),
       freq: usageFrequency[s.id],
       cancellation: s.cancellation,
+      downgrade: s.downgrade,
     })),
     ...wastedCustom.map((c) => ({
       id: c.name,
@@ -70,122 +94,286 @@ export default function StepResult({
       priceLabel: `${c.price} kr/md`,
       freq: usageFrequency[c.name],
       cancellation: "løbende" as const,
+      downgrade: undefined,
     })),
   ];
 
   return (
     <div>
+      {/* Header with Inspektøren */}
       <div className="text-center mb-8 sm:mb-10">
         <Inspektoeren
           pose="waving"
           size={120}
           speechBubble={
-            totalYearlySavings > 0
-              ? `Jeg fandt ${totalYearlySavings.toLocaleString("da-DK")} kr du kan spare!`
+            grandTotalYearly > 0
+              ? `Jeg fandt ${grandTotalYearly.toLocaleString("da-DK")} kr du kan spare!`
               : "Flot — du bruger dine abonnementer godt!"
           }
           className="mb-4"
         />
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
           Dit resultat
         </h1>
+        <p className="mt-2 text-gray-600 text-sm">
+          Her er en oversigt over dine abonnementer og besparelser
+        </p>
       </div>
 
       {/* Overview cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-          <p className="text-sm text-gray-500 mb-1">Samlet forbrug</p>
-          <p className="text-3xl font-bold text-gray-900">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Månedligt forbrug</p>
+          <p className="text-3xl font-bold text-[#1C2B2A]">
             {totalMonthly.toLocaleString("da-DK")} kr
           </p>
           <p className="text-sm text-gray-500">pr. måned</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-          <p className="text-sm text-gray-500 mb-1">Årligt forbrug</p>
-          <p className="text-3xl font-bold text-gray-900">
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Årligt forbrug</p>
+          <p className="text-3xl font-bold text-[#1C2B2A]">
             {(totalMonthly * 12).toLocaleString("da-DK")} kr
           </p>
           <p className="text-sm text-gray-500">pr. år</p>
         </div>
         <div
-          className={`rounded-xl border-2 p-6 text-center ${
-            totalMonthlySavings > 0
+          className={`rounded-2xl border-2 p-5 text-center ${
+            grandTotalYearly > 0
               ? "bg-teal-50 border-[#1B7A6E]"
               : "bg-white border-gray-200"
           }`}
         >
-          <p className="text-sm text-gray-500 mb-1">Mulig besparelse</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Mulig besparelse</p>
           <p
             className={`text-3xl font-bold ${
-              totalMonthlySavings > 0 ? "text-[#1B7A6E]" : "text-gray-900"
+              grandTotalYearly > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"
             }`}
           >
-            {totalYearlySavings.toLocaleString("da-DK")} kr
+            {grandTotalYearly.toLocaleString("da-DK")} kr
           </p>
           <p className="text-sm text-gray-500">pr. år</p>
         </div>
       </div>
 
-      {/* Wasted services detail */}
+      {/* Wasted services — cancel suggestions */}
       {allWasted.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Abonnementer du kan spare
+        <div className="mb-8">
+          <h2 className="text-lg font-bold text-[#1C2B2A] mb-1 flex items-center gap-2">
+            <span className="text-red-500">&#x2716;</span> Abonnementer du kan opsige
           </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Du bruger disse sjældent eller aldrig — spar {totalMonthlySavings.toLocaleString("da-DK")} kr/md
+          </p>
           <div className="space-y-3">
-            {allWasted.map((item) => (
-              <div
-                key={item.id}
-                className="bg-orange-50 border border-orange-200 rounded-xl px-5 py-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{item.icon}</span>
-                    <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-sm text-orange-600">
-                        Brugt: {frequencyLabels[item.freq]}
+            {allWasted.map((item) => {
+              const action = actions[item.id];
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+                >
+                  <div className="px-5 py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{item.icon}</span>
+                        <div>
+                          <p className="font-semibold text-[#1C2B2A]">{item.name}</p>
+                          <p className="text-sm text-gray-500">
+                            Brugt: <span className={`font-medium ${item.freq === "never" ? "text-red-600" : "text-orange-600"}`}>
+                              {frequencyLabels[item.freq]}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-[#1C2B2A]">{item.priceLabel}</p>
+                        <p className="text-xs text-gray-500">
+                          {(item.price * 12).toLocaleString("da-DK")} kr/år
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action chips */}
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => setAction(item.id, "cancel")}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                          action === "cancel"
+                            ? "bg-red-500 text-white border-red-500"
+                            : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                        }`}
+                      >
+                        Opsig
+                      </button>
+                      {item.downgrade && (
+                        <button
+                          onClick={() => setAction(item.id, "downgrade")}
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                            action === "downgrade"
+                              ? "bg-[#1B7A6E] text-white border-[#1B7A6E]"
+                              : "bg-teal-50 text-[#1B7A6E] border-teal-200 hover:bg-teal-100"
+                          }`}
+                        >
+                          Nedgrader (spar {item.downgrade.savingsPerMonth} kr/md)
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setAction(item.id, "keep")}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                          action === "keep"
+                            ? "bg-gray-700 text-white border-gray-700"
+                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                        }`}
+                      >
+                        Behold
+                      </button>
+                    </div>
+
+                    {/* Downgrade detail */}
+                    {action === "downgrade" && item.downgrade && (
+                      <div className="mt-3 bg-teal-50 rounded-lg px-3 py-2.5 flex items-start gap-2">
+                        <svg className="w-4 h-4 text-[#1B7A6E] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        <p className="text-sm text-[#1B7A6E]">
+                          <span className="font-medium">{item.name} {item.downgrade.fromLabel}</span>
+                          {" → "}
+                          <span className="font-medium">{item.name} {item.downgrade.toLabel}</span>
+                          {" — spar "}
+                          <span className="font-bold">{item.downgrade.savingsPerMonth} kr/md</span>
+                          {" ("}
+                          {(item.downgrade.savingsPerMonth * 12).toLocaleString("da-DK")}
+                          {" kr/år)"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Cancellation notice */}
+                  {item.cancellation !== "løbende" && (
+                    <div className="bg-orange-50 border-t border-orange-200 px-5 py-2.5 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs text-orange-700">
+                        <span className="font-semibold">OBS:</span> {item.name} har {item.cancellation} — du sparer fra {getCancellationDate(item.cancellation)}
                       </p>
                     </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Downgrade suggestions for active services */}
+      {downgradeServices.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold text-[#1C2B2A] mb-1 flex items-center gap-2">
+            <span className="text-[#1B7A6E]">&#x2193;</span> Nedgraderingsforslag
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Du bruger disse aktivt — men du kan stadig spare ved at nedgradere
+          </p>
+          <div className="space-y-3">
+            {downgradeServices.map((s) => {
+              const action = actions[s.id];
+              return (
+                <div
+                  key={s.id}
+                  className="bg-white rounded-xl border border-gray-200 px-5 py-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{s.icon}</span>
+                      <div>
+                        <p className="font-semibold text-[#1C2B2A]">{s.name}</p>
+                        <p className="text-sm text-gray-500">
+                          Brugt: <span className="text-green-600 font-medium">{frequencyLabels[usageFrequency[s.id]]}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-[#1C2B2A]">{formatPrice(s)}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">{item.priceLabel}</p>
-                    <p className="text-sm text-gray-500">
-                      {(item.price * 12).toLocaleString("da-DK")} kr/år
-                    </p>
+
+                  <div className="mt-3 bg-teal-50/60 rounded-lg px-4 py-3 border border-teal-100">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-[#1B7A6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
+                        <p className="text-sm text-[#1C2B2A]">
+                          <span className="font-medium">{s.downgrade!.fromLabel}</span>
+                          {" → "}
+                          <span className="font-semibold text-[#1B7A6E]">{s.downgrade!.toLabel}</span>
+                        </p>
+                      </div>
+                      <span className="text-sm font-bold text-[#1B7A6E]">
+                        Spar {s.downgrade!.savingsPerMonth} kr/md
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => setAction(s.id, "downgrade")}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                        action === "downgrade"
+                          ? "bg-[#1B7A6E] text-white border-[#1B7A6E]"
+                          : "bg-teal-50 text-[#1B7A6E] border-teal-200 hover:bg-teal-100"
+                      }`}
+                    >
+                      Nedgrader
+                    </button>
+                    <button
+                      onClick={() => setAction(s.id, "keep")}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                        action === "keep"
+                          ? "bg-gray-700 text-white border-gray-700"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                      }`}
+                    >
+                      Behold nuværende
+                    </button>
                   </div>
                 </div>
-                {item.cancellation !== "løbende" && (
-                  <div className="mt-3 flex items-start gap-2 bg-orange-100 rounded-lg px-3 py-2">
-                    <svg
-                      className="w-4 h-4 text-orange-600 mt-0.5 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <p className="text-sm text-orange-700">
-                      <span className="font-medium">OBS:</span> {item.name} har{" "}
-                      {item.cancellation} — du sparer fra{" "}
-                      {getCancellationDate(item.cancellation)}
-                    </p>
-                  </div>
-                )}
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Savings summary */}
+      {grandTotalYearly > 0 && (
+        <div className="bg-[#1C2B2A] text-white rounded-2xl p-6 mb-8">
+          <h3 className="text-lg font-bold mb-4 text-center">Din samlede besparelse</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {totalMonthlySavings > 0 && (
+              <div className="text-center">
+                <p className="text-xs text-white/60 uppercase tracking-wider">Opsigelser</p>
+                <p className="text-2xl font-bold text-white">{totalYearlySavings.toLocaleString("da-DK")} kr/år</p>
               </div>
-            ))}
+            )}
+            {downgradeSavings > 0 && (
+              <div className="text-center">
+                <p className="text-xs text-white/60 uppercase tracking-wider">Nedgraderinger</p>
+                <p className="text-2xl font-bold text-[#4ECDC4]">{totalDowngradeYearly.toLocaleString("da-DK")} kr/år</p>
+              </div>
+            )}
+          </div>
+          <div className="border-t border-white/20 mt-4 pt-4 text-center">
+            <p className="text-xs text-white/60 uppercase tracking-wider">I alt mulig besparelse</p>
+            <p className="text-4xl font-bold text-[#4ECDC4]">{grandTotalYearly.toLocaleString("da-DK")} kr/år</p>
           </div>
         </div>
       )}
 
       {/* Two paths */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+        <h2 className="text-lg font-bold text-[#1C2B2A] mb-4 text-center">
           Hvad vil du gøre nu?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -194,7 +382,7 @@ export default function StepResult({
             <div className="inline-flex items-center gap-2 bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full w-fit mb-4">
               100% gratis
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-[#1C2B2A] mb-2">
               Gør det selv
             </h3>
             <p className="text-gray-500 text-sm mb-6 flex-1">
@@ -203,7 +391,7 @@ export default function StepResult({
             </p>
             <a
               href="/"
-              className="block w-full text-center px-6 py-3 bg-white text-gray-800 font-semibold rounded-xl border border-gray-300 hover:bg-gray-100 transition-colors"
+              className="block w-full text-center px-6 py-3 bg-white text-[#1C2B2A] font-semibold rounded-xl border border-gray-300 hover:bg-gray-100 transition-colors"
             >
               Jeg klarer det selv
             </a>
@@ -220,18 +408,18 @@ export default function StepResult({
               </div>
               <Inspektoeren pose="searching" size={48} />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-[#1C2B2A] mb-2">
               Fix det for mig
             </h3>
             <p className="text-gray-600 text-sm mb-4 flex-1">
               Vi forbinder til din bank, finder alle abonnementer automatisk, og
               laver færdige opsigelsesmails du bare sender.
             </p>
-            {totalYearlySavings > 0 && (
+            {grandTotalYearly > 0 && (
               <p className="text-sm text-[#1B7A6E] font-medium mb-4">
                 Pris:{" "}
-                {Math.round(totalYearlySavings * 0.25).toLocaleString("da-DK")}{" "}
-                kr (25% af {totalYearlySavings.toLocaleString("da-DK")} kr
+                {Math.round(grandTotalYearly * 0.25).toLocaleString("da-DK")}{" "}
+                kr (25% af {grandTotalYearly.toLocaleString("da-DK")} kr
                 besparelse)
               </p>
             )}
@@ -249,7 +437,7 @@ export default function StepResult({
       <div className="text-center">
         <button
           onClick={onBack}
-          className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
+          className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors"
         >
           &larr; Tilbage til forbrugsvalg
         </button>
