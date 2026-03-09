@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import StepEmail from "@/components/quiz/StepEmail";
 import StepSelect from "@/components/quiz/StepSelect";
 import StepUsage from "@/components/quiz/StepUsage";
 import StepResult from "@/components/quiz/StepResult";
-import { UsageFrequency } from "@/lib/services";
+import { UsageFrequency, services } from "@/lib/services";
 import { supabase } from "@/lib/supabase";
 
 export default function QuizPage() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 0=email, 1=select, 2=usage, 3=result
+  const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [customServices, setCustomServices] = useState<
     { name: string; price: number }[]
@@ -18,41 +21,109 @@ export default function QuizPage() {
   >({});
   const [saved, setSaved] = useState(false);
 
-  const saveResults = useCallback(
-    async (
-      monthlyCost: number,
-      monthlySavings: number
-    ) => {
-      if (saved) return;
-      try {
-        const sessionId =
-          typeof window !== "undefined"
-            ? sessionStorage.getItem("quiz_session") ||
-              (() => {
-                const id = crypto.randomUUID();
-                sessionStorage.setItem("quiz_session", id);
-                return id;
-              })()
-            : crypto.randomUUID();
+  const handleEmailSubmit = async (userEmail: string) => {
+    setEmail(userEmail);
 
-        await supabase.from("quiz_results").insert({
-          session_id: sessionId,
-          selected_services: [
-            ...selectedServices,
-            ...customServices.map((c) => c.name),
-          ],
-          usage_frequency: usageFrequency,
-          estimated_monthly_cost: monthlyCost,
-          estimated_savings: monthlySavings * 12,
-          converted_to_scan: false,
-        });
+    try {
+      // Upsert user — insert or get existing
+      const { data: existing } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", userEmail)
+        .maybeSingle();
+
+      if (existing) {
+        setUserId(existing.id);
+      } else {
+        const { data: newUser } = await supabase
+          .from("users")
+          .insert({ email: userEmail })
+          .select("id")
+          .single();
+        if (newUser) setUserId(newUser.id);
+      }
+    } catch {
+      // Continue without user — quiz still works
+    }
+
+    setStep(1);
+  };
+
+  const saveResults = useCallback(
+    async (monthlyCost: number, monthlySavings: number) => {
+      if (saved) return;
+
+      const allServices = [
+        ...selectedServices,
+        ...customServices.map((c) => c.name),
+      ];
+      const yearlySavings = monthlySavings * 12;
+
+      try {
+        // Save quiz result
+        const { data: quizResult } = await supabase
+          .from("quiz_results")
+          .insert({
+            user_id: userId,
+            email,
+            selected_services: allServices,
+            usage_frequency: usageFrequency,
+            estimated_monthly_cost: monthlyCost,
+            estimated_savings: yearlySavings,
+            converted_to_scan: false,
+          })
+          .select("id")
+          .single();
+
+        // Mark user as quiz completed
+        if (userId) {
+          await supabase
+            .from("users")
+            .update({ quiz_completed: true })
+            .eq("id", userId);
+        }
+
+        // Send result email
+        if (quizResult) {
+          const wastedNames = allServices.filter(
+            (id) =>
+              usageFrequency[id] === "rarely" ||
+              usageFrequency[id] === "never"
+          );
+          const wastedDetails = wastedNames.map((id) => {
+            const svc = services.find((s) => s.id === id);
+            return {
+              name: svc?.name || id,
+              price: svc?.monthlyPrice ||
+                customServices.find((c) => c.name === id)?.price ||
+                0,
+            };
+          });
+
+          await fetch("/api/send-result-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email,
+              quizResultId: quizResult.id,
+              totalMonthly: monthlyCost,
+              totalYearly: monthlyCost * 12,
+              yearlySavings,
+              wastedServices: wastedDetails,
+            }),
+          });
+        }
+
         setSaved(true);
       } catch {
-        // Silently fail — quiz works without Supabase
+        // Silently fail
       }
     },
-    [saved, selectedServices, customServices, usageFrequency]
+    [saved, selectedServices, customServices, usageFrequency, email, userId]
   );
+
+  const totalSteps = 4;
+  const displayStep = step === 0 ? 0 : step;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50/30 to-white">
@@ -64,9 +135,11 @@ export default function QuizPage() {
               <span className="text-black">Abo</span>
               <span className="text-[#1B7A6E]">Vagt</span>
             </a>
-            <span className="text-sm text-gray-500">
-              Trin {step} af 3
-            </span>
+            {step > 0 && (
+              <span className="text-sm text-gray-500">
+                Trin {step} af 3
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -75,12 +148,13 @@ export default function QuizPage() {
       <div className="w-full bg-gray-200 h-1">
         <div
           className="bg-[#1B7A6E] h-1 transition-all duration-500 ease-out"
-          style={{ width: `${(step / 3) * 100}%` }}
+          style={{ width: `${(displayStep / totalSteps) * 100}%` }}
         />
       </div>
 
       {/* Steps */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {step === 0 && <StepEmail onNext={handleEmailSubmit} />}
         {step === 1 && (
           <StepSelect
             selectedServices={selectedServices}
@@ -88,7 +162,6 @@ export default function QuizPage() {
             customServices={customServices}
             setCustomServices={setCustomServices}
             onNext={() => {
-              // Initialize usage frequency for all selected
               const freq: Record<string, UsageFrequency> = {};
               selectedServices.forEach((id) => {
                 freq[id] = usageFrequency[id] || "weekly";
