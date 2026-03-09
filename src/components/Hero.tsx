@@ -1,8 +1,18 @@
+import Inspektoeren from "./Inspektoeren";
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-teal-50/50 to-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
         <div className="max-w-3xl mx-auto text-center mb-12 sm:mb-16">
+          <div className="flex items-center justify-center mb-6">
+            <Inspektoeren
+              pose="waving"
+              size={140}
+              speechBubble="Lad mig kigge..."
+              className="sm:mr-4"
+            />
+          </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-tight">
             Stop med at betale for det{" "}
             <span className="text-[#1B7A6E]">du ikke bruger</span>
@@ -15,7 +25,7 @@ export default function Hero() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
           {/* Vej 1: Gratis quiz */}
           <div className="relative bg-white rounded-2xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-            <div className="mb-6">
+            <div className="flex items-start justify-between mb-6">
               <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1.5 rounded-full">
                 <svg
                   className="w-4 h-4"
@@ -32,6 +42,7 @@ export default function Hero() {
                 </svg>
                 Gratis
               </div>
+              <Inspektoeren pose="pointing" size={56} />
             </div>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -82,7 +93,7 @@ export default function Hero() {
               Mest populær
             </div>
 
-            <div className="mb-6">
+            <div className="flex items-start justify-between mb-6">
               <div className="inline-flex items-center gap-2 bg-teal-50 text-[#1B7A6E] text-sm font-medium px-3 py-1.5 rounded-full">
                 <svg
                   className="w-4 h-4"
@@ -99,6 +110,11 @@ export default function Hero() {
                 </svg>
                 25% af besparelsen
               </div>
+              <Inspektoeren
+                pose="searching"
+                size={56}
+                speechBubble="Jeg finder dem for dig!"
+              />
             </div>
 
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
