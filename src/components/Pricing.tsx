@@ -4,11 +4,11 @@ export default function Pricing() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-            Du betaler kun hvis du sparer
+            Quizzen er gratis. Altid.
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Ingen risiko. Quizzen er gratis, og du betaler kun en andel af det,
-            du faktisk sparer.
+            Du betaler kun 25% af din besparelse — og kun når du vælger at
+            handle.
           </p>
         </div>
 
@@ -29,10 +29,10 @@ export default function Pricing() {
 
             <div className="mt-8 space-y-4">
               {[
-                "Gratis quiz og analyse",
-                "Personlig spareplan",
+                "Quiz og analyse er 100% gratis",
+                "Personlig spareplan med færdige mails",
                 "Ingen binding eller skjulte gebyrer",
-                "Du betaler kun når du sparer",
+                "Du betaler kun når du vælger at handle",
                 "Fuld gennemsigtighed i beregningen",
               ].map((feature) => (
                 <div key={feature} className="flex items-start gap-3">
@@ -59,7 +59,7 @@ export default function Pricing() {
                 href="#quiz"
                 className="block w-full text-center px-8 py-4 bg-[#1B7A6E] text-white text-lg font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 hover:shadow-xl"
               >
-                Kom i gang — det er gratis
+                Se hvad du kan spare — gratis
               </a>
             </div>
 
