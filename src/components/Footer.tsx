@@ -17,6 +17,9 @@ export default function Footer() {
             <a href="#hvordan" className="hover:text-white transition-colors">
               Sådan virker det
             </a>
+            <a href="#sikkerhed" className="hover:text-white transition-colors">
+              Sikkerhed
+            </a>
             <a href="#pris" className="hover:text-white transition-colors">
               Pris
             </a>
@@ -27,7 +30,10 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} AboVagt.dk. Alle rettigheder forbeholdes.</p>
+          <p>
+            &copy; {new Date().getFullYear()} AboVagt.dk. Alle rettigheder
+            forbeholdes.
+          </p>
         </div>
       </div>
     </footer>

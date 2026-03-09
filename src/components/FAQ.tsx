@@ -6,27 +6,37 @@ const faqs = [
   {
     question: "Er quizzen virkelig gratis?",
     answer:
-      "Ja, 100%. Du kan tage quizzen og få din personlige rapport helt uden at betale en krone. Vi tager kun betaling, hvis du vælger at følge vores anbefalinger og faktisk sparer penge.",
+      "Ja, 100%. Quizzen er og bliver altid gratis. Du får et estimat og tips helt uden at betale — ingen kreditkort, ingen binding, ingen skjulte gebyrer.",
   },
   {
-    question: "Hvordan beregner I besparelsen?",
+    question: "Hvad er forskellen på quiz og fuld service?",
     answer:
-      "Vi analyserer dine svar og sammenligner med gennemsnitlige priser og forbrugsmønstre for lignende abonnementer i Danmark. Besparelsen er baseret på den faktiske pris, du betaler, versus hvad du reelt bruger.",
+      "Quizzen giver dig et estimat baseret på dine svar. Fuld service forbinder til din bank via Tink, finder alle dine faktiske abonnementer automatisk, og genererer færdige opsigelsesmails. Du betaler kun 25% af besparelsen ved fuld service.",
   },
   {
-    question: "Hvad sker der med mine data?",
+    question: "Er det sikkert at forbinde min bank?",
     answer:
-      "Dine data behandles fortroligt og i overensstemmelse med GDPR. Vi deler aldrig dine oplysninger med tredjepart, og du kan til enhver tid bede om at få dine data slettet.",
+      "Ja. Vi bruger Tink, som er ejet af Visa og reguleret under PSD2 af Finanstilsynet. Vi har kun læseadgang til dine transaktioner — vi kan aldrig flytte penge eller foretage betalinger. Det er den samme teknologi som bruges af Nordens største banker.",
+  },
+  {
+    question: "Opsiger I abonnementer på mine vegne?",
+    answer:
+      "Nej, aldrig. Vi genererer færdige opsigelsesmails, men du trykker selv send. Du er altid i fuld kontrol over dine abonnementer. Vi handler aldrig uden din godkendelse.",
   },
   {
     question: "Hvornår skal jeg betale de 25%?",
     answer:
-      "Først når du har gennemført opsigelsen af abonnementer og kan dokumentere din besparelse. Vi sender en faktura baseret på den faktiske årlige besparelse, du opnår.",
+      "Kun når du faktisk sparer penge. Hvis du vælger fuld service og følger vores anbefalinger, betaler du 25% af den dokumenterede årlige besparelse. Ingen besparelse = ingen betaling.",
   },
   {
-    question: "Hvilke typer abonnementer dækker I?",
+    question: "Hvad sker der med mine data?",
     answer:
-      "Vi dækker alle typer tilbagevendende betalinger: streaming, software, fitness, forsikringer, mobilabonnementer, magasiner, og meget mere. Hvis du betaler for det månedligt eller årligt, kan vi hjælpe.",
+      "Dine data behandles i EU i fuld overensstemmelse med GDPR. Vi sælger aldrig dine oplysninger til tredjepart. Du kan til enhver tid bede om at få alle dine data slettet.",
+  },
+  {
+    question: "Hvilke typer abonnementer finder I?",
+    answer:
+      "Vi finder alle tilbagevendende betalinger: streaming (Netflix, HBO, Spotify), software, fitness, forsikringer, mobilabonnementer, magasiner, og alt andet der trækkes automatisk.",
   },
 ];
 
@@ -74,7 +84,7 @@ function FAQItem({
 
 export default function FAQ() {
   return (
-    <section id="faq" className="bg-gray-50 py-16 sm:py-24">
+    <section id="faq" className="bg-white py-16 sm:py-24">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
@@ -82,7 +92,7 @@ export default function FAQ() {
           </h2>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div className="bg-gray-50 rounded-2xl p-6 sm:p-8">
           {faqs.map((faq) => (
             <FAQItem
               key={faq.question}

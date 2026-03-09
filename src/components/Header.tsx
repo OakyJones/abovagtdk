@@ -22,6 +22,12 @@ export default function Header() {
               Sådan virker det
             </a>
             <a
+              href="#sikkerhed"
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Sikkerhed
+            </a>
+            <a
               href="#pris"
               className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
@@ -34,10 +40,10 @@ export default function Header() {
               FAQ
             </a>
             <a
-              href="#quiz"
+              href="#kom-igang"
               className="inline-flex items-center px-5 py-2.5 bg-[#1B7A6E] text-white text-sm font-medium rounded-lg hover:bg-[#155F56] transition-colors"
             >
-              Tag den gratis quiz
+              Kom i gang
             </a>
           </nav>
 
@@ -81,6 +87,13 @@ export default function Header() {
               Sådan virker det
             </a>
             <a
+              href="#sikkerhed"
+              className="text-sm text-gray-600 hover:text-gray-900"
+              onClick={() => setMenuOpen(false)}
+            >
+              Sikkerhed
+            </a>
+            <a
               href="#pris"
               className="text-sm text-gray-600 hover:text-gray-900"
               onClick={() => setMenuOpen(false)}
@@ -95,11 +108,11 @@ export default function Header() {
               FAQ
             </a>
             <a
-              href="#quiz"
+              href="#kom-igang"
               className="inline-flex items-center justify-center px-5 py-2.5 bg-[#1B7A6E] text-white text-sm font-medium rounded-lg hover:bg-[#155F56] transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Tag den gratis quiz
+              Kom i gang
             </a>
           </nav>
         )}
