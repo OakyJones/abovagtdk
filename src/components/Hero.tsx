@@ -55,7 +55,7 @@ export default function Hero() {
             </ul>
 
             <a
-              href="#quiz"
+              href="/quiz"
               className="block w-full text-center px-6 py-3.5 bg-white text-gray-800 font-semibold rounded-xl border border-gray-300 hover:bg-gray-100 transition-colors"
             >
               Tag den gratis quiz
