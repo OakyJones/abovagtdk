@@ -89,7 +89,7 @@ export default function Hero() {
                 "Vi forbinder til din bank via Tink — kun læseadgang",
                 "AI finder alle dine abonnementer automatisk",
                 "Vi laver færdige opsigelsesmails — du trykker send",
-                "5 minutter i stedet for 3 timer",
+                "På kun 5 minutter",
                 "Du betaler kun når du sparer penge",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">

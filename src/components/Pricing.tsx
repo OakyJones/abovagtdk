@@ -12,83 +12,39 @@ export default function Pricing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Gratis */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 sm:p-10 flex flex-col">
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-              Quiz
-            </p>
-            <p className="mt-4 text-4xl sm:text-5xl font-bold text-gray-900">
-              Gratis
-            </p>
-            <p className="mt-2 text-gray-500">Altid. Ingen hager.</p>
-
-            <div className="mt-8 space-y-4 flex-1">
-              {[
-                "Personlig quiz om dine abonnementer",
-                "Estimeret forbrug og besparelse",
-                "Tips til hvad du kan opsige",
-                "Ingen login påkrævet",
-              ].map((feature) => (
-                <div key={feature} className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-gray-400 mt-0.5 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-gray-600 text-sm">{feature}</span>
-                </div>
-              ))}
-            </div>
-
-            <a
-              href="#quiz"
-              className="mt-8 block w-full text-center px-6 py-3.5 bg-gray-100 text-gray-800 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
-            >
-              Tag den gratis quiz &rarr;
-            </a>
-          </div>
-
-          {/* Fuld service */}
-          <div className="relative bg-white rounded-2xl border-2 border-[#1B7A6E] p-8 sm:p-10 shadow-lg flex flex-col">
+        <div className="max-w-md mx-auto">
+          <div className="relative bg-white rounded-2xl border-2 border-[#1B7A6E] p-8 sm:p-10 shadow-lg">
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
-              Anbefalet
+              Ingen risiko
             </div>
 
-            <p className="text-sm font-semibold text-[#1B7A6E] uppercase tracking-wide">
-              Fuld service
-            </p>
-            <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-4xl sm:text-5xl font-bold text-gray-900">
-                25%
-              </span>
-              <span className="text-gray-500">af besparelsen</span>
+            <div className="text-center mb-8">
+              <p className="text-sm font-semibold text-[#1B7A6E] uppercase tracking-wide">
+                Fuld service
+              </p>
+              <div className="mt-4 flex items-baseline justify-center gap-1">
+                <span className="text-5xl sm:text-6xl font-bold text-gray-900">
+                  25%
+                </span>
+                <span className="text-gray-500">af besparelsen</span>
+              </div>
+              <p className="mt-2 text-gray-500">
+                Du betaler kun når du vælger at handle.
+              </p>
             </div>
-            <p className="mt-2 text-gray-500">
-              Du betaler kun når du vælger at handle.
-            </p>
 
-            <div className="mt-8 space-y-4 flex-1">
+            <div className="space-y-4 mb-8">
               {[
-                "Alt fra gratis — plus:",
+                "Quizzen er og bliver 100% gratis",
                 "Automatisk scanning via bankforbindelse",
                 "AI-analyse af alle abonnementer",
                 "Færdige opsigelsesmails",
                 "Du betaler kun ved reel besparelse",
-              ].map((feature, i) => (
+                "Ingen binding eller skjulte gebyrer",
+              ].map((feature) => (
                 <div key={feature} className="flex items-start gap-3">
                   <svg
-                    className={`w-5 h-5 mt-0.5 shrink-0 ${
-                      i === 0 ? "text-transparent" : "text-[#1B7A6E]"
-                    }`}
+                    className="w-5 h-5 text-[#1B7A6E] mt-0.5 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -100,27 +56,12 @@ export default function Pricing() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <span
-                    className={`text-sm ${
-                      i === 0
-                        ? "text-gray-400 font-medium -ml-8"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    {feature}
-                  </span>
+                  <span className="text-gray-700 text-sm">{feature}</span>
                 </div>
               ))}
             </div>
 
-            <a
-              href="#kom-igang"
-              className="mt-8 block w-full text-center px-6 py-3.5 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20"
-            >
-              Find mine abonnementer &rarr;
-            </a>
-
-            <p className="mt-3 text-center text-xs text-gray-500">
+            <p className="text-center text-sm text-gray-500">
               Eksempel: Sparer du 2.400 kr/år, betaler du 600 kr.
             </p>
           </div>
