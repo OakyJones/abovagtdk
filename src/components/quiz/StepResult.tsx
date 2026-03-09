@@ -5,7 +5,9 @@ import {
   services,
   UsageFrequency,
   frequencyLabels,
+  formatPrice,
   getEstimatedSavings,
+  getCancellationDate,
 } from "@/lib/services";
 import Inspektoeren from "@/components/Inspektoeren";
 
@@ -32,10 +34,11 @@ export default function StepResult({
     selectedServiceObjects.reduce((sum, s) => sum + s.monthlyPrice, 0) +
     customServices.reduce((sum, c) => sum + c.price, 0);
 
-  const { monthlySavings, yearlySavings, wastedServices } =
-    getEstimatedSavings(selectedServices, usageFrequency);
+  const { monthlySavings, wastedServices } = getEstimatedSavings(
+    selectedServices,
+    usageFrequency
+  );
 
-  // Also calculate custom service waste
   const wastedCustom = customServices.filter(
     (c) =>
       usageFrequency[c.name] === "rarely" ||
@@ -43,7 +46,7 @@ export default function StepResult({
   );
   const customWaste = wastedCustom.reduce((sum, c) => sum + c.price, 0);
   const totalMonthlySavings = monthlySavings + customWaste;
-  const totalYearlySavings = (monthlySavings + customWaste) * 12;
+  const totalYearlySavings = totalMonthlySavings * 12;
 
   useEffect(() => {
     onSave(totalMonthly, totalMonthlySavings);
@@ -51,16 +54,22 @@ export default function StepResult({
 
   const allWasted = [
     ...wastedServices.map((s) => ({
+      id: s.id,
       name: s.name,
       icon: s.icon,
       price: s.monthlyPrice,
+      priceLabel: formatPrice(s),
       freq: usageFrequency[s.id],
+      cancellation: s.cancellation,
     })),
     ...wastedCustom.map((c) => ({
+      id: c.name,
       name: c.name,
       icon: "📦",
       price: c.price,
+      priceLabel: `${c.price} kr/md`,
       freq: usageFrequency[c.name],
+      cancellation: "løbende" as const,
     })),
   ];
 
@@ -126,24 +135,48 @@ export default function StepResult({
           <div className="space-y-3">
             {allWasted.map((item) => (
               <div
-                key={item.name}
-                className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-5 py-4"
+                key={item.id}
+                className="bg-orange-50 border border-orange-200 rounded-xl px-5 py-4"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{item.icon}</span>
-                  <div>
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-orange-600">
-                      Brugt: {frequencyLabels[item.freq]}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{item.icon}</span>
+                    <div>
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <p className="text-sm text-orange-600">
+                        Brugt: {frequencyLabels[item.freq]}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">{item.priceLabel}</p>
+                    <p className="text-sm text-gray-500">
+                      {(item.price * 12).toLocaleString("da-DK")} kr/år
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-900">{item.price} kr/md</p>
-                  <p className="text-sm text-gray-500">
-                    {(item.price * 12).toLocaleString("da-DK")} kr/år
-                  </p>
-                </div>
+                {item.cancellation !== "løbende" && (
+                  <div className="mt-3 flex items-start gap-2 bg-orange-100 rounded-lg px-3 py-2">
+                    <svg
+                      className="w-4 h-4 text-orange-600 mt-0.5 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <p className="text-sm text-orange-700">
+                      <span className="font-medium">OBS:</span> {item.name} har{" "}
+                      {item.cancellation} — du sparer fra{" "}
+                      {getCancellationDate(item.cancellation)}
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

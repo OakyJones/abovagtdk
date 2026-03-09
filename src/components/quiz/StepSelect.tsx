@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { services, Service } from "@/lib/services";
+import {
+  services,
+  Service,
+  categoryLabels,
+  categoryOrder,
+  formatPrice,
+} from "@/lib/services";
 
 interface Props {
   selectedServices: string[];
@@ -11,16 +17,6 @@ interface Props {
   onNext: () => void;
 }
 
-const categories = [
-  { key: "streaming", label: "Streaming" },
-  { key: "music", label: "Musik" },
-  { key: "fitness", label: "Fitness" },
-  { key: "books", label: "Bøger & lyd" },
-  { key: "software", label: "Software" },
-  { key: "storage", label: "Cloud" },
-  { key: "food", label: "Mad & livsstil" },
-] as const;
-
 export default function StepSelect({
   selectedServices,
   setSelectedServices,
@@ -28,6 +24,7 @@ export default function StepSelect({
   setCustomServices,
   onNext,
 }: Props) {
+  const [activeCategory, setActiveCategory] = useState("streaming");
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState("");
 
@@ -60,6 +57,13 @@ export default function StepSelect({
       .reduce((sum, s) => sum + s.monthlyPrice, 0) +
     customServices.reduce((sum, c) => sum + c.price, 0);
 
+  const catServices = services.filter((s) => s.category === activeCategory);
+
+  // Count selected per category
+  const selectedPerCategory = (cat: string) =>
+    services.filter((s) => s.category === cat && selectedServices.includes(s.id))
+      .length;
+
   return (
     <div>
       <div className="text-center mb-8 sm:mb-10">
@@ -71,79 +75,137 @@ export default function StepSelect({
         </p>
       </div>
 
-      {categories.map((cat) => {
-        const catServices = services.filter((s) => s.category === cat.key);
-        return (
-          <div key={cat.key} className="mb-8">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              {cat.label}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {catServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  selected={selectedServices.includes(service.id)}
-                  onToggle={() => toggle(service.id)}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Custom services */}
-      <div className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Andre abonnementer
-        </h2>
-        {customServices.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {customServices.map((c) => (
-              <span
-                key={c.name}
-                className="inline-flex items-center gap-1.5 bg-[#1B7A6E]/10 text-[#1B7A6E] text-sm font-medium px-3 py-1.5 rounded-full"
+      {/* Category tabs */}
+      <div className="mb-6 -mx-4 px-4 overflow-x-auto">
+        <div className="flex gap-2 min-w-max pb-2">
+          {categoryOrder.map((cat) => {
+            const count = selectedPerCategory(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
+                  activeCategory === cat
+                    ? "bg-[#1B7A6E] text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
               >
-                {c.name} ({c.price} kr/md)
-                <button
-                  onClick={() => removeCustom(c.name)}
-                  className="hover:text-red-500"
-                  aria-label={`Fjern ${c.name}`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Navn (f.eks. Wolt+)"
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B7A6E]/30 focus:border-[#1B7A6E]"
-          />
-          <input
-            type="number"
-            placeholder="Kr/md"
-            value={customPrice}
-            onChange={(e) => setCustomPrice(e.target.value)}
-            className="w-24 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B7A6E]/30 focus:border-[#1B7A6E]"
-          />
+                {categoryLabels[cat]}
+                {count > 0 && (
+                  <span
+                    className={`ml-1.5 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full ${
+                      activeCategory === cat
+                        ? "bg-white/20 text-white"
+                        : "bg-[#1B7A6E] text-white"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
           <button
-            onClick={addCustom}
-            className="px-4 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors text-sm"
+            onClick={() => setActiveCategory("custom")}
+            className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all ${
+              activeCategory === "custom"
+                ? "bg-[#1B7A6E] text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
           >
-            Tilføj
+            Andet
+            {customServices.length > 0 && (
+              <span
+                className={`ml-1.5 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full ${
+                  activeCategory === "custom"
+                    ? "bg-white/20 text-white"
+                    : "bg-[#1B7A6E] text-white"
+                }`}
+              >
+                {customServices.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
 
+      {/* Service grid */}
+      {activeCategory !== "custom" ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-8">
+          {catServices.map((service) => (
+            <ServiceCard
+              key={service.id}
+              service={service}
+              selected={selectedServices.includes(service.id)}
+              onToggle={() => toggle(service.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mb-8">
+          {customServices.length > 0 && (
+            <div className="space-y-2 mb-6">
+              {customServices.map((c) => (
+                <div
+                  key={c.name}
+                  className="flex items-center justify-between bg-teal-50 border border-[#1B7A6E]/20 rounded-xl px-4 py-3"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{c.name}</p>
+                    <p className="text-sm text-gray-500">{c.price} kr/md</p>
+                  </div>
+                  <button
+                    onClick={() => removeCustom(c.name)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    aria-label={`Fjern ${c.name}`}
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Navn (f.eks. Wolt+)"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCustom()}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B7A6E]/30 focus:border-[#1B7A6E]"
+            />
+            <input
+              type="number"
+              placeholder="Kr/md"
+              value={customPrice}
+              onChange={(e) => setCustomPrice(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCustom()}
+              className="w-24 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B7A6E]/30 focus:border-[#1B7A6E]"
+            />
+            <button
+              onClick={addCustom}
+              className="px-4 py-2.5 bg-[#1B7A6E] text-white font-medium rounded-xl hover:bg-[#155F56] transition-colors text-sm"
+            >
+              Tilføj
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sticky bottom bar */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mt-8">
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mt-4">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div>
             <p className="text-sm text-gray-500">
@@ -180,7 +242,7 @@ function ServiceCard({
   return (
     <button
       onClick={onToggle}
-      className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center ${
+      className={`relative flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all text-center ${
         selected
           ? "border-[#1B7A6E] bg-teal-50 shadow-sm"
           : "border-gray-200 bg-white hover:border-gray-300"
@@ -188,16 +250,25 @@ function ServiceCard({
     >
       {selected && (
         <div className="absolute top-2 right-2">
-          <svg className="w-5 h-5 text-[#1B7A6E]" fill="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-[#1B7A6E]"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
           </svg>
         </div>
       )}
       <span className="text-2xl">{service.icon}</span>
-      <span className="text-sm font-medium text-gray-900">{service.name}</span>
-      <span className="text-xs text-gray-500">
-        {service.monthlyPrice} kr/md
+      <span className="text-sm font-medium text-gray-900 leading-tight">
+        {service.name}
       </span>
+      <span className="text-xs text-gray-500">{formatPrice(service)}</span>
+      {service.cancellation !== "løbende" && (
+        <span className="text-[10px] text-orange-600 font-medium">
+          {service.cancellation}
+        </span>
+      )}
     </button>
   );
 }

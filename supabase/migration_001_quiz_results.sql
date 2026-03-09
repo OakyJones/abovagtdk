@@ -8,6 +8,7 @@ create table if not exists quiz_results (
   usage_frequency jsonb not null default '{}'::jsonb,
   estimated_monthly_cost integer not null default 0,
   estimated_savings integer not null default 0,
+  cancellation_details jsonb not null default '[]'::jsonb,
   converted_to_scan boolean not null default false,
   created_at timestamptz not null default now()
 );

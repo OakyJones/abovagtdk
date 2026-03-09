@@ -1,6 +1,6 @@
 "use client";
 
-import { services, UsageFrequency, frequencyLabels } from "@/lib/services";
+import { services, UsageFrequency, frequencyLabels, formatPrice } from "@/lib/services";
 
 interface Props {
   selectedServices: string[];
@@ -39,24 +39,44 @@ export default function StepUsage({
     setUsageFrequency({ ...usageFrequency, [id]: freq });
   };
 
-  const allItems: { id: string; name: string; icon: string; price: number }[] =
-    [
-      ...services
-        .filter((s) => selectedServices.includes(s.id))
-        .map((s) => ({ id: s.id, name: s.name, icon: s.icon, price: s.monthlyPrice })),
-      ...customServices.map((c) => ({
-        id: c.name,
-        name: c.name,
-        icon: "📦",
-        price: c.price,
+  const allItems: {
+    id: string;
+    name: string;
+    icon: string;
+    priceLabel: string;
+    monthlyPrice: number;
+  }[] = [
+    ...services
+      .filter((s) => selectedServices.includes(s.id))
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        icon: s.icon,
+        priceLabel: formatPrice(s),
+        monthlyPrice: s.monthlyPrice,
       })),
-    ];
+    ...customServices.map((c) => ({
+      id: c.name,
+      name: c.name,
+      icon: "📦",
+      priceLabel: `${c.price} kr/md`,
+      monthlyPrice: c.price,
+    })),
+  ];
 
   const wastingCount = allItems.filter(
     (item) =>
       usageFrequency[item.id] === "rarely" ||
       usageFrequency[item.id] === "never"
   ).length;
+
+  const wastingMonthly = allItems
+    .filter(
+      (item) =>
+        usageFrequency[item.id] === "rarely" ||
+        usageFrequency[item.id] === "never"
+    )
+    .reduce((sum, item) => sum + item.monthlyPrice, 0);
 
   return (
     <div>
@@ -69,7 +89,7 @@ export default function StepUsage({
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {allItems.map((item) => {
           const freq = usageFrequency[item.id] || "weekly";
           const isWasting = freq === "rarely" || freq === "never";
@@ -83,12 +103,12 @@ export default function StepUsage({
                   : "border-gray-200 bg-white"
               }`}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <div className="flex items-center gap-3 sm:min-w-[200px]">
                   <span className="text-2xl">{item.icon}</span>
                   <div>
                     <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-500">{item.price} kr/md</p>
+                    <p className="text-sm text-gray-500">{item.priceLabel}</p>
                   </div>
                 </div>
 
@@ -112,7 +132,7 @@ export default function StepUsage({
               {isWasting && (
                 <p className="mt-3 text-sm text-orange-600 font-medium flex items-center gap-1.5">
                   <svg
-                    className="w-4 h-4"
+                    className="w-4 h-4 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -124,7 +144,7 @@ export default function StepUsage({
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
                     />
                   </svg>
-                  Du bruger {item.price} kr/md på noget du{" "}
+                  Du bruger {item.priceLabel} på noget du{" "}
                   {freq === "never" ? "aldrig bruger" : "sjældent bruger"}
                 </p>
               )}
@@ -142,11 +162,11 @@ export default function StepUsage({
           >
             &larr; Tilbage
           </button>
-          <div className="text-center">
+          <div className="text-center hidden sm:block">
             {wastingCount > 0 && (
               <p className="text-sm text-orange-600 font-medium">
-                {wastingCount} abonnement{wastingCount !== 1 ? "er" : ""} du kan
-                spare
+                {wastingCount} abonnement{wastingCount !== 1 ? "er" : ""} —{" "}
+                {wastingMonthly.toLocaleString("da-DK")} kr/md du kan spare
               </p>
             )}
           </div>
