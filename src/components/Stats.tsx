@@ -5,9 +5,9 @@ const stats = [
     description: "har den gennemsnitlige dansker",
   },
   {
-    value: "2.400 kr",
-    label: "spildt årligt",
-    description: "på glemte eller ubrugte tjenester",
+    value: "200 kr/md",
+    label: "spildt i snit",
+    description: "på glemte eller ubrugte abonnementer",
   },
   {
     value: "5 min",

@@ -286,7 +286,7 @@ export default function StepSelect({
                                 )}
                               </div>
                               <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-[#1C2B2A]"}`}>
-                                {tier.price} kr
+                                {tier.price} kr/md
                               </span>
                             </button>
                           );

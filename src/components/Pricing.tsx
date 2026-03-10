@@ -62,7 +62,7 @@ export default function Pricing() {
             </div>
 
             <p className="text-center text-sm text-gray-500">
-              Eksempel: Sparer du 2.400 kr/år, betaler du 600 kr.
+              Eksempel: Sparer du 200 kr/md, betaler du 50 kr/md.
             </p>
           </div>
         </div>
