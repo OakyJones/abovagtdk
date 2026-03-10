@@ -204,7 +204,7 @@ export default function StepResult({
               : "bg-white border-gray-200"
           }`}
         >
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Din besparelse</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Mulig besparelse</p>
           <p
             className={`text-3xl font-bold ${
               totalSavings > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"
@@ -469,7 +469,7 @@ export default function StepResult({
             <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Din besparelse</span>
+                  <span className="text-sm text-gray-600">Mulig besparelse</span>
                   <span className="text-sm font-bold text-[#1C2B2A]">{totalSavings.toLocaleString("da-DK")} kr/md</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -477,8 +477,8 @@ export default function StepResult({
                   <span className="text-sm font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr (en gang)</span>
                 </div>
                 <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[#1B7A6E]">Du beholder</span>
-                  <span className="text-lg font-bold text-[#1B7A6E]">{kept.toLocaleString("da-DK")} kr/md — hver måned fremover</span>
+                  <span className="text-sm font-semibold text-[#1B7A6E]">Du kan spare</span>
+                  <span className="text-lg font-bold text-[#1B7A6E]">{kept.toLocaleString("da-DK")} kr/md — hvis du opsiger de valgte</span>
                 </div>
               </div>
             </div>
