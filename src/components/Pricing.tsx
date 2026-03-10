@@ -29,7 +29,7 @@ export default function Pricing() {
                 <span className="text-gray-500">af besparelsen</span>
               </div>
               <p className="mt-2 text-gray-500">
-                Du betaler kun når du vælger at handle.
+                En engangsbetaling — kun når du faktisk sparer.
               </p>
             </div>
 
@@ -39,7 +39,7 @@ export default function Pricing() {
                 "Automatisk scanning via bankforbindelse",
                 "AI-analyse af alle abonnementer",
                 "Færdige opsigelsesmails",
-                "Du betaler kun ved reel besparelse",
+                "En engangsbetaling — kun ved reel besparelse",
                 "Ingen binding eller skjulte gebyrer",
               ].map((feature) => (
                 <div key={feature} className="flex items-start gap-3">
@@ -62,7 +62,7 @@ export default function Pricing() {
             </div>
 
             <p className="text-center text-sm text-gray-500">
-              Eksempel: Sparer du 200 kr/md, betaler du 50 kr/md.
+              Eksempel: Sparer du 200 kr/md, betaler du 50 kr en gang.
             </p>
           </div>
         </div>

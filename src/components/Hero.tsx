@@ -90,7 +90,7 @@ export default function Hero() {
                 "AI finder alle dine abonnementer automatisk",
                 "Vi laver færdige opsigelsesmails — du trykker send",
                 "På kun 5 minutter",
-                "Du betaler kun når du sparer penge",
+                "Du betaler kun en engangsbetaling når du sparer penge",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <svg
@@ -119,7 +119,7 @@ export default function Hero() {
               <span className="ml-1">&rarr;</span>
             </a>
             <p className="mt-3 text-center text-xs text-gray-500">
-              25% af besparelsen — kun når du sparer
+              Engangsbetaling: 25% af besparelsen
             </p>
           </div>
         </div>
