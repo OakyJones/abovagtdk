@@ -9,6 +9,8 @@ async function getStats() {
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + 1).toISOString();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
   const [
     { count: totalQuiz },
     { count: todayQuiz },
@@ -16,6 +18,7 @@ async function getStats() {
     { count: totalEmails },
     { count: tinkConnected },
     { data: savingsData },
+    { data: thisMonthSavings },
     { data: recentQuiz },
     { data: last30Quiz },
     { data: allServices },
@@ -26,16 +29,29 @@ async function getStats() {
     getSupabaseAdmin().from("users").select("*", { count: "exact", head: true }),
     getSupabaseAdmin().from("users").select("*", { count: "exact", head: true }).eq("tink_connected", true),
     getSupabaseAdmin().from("quiz_results").select("estimated_savings"),
+    getSupabaseAdmin().from("quiz_results").select("estimated_savings").gte("created_at", monthStart),
     getSupabaseAdmin().from("quiz_results").select("id, email, selected_services, estimated_monthly_cost, estimated_savings, created_at").order("created_at", { ascending: false }).limit(20),
     getSupabaseAdmin().from("quiz_results").select("created_at").gte("created_at", thirtyDaysAgo),
     getSupabaseAdmin().from("quiz_results").select("selected_services"),
   ]);
 
-  // Total savings
+  // Total savings (all-time)
   const totalSavings = (savingsData || []).reduce(
     (sum, r) => sum + (Number(r.estimated_savings) || 0),
     0
   );
+  const totalSavingsUsers = (savingsData || []).filter(
+    (r) => (Number(r.estimated_savings) || 0) > 0
+  ).length;
+
+  // This month savings
+  const quizSavingsMonth = (thisMonthSavings || []).reduce(
+    (sum, r) => sum + (Number(r.estimated_savings) || 0),
+    0
+  );
+  const quizSavingsMonthUsers = (thisMonthSavings || []).filter(
+    (r) => (Number(r.estimated_savings) || 0) > 0
+  ).length;
 
   // Conversion rate
   const conversionRate = (totalQuiz || 0) > 0
@@ -75,6 +91,9 @@ async function getStats() {
     totalEmails: totalEmails || 0,
     conversionRate,
     totalSavings,
+    totalSavingsUsers,
+    quizSavingsMonth,
+    quizSavingsMonthUsers,
     dailyCounts,
     top10,
     recentQuiz: recentQuiz || [],
@@ -92,7 +111,7 @@ export default async function AdminDashboard() {
     { label: "Konvertering → bank", value: `${stats.conversionRate}%`, color: "text-orange-600" },
     {
       label: "Samlet besparelse fundet",
-      value: `${stats.totalSavings.toLocaleString("da-DK")} kr`,
+      value: `${stats.totalSavings.toLocaleString("da-DK")} kr/md`,
       color: "text-[#1B7A6E]",
     },
   ];
@@ -100,6 +119,46 @@ export default async function AdminDashboard() {
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-900 mb-6">Dashboard</h2>
+
+      {/* Savings overview cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-2xl border-2 border-teal-100 p-5">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Besparelse via quiz denne md</p>
+          <p className="text-3xl font-bold text-[#1B7A6E]">
+            {stats.quizSavingsMonth.toLocaleString("da-DK")} <span className="text-lg font-semibold">kr/md</span>
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {stats.quizSavingsMonthUsers} bruger{stats.quizSavingsMonthUsers !== 1 ? "e" : ""}
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl border-2 border-gray-200 p-5">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Besparelse via bank denne md</p>
+          <p className="text-3xl font-bold text-gray-300">
+            0 <span className="text-lg font-semibold">kr/md</span>
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            0 brugere — Tink ikke live endnu
+          </p>
+        </div>
+        <div className="bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-5">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Samlet besparelse denne md</p>
+          <p className="text-3xl font-bold text-[#1B7A6E]">
+            {stats.quizSavingsMonth.toLocaleString("da-DK")} <span className="text-lg font-semibold">kr/md</span>
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {stats.quizSavingsMonthUsers} bruger{stats.quizSavingsMonthUsers !== 1 ? "e" : ""}
+          </p>
+        </div>
+        <div className="bg-[#1C2B2A] rounded-2xl p-5">
+          <p className="text-xs text-white/50 uppercase tracking-wider mb-2">Samlet besparelse all-time</p>
+          <p className="text-3xl font-bold text-[#4ECDC4]">
+            {stats.totalSavings.toLocaleString("da-DK")} <span className="text-lg font-semibold">kr/md</span>
+          </p>
+          <p className="text-xs text-white/40 mt-1">
+            {stats.totalSavingsUsers} bruger{stats.totalSavingsUsers !== 1 ? "e" : ""}
+          </p>
+        </div>
+      </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -194,7 +253,7 @@ export default async function AdminDashboard() {
                 {stats.totalQuiz > 0
                   ? Math.round(stats.totalSavings / stats.totalQuiz).toLocaleString("da-DK")
                   : 0}{" "}
-                kr/år
+                kr/md
               </span>
             </div>
             <div className="flex justify-between">
@@ -208,7 +267,7 @@ export default async function AdminDashboard() {
                       ) / stats.recentQuiz.length
                     ).toLocaleString("da-DK")
                   : 0}{" "}
-                kr
+                kr/md
               </span>
             </div>
           </div>
