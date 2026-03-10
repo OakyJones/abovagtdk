@@ -73,6 +73,7 @@ export default function QuizPage() {
             user_id: userId,
             email,
             selected_services: allServices,
+            selected_plans: selectedPlans,
             usage_frequency: usageFrequency,
             estimated_monthly_cost: monthlyCost,
             estimated_savings: yearlySavings,
