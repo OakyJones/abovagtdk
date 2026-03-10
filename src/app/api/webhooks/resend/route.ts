@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import crypto from "crypto";
+import { Webhook } from "svix";
 
 function getSupabase() {
   return createClient(
@@ -17,30 +17,31 @@ function getTag(toEmail: string): string {
   return "other";
 }
 
-function verifySignature(payload: string, signature: string | null): boolean {
-  const secret = process.env.RESEND_WEBHOOK_SECRET;
-  if (!secret) return true; // Skip verification if no secret configured
-  if (!signature) return false;
-
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expected)
-  );
-}
-
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
-    const signature = req.headers.get("svix-signature");
 
-    // Verify webhook signature if secret is configured
-    if (process.env.RESEND_WEBHOOK_SECRET && !verifySignature(rawBody, signature)) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    // Verify Svix webhook signature if secret is configured
+    const secret = process.env.RESEND_WEBHOOK_SECRET;
+    if (secret) {
+      const svixId = req.headers.get("svix-id");
+      const svixTimestamp = req.headers.get("svix-timestamp");
+      const svixSignature = req.headers.get("svix-signature");
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        return NextResponse.json({ error: "Missing svix headers" }, { status: 401 });
+      }
+
+      const wh = new Webhook(secret);
+      try {
+        wh.verify(rawBody, {
+          "svix-id": svixId,
+          "svix-timestamp": svixTimestamp,
+          "svix-signature": svixSignature,
+        });
+      } catch {
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
     }
 
     const body = JSON.parse(rawBody);
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
           email_id: inserted.id,
           filename: att.filename || "unknown",
           content_type: att.content_type || "application/octet-stream",
-          storage_path: null, // Attachment content not stored for now
+          storage_path: null,
         })
       );
 
