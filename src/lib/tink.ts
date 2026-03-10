@@ -126,20 +126,35 @@ export async function getTransactions(
   // Use search endpoint for date filtering
   const threeMonthsAgo = fromDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-  const res = await fetch(
-    `${TINK_BASE_URL}/data/v2/transactions?pageSize=500&dateGte=${threeMonthsAgo}`,
-    {
-      headers: { Authorization: `Bearer ${userToken}` },
+  // Paginate — Tink max page size is 100
+  let allTransactions: TinkTransaction[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const params = new URLSearchParams({
+      pageSize: "100",
+      dateGte: threeMonthsAgo,
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+
+    const res = await fetch(
+      `${TINK_BASE_URL}/data/v2/transactions?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${userToken}` },
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Tink transactions error: ${res.status} ${err}`);
     }
-  );
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Tink transactions error: ${res.status} ${err}`);
-  }
+    const data = await res.json();
+    allTransactions = allTransactions.concat(data.transactions || []);
+    pageToken = data.nextPageToken;
+  } while (pageToken);
 
-  const data = await res.json();
-  return (data.transactions || []) as TinkTransaction[];
+  return allTransactions;
 }
 
 /** Fetch accounts for a user */
