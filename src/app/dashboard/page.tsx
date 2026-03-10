@@ -2,9 +2,13 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import Inspektoeren from "@/components/Inspektoeren";
 import { services, Service, ServiceTier, getCancellationDate, CancellationPeriod } from "@/lib/services";
 import { generateCancelEmail, generateDowngradeEmail, calculateSavingsFromDate } from "@/lib/cancel-templates";
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
 interface Subscription {
   serviceName: string;
@@ -136,6 +140,13 @@ function DashboardContent() {
 
   // Completed actions tracking
   const [completedActions, setCompletedActions] = useState<CompletedAction[]>([]);
+
+  // Stripe payment state
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("abovagt_user_id");
@@ -439,9 +450,59 @@ function DashboardContent() {
     }
   };
 
-  // Go to confirmation page
-  const goToConfirmation = () => {
+  // Go to confirmation page + create payment intent
+  const goToConfirmation = async () => {
     setStep("confirmation");
+    setPaymentLoading(true);
+    setPaymentError(null);
+
+    try {
+      const res = await fetch("/api/stripe/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          totalSavings: totalCompletedSavings,
+          completedActions,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPaymentError(data.error || "Kunne ikke oprette betaling");
+        setPaymentLoading(false);
+        return;
+      }
+
+      setClientSecret(data.clientSecret);
+      setPaymentIntentId(data.paymentIntentId);
+    } catch {
+      setPaymentError("Kunne ikke oprette betaling — prøv igen");
+    }
+    setPaymentLoading(false);
+  };
+
+  // Confirm payment after successful Stripe capture
+  const confirmPayment = async () => {
+    if (!paymentIntentId || !userId) return;
+
+    try {
+      await fetch("/api/stripe/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentIntentId,
+          userId,
+          completedActions,
+          totalSavings: totalCompletedSavings,
+        }),
+      });
+      setPaymentSuccess(true);
+    } catch {
+      // Payment was successful via Stripe, just couldn't save receipt
+      setPaymentSuccess(true);
+    }
   };
 
   // Confirmation page data
@@ -1093,111 +1154,216 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Step: Confirmation */}
+        {/* Step: Confirmation + Payment */}
         {step === "confirmation" && (
           <div className="max-w-lg mx-auto">
-            <div className="text-center mb-8">
-              <Inspektoeren
-                pose="thumbsup"
-                size={120}
-                speechBubble="Godt klaret! Du sparer penge nu."
-                className="mb-4"
-              />
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
-                Bekræftelse
-              </h1>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">
-                Dine handlinger
-              </h2>
-
-              {cancelCount > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm font-semibold text-red-600 mb-2">
-                    Opsagt ({cancelCount} {cancelCount === 1 ? "abonnement" : "abonnementer"})
+            {/* Payment success */}
+            {paymentSuccess ? (
+              <div>
+                <div className="text-center mb-8">
+                  <Inspektoeren
+                    pose="thumbsup"
+                    size={120}
+                    speechBubble="Perfekt! Du sparer penge fra nu af."
+                    className="mb-4"
+                  />
+                  <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
+                    Tak for din betaling!
+                  </h1>
+                  <p className="mt-2 text-gray-600">
+                    Kvittering er sendt til {userEmail || "din email"}.
                   </p>
-                  <div className="space-y-1.5">
-                    {completedActions
-                      .filter((a) => a.type === "cancel")
-                      .map((a, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-700">{a.serviceName}</span>
-                          <span className="font-medium text-red-600">
-                            -{a.savings} kr/md
-                          </span>
-                        </div>
-                      ))}
-                  </div>
                 </div>
-              )}
 
-              {downgradeCount > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm font-semibold text-orange-600 mb-2">
-                    Nedgraderet ({downgradeCount} {downgradeCount === 1 ? "abonnement" : "abonnementer"})
+                <div className="bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 mb-6 text-center">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+                    Din månedlige besparelse
                   </p>
-                  <div className="space-y-1.5">
-                    {completedActions
-                      .filter((a) => a.type === "downgrade")
-                      .map((a, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-700">{a.serviceName}</span>
-                          <span className="font-medium text-orange-600">
-                            -{a.savings} kr/md
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">Estimeret besparelse</span>
-                  <span className="text-lg font-bold text-[#1B7A6E]">
+                  <p className="text-4xl font-bold text-[#1B7A6E]">
                     {totalCompletedSavings.toLocaleString("da-DK")} kr/md
-                  </span>
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    = {(totalCompletedSavings * 12).toLocaleString("da-DK")} kr/år
+                  </p>
                 </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">Årlig besparelse</span>
-                  <span className="text-sm font-bold text-[#1C2B2A]">
-                    {(totalCompletedSavings * 12).toLocaleString("da-DK")} kr/år
-                  </span>
+
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+                  <h2 className="text-sm font-bold text-[#1C2B2A] mb-3">
+                    Opsummering
+                  </h2>
+                  {completedActions.map((a, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-gray-100 last:border-0">
+                      <span className="text-gray-700">{a.serviceName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          a.type === "cancel" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
+                        }`}>
+                          {a.type === "cancel" ? "Opsagt" : "Nedgraderet"}
+                        </span>
+                        <span className="font-medium text-[#1B7A6E]">
+                          -{a.savings} kr/md
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t border-gray-200 mt-3 pt-3 flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Betalt</span>
+                    <span className="text-sm font-bold text-[#1C2B2A]">
+                      {fee.toLocaleString("da-DK")} kr (reserveret)
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Din pris</span>
-                  <span className="text-sm font-bold text-[#1C2B2A]">
-                    {fee.toLocaleString("da-DK")} kr (en gang, maks 149 kr)
-                  </span>
+
+                <p className="text-center text-xs text-gray-500 mb-6">
+                  Beløbet er reserveret og trækkes først når besparelsen er bekræftet.
+                </p>
+
+                <div className="text-center">
+                  <a
+                    href="/"
+                    className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors"
+                  >
+                    &larr; Tilbage til forsiden
+                  </a>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <div className="text-center mb-8">
+                  <Inspektoeren
+                    pose="thumbsup"
+                    size={120}
+                    speechBubble="Godt klaret! Du sparer penge nu."
+                    className="mb-4"
+                  />
+                  <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
+                    Bekræftelse
+                  </h1>
+                </div>
 
-            {/* Payment CTA */}
-            <button
-              className="w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg mb-4"
-              onClick={() => {
-                // Stripe integration comes in Phase 4
-                alert("Stripe betaling kommer snart!");
-              }}
-            >
-              Betal {fee.toLocaleString("da-DK")} kr nu
-            </button>
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+                  <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">
+                    Dine handlinger
+                  </h2>
 
-            <p className="text-center text-xs text-gray-500 mb-6">
-              Ingen binding. Du betaler kun en gang for alle dine opsigelser.
-            </p>
+                  {cancelCount > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold text-red-600 mb-2">
+                        Opsagt ({cancelCount} {cancelCount === 1 ? "abonnement" : "abonnementer"})
+                      </p>
+                      <div className="space-y-1.5">
+                        {completedActions
+                          .filter((a) => a.type === "cancel")
+                          .map((a, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <span className="text-gray-700">{a.serviceName}</span>
+                              <span className="font-medium text-red-600">
+                                -{a.savings} kr/md
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
 
-            <div className="text-center">
-              <button
-                onClick={() => setStep("results")}
-                className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors"
-              >
-                &larr; Tilbage til dine abonnementer
-              </button>
-            </div>
+                  {downgradeCount > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold text-orange-600 mb-2">
+                        Nedgraderet ({downgradeCount} {downgradeCount === 1 ? "abonnement" : "abonnementer"})
+                      </p>
+                      <div className="space-y-1.5">
+                        {completedActions
+                          .filter((a) => a.type === "downgrade")
+                          .map((a, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <span className="text-gray-700">{a.serviceName}</span>
+                              <span className="font-medium text-orange-600">
+                                -{a.savings} kr/md
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600">Estimeret besparelse</span>
+                      <span className="text-lg font-bold text-[#1B7A6E]">
+                        {totalCompletedSavings.toLocaleString("da-DK")} kr/md
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600">Årlig besparelse</span>
+                      <span className="text-sm font-bold text-[#1C2B2A]">
+                        {(totalCompletedSavings * 12).toLocaleString("da-DK")} kr/år
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Din pris</span>
+                      <span className="text-sm font-bold text-[#1C2B2A]">
+                        {fee.toLocaleString("da-DK")} kr (en gang, maks 149 kr)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stripe Payment */}
+                {paymentLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-[#1B7A6E] border-t-transparent rounded-full animate-spin" />
+                    <span className="ml-3 text-sm text-gray-500">Opretter betaling...</span>
+                  </div>
+                )}
+
+                {paymentError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+                    <p className="text-sm text-red-700">{paymentError}</p>
+                  </div>
+                )}
+
+                {clientSecret && !paymentLoading && (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+                    <h3 className="text-sm font-bold text-[#1C2B2A] mb-4">
+                      Kortbetaling
+                    </h3>
+                    <Elements
+                      stripe={stripePromise}
+                      options={{
+                        clientSecret,
+                        appearance: {
+                          theme: "stripe",
+                          variables: {
+                            colorPrimary: "#1B7A6E",
+                            borderRadius: "8px",
+                          },
+                        },
+                        locale: "da",
+                      }}
+                    >
+                      <CheckoutForm
+                        fee={fee}
+                        onSuccess={confirmPayment}
+                      />
+                    </Elements>
+                  </div>
+                )}
+
+                <p className="text-center text-xs text-gray-500 mb-6">
+                  Beløbet reserveres og trækkes først når besparelsen er bekræftet.
+                  Ingen binding. Du betaler kun en gang.
+                </p>
+
+                <div className="text-center">
+                  <button
+                    onClick={() => setStep("results")}
+                    className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors"
+                  >
+                    &larr; Tilbage til dine abonnementer
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1354,5 +1520,68 @@ function DashboardContent() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Stripe Checkout Form component */
+function CheckoutForm({ fee, onSuccess }: { fee: number; onSuccess: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) return;
+
+    setProcessing(true);
+    setError(null);
+
+    const result = await stripe.confirmPayment({
+      elements,
+      redirect: "if_required",
+    });
+
+    if (result.error) {
+      setError(result.error.message || "Betaling fejlede");
+      setProcessing(false);
+    } else if (result.paymentIntent?.status === "requires_capture") {
+      // Success! Payment is authorized (delayed capture)
+      onSuccess();
+      setProcessing(false);
+    } else {
+      setError("Uventet betalingsstatus. Kontakt support.");
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <PaymentElement />
+
+      {error && (
+        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className={`mt-4 w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg ${
+          processing ? "opacity-60 cursor-not-allowed" : ""
+        }`}
+      >
+        {processing ? (
+          <span className="flex items-center justify-center gap-2">
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Behandler...
+          </span>
+        ) : (
+          `Betal ${fee.toLocaleString("da-DK")} kr`
+        )}
+      </button>
+    </form>
   );
 }
