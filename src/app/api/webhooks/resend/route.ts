@@ -13,6 +13,7 @@ function getTag(toEmail: string): string {
   const addr = toEmail.toLowerCase().trim();
   if (addr.startsWith("support@")) return "support";
   if (addr.startsWith("info@")) return "general";
+  if (addr.startsWith("hej@")) return "general";
   return "other";
 }
 
