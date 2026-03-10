@@ -57,7 +57,8 @@ function DashboardContent() {
 
   const handleConnect = async () => {
     if (!userId) {
-      setScanError("Du skal tage quizzen først for at forbinde din bank.");
+      // No userId — redirect to /connect for email gate
+      window.location.href = "/connect";
       return;
     }
 

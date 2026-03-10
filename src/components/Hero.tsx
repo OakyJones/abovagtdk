@@ -112,7 +112,7 @@ export default function Hero() {
             </ul>
 
             <a
-              href="/dashboard"
+              href="/connect"
               className="block w-full text-center px-6 py-3.5 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 hover:shadow-xl hover:shadow-teal-600/30"
             >
               Find mine abonnementer

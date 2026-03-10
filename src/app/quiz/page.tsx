@@ -45,7 +45,7 @@ export default function QuizPage() {
       } else {
         const { data: newUser } = await supabase
           .from("users")
-          .insert({ email: userEmail, newsletter_consent: newsletterConsent })
+          .insert({ email: userEmail, newsletter_consent: newsletterConsent, signup_path: "quiz" })
           .select("id")
           .single();
         if (newUser) {
