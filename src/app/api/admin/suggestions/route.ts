@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 // GET: list unreviewed suggestions
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabaseAdmin()
       .from("unknown_services")
       .select("*")
       .eq("reviewed", false)
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert into known_services
-    const { error: insertError } = await supabaseAdmin
+    const { error: insertError } = await getSupabaseAdmin()
       .from("known_services")
       .insert({
         name,
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     if (insertError) throw insertError;
 
     // Mark suggestion as reviewed
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await getSupabaseAdmin()
       .from("unknown_services")
       .update({ reviewed: true })
       .eq("id", suggestionId);
@@ -74,7 +74,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Missing suggestionId" }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from("unknown_services")
       .update({ reviewed: true })
       .eq("id", suggestionId);

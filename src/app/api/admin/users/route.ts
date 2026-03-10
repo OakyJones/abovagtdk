@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   try {
-    let query = supabaseAdmin
+    let query = getSupabaseAdmin()
       .from("users")
       .select("*", { count: "exact" });
 
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     // Get quiz results for these users
     const userIds = (users || []).map((u) => u.id);
-    const { data: quizResults } = await supabaseAdmin
+    const { data: quizResults } = await getSupabaseAdmin()
       .from("quiz_results")
       .select("user_id, selected_services, estimated_savings, created_at")
       .in("user_id", userIds.length > 0 ? userIds : ["none"]);

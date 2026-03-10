@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import QuizChart from "./QuizChart";
 
 async function getStats() {
@@ -18,15 +18,15 @@ async function getStats() {
     { data: last30Quiz },
     { data: allServices },
   ] = await Promise.all([
-    supabaseAdmin.from("quiz_results").select("*", { count: "exact", head: true }),
-    supabaseAdmin.from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
-    supabaseAdmin.from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
-    supabaseAdmin.from("users").select("*", { count: "exact", head: true }),
-    supabaseAdmin.from("users").select("*", { count: "exact", head: true }).eq("tink_connected", true),
-    supabaseAdmin.from("quiz_results").select("estimated_savings"),
-    supabaseAdmin.from("quiz_results").select("id, email, selected_services, estimated_monthly_cost, estimated_savings, created_at").order("created_at", { ascending: false }).limit(20),
-    supabaseAdmin.from("quiz_results").select("created_at").gte("created_at", thirtyDaysAgo),
-    supabaseAdmin.from("quiz_results").select("selected_services"),
+    getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }),
+    getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
+    getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
+    getSupabaseAdmin().from("users").select("*", { count: "exact", head: true }),
+    getSupabaseAdmin().from("users").select("*", { count: "exact", head: true }).eq("tink_connected", true),
+    getSupabaseAdmin().from("quiz_results").select("estimated_savings"),
+    getSupabaseAdmin().from("quiz_results").select("id, email, selected_services, estimated_monthly_cost, estimated_savings, created_at").order("created_at", { ascending: false }).limit(20),
+    getSupabaseAdmin().from("quiz_results").select("created_at").gte("created_at", thirtyDaysAgo),
+    getSupabaseAdmin().from("quiz_results").select("selected_services"),
   ]);
 
   // Total savings

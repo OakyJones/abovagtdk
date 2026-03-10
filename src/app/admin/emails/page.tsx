@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const emailTypeLabels: Record<number, string> = {
   0: "Quiz-resultat",
@@ -9,7 +9,7 @@ const emailTypeLabels: Record<number, string> = {
 };
 
 export default async function AdminEmailsPage() {
-  const { data: emails, error } = await supabaseAdmin
+  const { data: emails, error } = await getSupabaseAdmin()
     .from("drip_emails")
     .select("id, user_id, quiz_result_id, day, sent_at, clicked")
     .order("sent_at", { ascending: false, nullsFirst: false })
@@ -17,7 +17,7 @@ export default async function AdminEmailsPage() {
 
   // Get user emails for the user_ids
   const userIds = Array.from(new Set((emails || []).map((e) => e.user_id)));
-  const { data: users } = await supabaseAdmin
+  const { data: users } = await getSupabaseAdmin()
     .from("users")
     .select("id, email")
     .in("id", userIds.length > 0 ? userIds : ["none"]);
