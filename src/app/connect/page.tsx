@@ -46,11 +46,15 @@ function ConnectContent() {
 
     try {
       // Create or find user
-      const { data: existing } = await supabase
+      const { data: existing, error: lookupError } = await supabase
         .from("users")
         .select("id")
         .eq("email", email)
         .maybeSingle();
+
+      if (lookupError) {
+        console.error("User lookup error:", lookupError);
+      }
 
       let userId: string;
 
@@ -58,23 +62,37 @@ function ConnectContent() {
         userId = existing.id;
         await supabase
           .from("users")
-          .update({
-            newsletter_consent: newsletter,
-            signup_path: "connect",
-          })
+          .update({ newsletter_consent: newsletter })
           .eq("id", userId);
       } else {
-        const { data: newUser } = await supabase
+        // Try insert with signup_path, fall back without it if column doesn't exist yet
+        let newUser = null;
+        let insertError = null;
+
+        const res1 = await supabase
           .from("users")
-          .insert({
-            email,
-            newsletter_consent: newsletter,
-            signup_path: "connect",
-          })
+          .insert({ email, newsletter_consent: newsletter, signup_path: "connect" })
           .select("id")
           .single();
-        if (!newUser) {
-          setConnectError("Kunne ikke oprette bruger");
+
+        if (res1.error) {
+          // Column might not exist yet — retry without signup_path
+          const res2 = await supabase
+            .from("users")
+            .insert({ email, newsletter_consent: newsletter })
+            .select("id")
+            .single();
+          newUser = res2.data;
+          insertError = res2.error;
+        } else {
+          newUser = res1.data;
+        }
+
+        if (insertError || !newUser) {
+          console.error("User insert error:", insertError);
+          setConnectError(
+            insertError?.message || "Kunne ikke oprette bruger — prøv igen"
+          );
           setLoading(false);
           return;
         }

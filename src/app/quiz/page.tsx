@@ -43,14 +43,22 @@ export default function QuizPage() {
           .update({ newsletter_consent: newsletterConsent })
           .eq("id", existing.id);
       } else {
-        const { data: newUser } = await supabase
+        // Try with signup_path, fall back without if column doesn't exist yet
+        let res = await supabase
           .from("users")
           .insert({ email: userEmail, newsletter_consent: newsletterConsent, signup_path: "quiz" })
           .select("id")
           .single();
-        if (newUser) {
-          setUserId(newUser.id);
-          localStorage.setItem("abovagt_user_id", newUser.id);
+        if (res.error) {
+          res = await supabase
+            .from("users")
+            .insert({ email: userEmail, newsletter_consent: newsletterConsent })
+            .select("id")
+            .single();
+        }
+        if (res.data) {
+          setUserId(res.data.id);
+          localStorage.setItem("abovagt_user_id", res.data.id);
         }
       }
     } catch {
@@ -75,7 +83,8 @@ export default function QuizPage() {
       const yearlySavings = monthlySavings * 12;
 
       try {
-        const { data: quizResult } = await supabase
+        // Try with user_actions, fall back without if column doesn't exist yet
+        let quizInsert = await supabase
           .from("quiz_results")
           .insert({
             user_id: userId,
@@ -90,6 +99,25 @@ export default function QuizPage() {
           })
           .select("id")
           .single();
+
+        if (quizInsert.error) {
+          quizInsert = await supabase
+            .from("quiz_results")
+            .insert({
+              user_id: userId,
+              email,
+              selected_services: allServices,
+              selected_plans: selectedPlans,
+              usage_frequency: usageFrequency,
+              estimated_monthly_cost: monthlyCost,
+              estimated_savings: yearlySavings,
+              converted_to_scan: false,
+            })
+            .select("id")
+            .single();
+        }
+
+        const quizResult = quizInsert.data;
 
         if (userId) {
           await supabase
