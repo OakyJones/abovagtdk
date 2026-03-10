@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Inspektoeren from "@/components/Inspektoeren";
-import { services, Service, ServiceTier, getCancellationDate } from "@/lib/services";
+import { services, Service, ServiceTier, getCancellationDate, CancellationPeriod } from "@/lib/services";
+import { generateCancelEmail, generateDowngradeEmail, calculateSavingsFromDate } from "@/lib/cancel-templates";
 
 interface Subscription {
   serviceName: string;
@@ -13,6 +14,7 @@ interface Subscription {
   lastSeen: string;
   matchedBy: "known_service" | "recurring_pattern";
   icon?: string;
+  subscriptionId?: string;
 }
 
 type ActionType = "keep" | "downgrade" | "cancel";
@@ -30,6 +32,25 @@ interface DashboardItem {
   lowerTiers: { tierId: string; label: string; price: number; savingsPerMonth: number }[];
   legacyDowngrade?: { fromLabel: string; toLabel: string; savingsPerMonth: number };
   cancellation?: string;
+  subscriptionId?: string;
+}
+
+interface ModalState {
+  isOpen: boolean;
+  type: "cancel" | "downgrade";
+  item: DashboardItem | null;
+  emailSubject: string;
+  emailBody: string;
+  toEmail?: string;
+  cancelUrl?: string;
+  savingsFromDate: string;
+  selectedTier?: { label: string; price: number; tierId: string };
+}
+
+interface CompletedAction {
+  type: "cancel" | "downgrade";
+  serviceName: string;
+  savings: number;
 }
 
 /** Find the tier closest to a detected price */
@@ -44,7 +65,6 @@ function matchTierByPrice(service: Service, detectedPrice: number): ServiceTier 
       best = tier;
     }
   }
-  // Only match if within 30% of tier price
   if (best && bestDiff / best.price > 0.3) return undefined;
   return best;
 }
@@ -89,7 +109,7 @@ function DashboardContent() {
   const tinkCode = searchParams.get("code");
   const error = searchParams.get("error");
 
-  const [step, setStep] = useState<"connect" | "scanning" | "results">(
+  const [step, setStep] = useState<"connect" | "scanning" | "results" | "confirmation">(
     connected ? "scanning" : "connect"
   );
   const [subs, setSubs] = useState<Subscription[]>([]);
@@ -99,10 +119,31 @@ function DashboardContent() {
   const [downgradeTargets, setDowngradeTargets] = useState<Record<string, string>>({});
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
+
+  // Modal state
+  const [modal, setModal] = useState<ModalState>({
+    isOpen: false,
+    type: "cancel",
+    item: null,
+    emailSubject: "",
+    emailBody: "",
+    savingsFromDate: "",
+  });
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  // Completed actions tracking
+  const [completedActions, setCompletedActions] = useState<CompletedAction[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem("abovagt_user_id");
+    const storedEmail = localStorage.getItem("abovagt_user_email");
+    const storedName = localStorage.getItem("abovagt_user_name");
     if (stored) setUserId(stored);
+    if (storedEmail) setUserEmail(storedEmail);
+    if (storedName) setUserName(storedName);
   }, []);
 
   useEffect(() => {
@@ -209,6 +250,7 @@ function DashboardContent() {
         lowerTiers,
         legacyDowngrade,
         cancellation: service?.cancellation,
+        subscriptionId: sub.subscriptionId,
       };
     });
 
@@ -221,6 +263,7 @@ function DashboardContent() {
       lastSeen: sub.lastSeen,
       isKnown: false,
       lowerTiers: [],
+      subscriptionId: sub.subscriptionId,
     }));
 
     return [...knownItems, ...unknownItems];
@@ -271,6 +314,141 @@ function DashboardContent() {
   const setDowngradeTarget = (id: string, tierId: string) => {
     setDowngradeTargets((prev) => ({ ...prev, [id]: tierId }));
   };
+
+  // Open cancel modal
+  const openCancelModal = (item: DashboardItem) => {
+    const serviceId = item.service?.id || "";
+    const serviceName = item.service?.name || item.name;
+    const cancellation = (item.cancellation || "løbende") as CancellationPeriod;
+
+    const email = generateCancelEmail(serviceId, serviceName, userName || "Dit navn");
+    const savingsFromDate = calculateSavingsFromDate(cancellation);
+
+    setModal({
+      isOpen: true,
+      type: "cancel",
+      item,
+      emailSubject: email.subject,
+      emailBody: email.body,
+      toEmail: email.toEmail,
+      cancelUrl: email.cancelUrl,
+      savingsFromDate,
+    });
+    setSendError(null);
+  };
+
+  // Open downgrade modal
+  const openDowngradeModal = (item: DashboardItem) => {
+    const serviceId = item.service?.id || "";
+    const serviceName = item.service?.name || item.name;
+    const cancellation = (item.cancellation || "løbende") as CancellationPeriod;
+
+    let currentPlan = item.matchedTier?.label || "Nuværende";
+    let newPlan = "";
+    let newPrice = 0;
+    let selectedTier: ModalState["selectedTier"] = undefined;
+
+    if (item.lowerTiers.length > 0) {
+      const targetTierId = downgradeTargets[item.id];
+      const target = item.lowerTiers.find((t) => t.tierId === targetTierId) || item.lowerTiers[0];
+      newPlan = target.label;
+      newPrice = target.price;
+      selectedTier = { label: target.label, price: target.price, tierId: target.tierId };
+    } else if (item.legacyDowngrade) {
+      currentPlan = item.legacyDowngrade.fromLabel;
+      newPlan = item.legacyDowngrade.toLabel;
+      newPrice = item.price - item.legacyDowngrade.savingsPerMonth;
+    }
+
+    const email = generateDowngradeEmail(
+      serviceId, serviceName, userName || "Dit navn", currentPlan, newPlan, newPrice
+    );
+    const savingsFromDate = calculateSavingsFromDate(cancellation);
+
+    setModal({
+      isOpen: true,
+      type: "downgrade",
+      item,
+      emailSubject: email.subject,
+      emailBody: email.body,
+      toEmail: email.toEmail,
+      cancelUrl: email.cancelUrl,
+      savingsFromDate,
+      selectedTier,
+    });
+    setSendError(null);
+  };
+
+  // Send cancellation/downgrade email
+  const handleSendEmail = async () => {
+    if (!modal.item || !userId) return;
+
+    setSending(true);
+    setSendError(null);
+
+    try {
+      const res = await fetch("/api/cancel-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          userEmail,
+          userName: userName || "Bruger",
+          serviceName: modal.item.service?.name || modal.item.name,
+          serviceId: modal.item.service?.id || "",
+          subscriptionId: modal.item.subscriptionId,
+          type: modal.type,
+          emailSubject: modal.emailSubject,
+          emailBody: modal.emailBody,
+          toEmail: modal.toEmail,
+          savingsFromDate: modal.savingsFromDate,
+          monthlyAmount: modal.item.price,
+          newPlan: modal.selectedTier?.label,
+          newPrice: modal.selectedTier?.price,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSendError(data.error || "Kunne ikke sende email");
+        setSending(false);
+        return;
+      }
+
+      // Track completed action
+      const savings = modal.type === "cancel"
+        ? modal.item.price
+        : getDowngradeSavingsForItem(modal.item);
+
+      setCompletedActions((prev) => [
+        ...prev,
+        {
+          type: modal.type,
+          serviceName: modal.item!.service?.name || modal.item!.name,
+          savings,
+        },
+      ]);
+
+      // Close modal
+      setModal((prev) => ({ ...prev, isOpen: false }));
+      setSending(false);
+    } catch {
+      setSendError("Kunne ikke sende email — prøv igen");
+      setSending(false);
+    }
+  };
+
+  // Go to confirmation page
+  const goToConfirmation = () => {
+    setStep("confirmation");
+  };
+
+  // Confirmation page data
+  const totalCompletedSavings = completedActions.reduce((sum, a) => sum + a.savings, 0);
+  const cancelCount = completedActions.filter((a) => a.type === "cancel").length;
+  const downgradeCount = completedActions.filter((a) => a.type === "downgrade").length;
+  const fee = Math.min(Math.round(totalCompletedSavings * 0.25), 149);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50/30 to-white">
@@ -422,6 +600,25 @@ function DashboardContent() {
               </div>
             </div>
 
+            {/* Name input for emails */}
+            {!userName && (cancelledItems.length > 0 || downgradedItems.length > 0) && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6">
+                <label className="block text-sm font-semibold text-[#1C2B2A] mb-2">
+                  Dit navn (bruges i opsigelsesmails)
+                </label>
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => {
+                    setUserName(e.target.value);
+                    localStorage.setItem("abovagt_user_name", e.target.value);
+                  }}
+                  placeholder="F.eks. Jonas Nielsen"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-[#1B7A6E] focus:ring-1 focus:ring-[#1B7A6E] outline-none text-sm"
+                />
+              </div>
+            )}
+
             {/* All subscriptions with action buttons */}
             {allItems.length > 0 && (
               <div className="mb-8">
@@ -432,12 +629,17 @@ function DashboardContent() {
                   {allItems.map((item) => {
                     const action = actions[item.id] || "keep";
                     const canDowngrade = hasDowngrade(item);
+                    const isCompleted = completedActions.some(
+                      (a) => a.serviceName === (item.service?.name || item.name)
+                    );
 
                     return (
                       <div
                         key={item.id}
                         className={`bg-white rounded-xl border overflow-hidden transition-all ${
-                          action === "cancel"
+                          isCompleted
+                            ? "border-green-300 bg-green-50/50"
+                            : action === "cancel"
                             ? "border-red-300"
                             : action === "downgrade"
                             ? "border-orange-300"
@@ -451,12 +653,19 @@ function DashboardContent() {
                               <div>
                                 <p
                                   className={`font-semibold ${
-                                    action === "cancel"
+                                    isCompleted
+                                      ? "text-green-700"
+                                      : action === "cancel"
                                       ? "text-gray-400 line-through"
                                       : "text-[#1C2B2A]"
                                   }`}
                                 >
                                   {item.name}
+                                  {isCompleted && (
+                                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                      Sendt
+                                    </span>
+                                  )}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {item.transactionCount} transaktioner fundet
@@ -498,44 +707,47 @@ function DashboardContent() {
                           </div>
 
                           {/* Action buttons */}
-                          <div className="flex gap-2 mt-3">
-                            <button
-                              onClick={() => setAction(item.id, "keep")}
-                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                                action === "keep"
-                                  ? "bg-gray-700 text-white border-gray-700"
-                                  : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                              }`}
-                            >
-                              Behold
-                            </button>
-                            {canDowngrade && (
+                          {!isCompleted && (
+                            <div className="flex gap-2 mt-3">
                               <button
-                                onClick={() => setAction(item.id, "downgrade")}
+                                onClick={() => setAction(item.id, "keep")}
                                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                                  action === "downgrade"
-                                    ? "bg-orange-500 text-white border-orange-500"
-                                    : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                                  action === "keep"
+                                    ? "bg-gray-700 text-white border-gray-700"
+                                    : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                                 }`}
                               >
-                                Nedgrader
+                                Behold
                               </button>
-                            )}
-                            <button
-                              onClick={() => setAction(item.id, "cancel")}
-                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                                action === "cancel"
-                                  ? "bg-red-500 text-white border-red-500"
-                                  : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                              }`}
-                            >
-                              Opsig
-                            </button>
-                          </div>
+                              {canDowngrade && (
+                                <button
+                                  onClick={() => setAction(item.id, "downgrade")}
+                                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                                    action === "downgrade"
+                                      ? "bg-orange-500 text-white border-orange-500"
+                                      : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                                  }`}
+                                >
+                                  Nedgrader
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setAction(item.id, "cancel")}
+                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                                  action === "cancel"
+                                    ? "bg-red-500 text-white border-red-500"
+                                    : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                                }`}
+                              >
+                                Opsig
+                              </button>
+                            </div>
+                          )}
 
                           {/* Downgrade tier picker */}
                           {action === "downgrade" &&
-                            item.lowerTiers.length > 0 && (
+                            item.lowerTiers.length > 0 &&
+                            !isCompleted && (
                               <div className="mt-3 bg-orange-50 rounded-lg px-4 py-3 border border-orange-100">
                                 <p className="text-xs text-orange-700 font-semibold mb-2">
                                   Vælg billigere plan:
@@ -582,74 +794,97 @@ function DashboardContent() {
                                     );
                                   })}
                                 </div>
+
+                                {/* Send downgrade email button */}
+                                <button
+                                  onClick={() => openDowngradeModal(item)}
+                                  className="mt-3 w-full px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-all"
+                                >
+                                  Send nedgraderingsmail
+                                </button>
                               </div>
                             )}
 
                           {/* Legacy downgrade info */}
                           {action === "downgrade" &&
                             item.lowerTiers.length === 0 &&
-                            item.legacyDowngrade && (
-                              <div className="mt-3 bg-orange-50 rounded-lg px-3 py-2.5 flex items-start gap-2">
-                                <svg
-                                  className="w-4 h-4 text-orange-500 mt-0.5 shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                            item.legacyDowngrade &&
+                            !isCompleted && (
+                              <div className="mt-3 bg-orange-50 rounded-lg px-3 py-2.5">
+                                <div className="flex items-start gap-2">
+                                  <svg
+                                    className="w-4 h-4 text-orange-500 mt-0.5 shrink-0"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                                    />
+                                  </svg>
+                                  <p className="text-sm text-orange-700">
+                                    <span className="font-medium">
+                                      {item.legacyDowngrade.fromLabel}
+                                    </span>
+                                    {" → "}
+                                    <span className="font-medium">
+                                      {item.legacyDowngrade.toLabel}
+                                    </span>
+                                    {" — spar "}
+                                    <span className="font-bold">
+                                      {item.legacyDowngrade.savingsPerMonth} kr/md
+                                    </span>
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => openDowngradeModal(item)}
+                                  className="mt-2 w-full px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-all"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                                  />
-                                </svg>
-                                <p className="text-sm text-orange-700">
-                                  <span className="font-medium">
-                                    {item.legacyDowngrade.fromLabel}
-                                  </span>
-                                  {" → "}
-                                  <span className="font-medium">
-                                    {item.legacyDowngrade.toLabel}
-                                  </span>
-                                  {" — spar "}
-                                  <span className="font-bold">
-                                    {item.legacyDowngrade.savingsPerMonth} kr/md
-                                  </span>
-                                </p>
+                                  Send nedgraderingsmail
+                                </button>
                               </div>
                             )}
 
-                          {/* Cancel info */}
-                          {action === "cancel" &&
-                            item.cancellation &&
-                            item.cancellation !== "løbende" && (
-                              <div className="mt-3 bg-red-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
-                                <svg
-                                  className="w-4 h-4 text-red-500 shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
-                                <p className="text-xs text-red-700">
-                                  <span className="font-semibold">OBS:</span>{" "}
-                                  {item.service?.name || item.name} har{" "}
-                                  {item.cancellation} — du sparer fra{" "}
-                                  {getCancellationDate(
-                                    item.cancellation as
-                                      | "løbende"
-                                      | "1 md opsigelse"
-                                      | "12 md binding"
-                                  )}
-                                </p>
-                              </div>
-                            )}
+                          {/* Cancel action button */}
+                          {action === "cancel" && !isCompleted && (
+                            <div className="mt-3">
+                              {item.cancellation &&
+                                item.cancellation !== "løbende" && (
+                                  <div className="bg-red-50 rounded-lg px-3 py-2.5 flex items-center gap-2 mb-2">
+                                    <svg
+                                      className="w-4 h-4 text-red-500 shrink-0"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    <p className="text-xs text-red-700">
+                                      <span className="font-semibold">OBS:</span>{" "}
+                                      {item.service?.name || item.name} har{" "}
+                                      {item.cancellation} — du sparer fra{" "}
+                                      {getCancellationDate(
+                                        item.cancellation as CancellationPeriod
+                                      )}
+                                    </p>
+                                  </div>
+                                )}
+                              <button
+                                onClick={() => openCancelModal(item)}
+                                className="w-full px-4 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-all"
+                              >
+                                Send opsigelsesmail
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -760,8 +995,8 @@ function DashboardContent() {
 
             {/* Pricing CTA */}
             {totalSavings > 0 && (() => {
-              const fee = Math.min(Math.round(totalSavings * 0.25), 149);
-              const kept = totalSavings - fee;
+              const priceFee = Math.min(Math.round(totalSavings * 0.25), 149);
+              const kept = totalSavings - priceFee;
               return (
                 <div className="relative bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-8 mb-8">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
@@ -783,7 +1018,7 @@ function DashboardContent() {
                           Du betaler
                         </span>
                         <span className="text-sm font-bold text-[#1C2B2A]">
-                          {fee.toLocaleString("da-DK")} kr (en gang)
+                          {priceFee.toLocaleString("da-DK")} kr (en gang)
                         </span>
                       </div>
                       <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
@@ -797,6 +1032,16 @@ function DashboardContent() {
                       </div>
                     </div>
                   </div>
+
+                  {/* CTA: Go to confirmation if actions completed */}
+                  {completedActions.length > 0 && (
+                    <button
+                      onClick={goToConfirmation}
+                      className="mt-4 w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
+                    >
+                      Se din bekræftelse
+                    </button>
+                  )}
 
                   <p className="mt-4 text-center text-xs text-gray-500">
                     Ingen binding. Ingen skjulte gebyrer. Du betaler kun en
@@ -847,7 +1092,267 @@ function DashboardContent() {
             </div>
           </div>
         )}
+
+        {/* Step: Confirmation */}
+        {step === "confirmation" && (
+          <div className="max-w-lg mx-auto">
+            <div className="text-center mb-8">
+              <Inspektoeren
+                pose="thumbsup"
+                size={120}
+                speechBubble="Godt klaret! Du sparer penge nu."
+                className="mb-4"
+              />
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
+                Bekræftelse
+              </h1>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+              <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">
+                Dine handlinger
+              </h2>
+
+              {cancelCount > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-red-600 mb-2">
+                    Opsagt ({cancelCount} {cancelCount === 1 ? "abonnement" : "abonnementer"})
+                  </p>
+                  <div className="space-y-1.5">
+                    {completedActions
+                      .filter((a) => a.type === "cancel")
+                      .map((a, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-700">{a.serviceName}</span>
+                          <span className="font-medium text-red-600">
+                            -{a.savings} kr/md
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {downgradeCount > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-orange-600 mb-2">
+                    Nedgraderet ({downgradeCount} {downgradeCount === 1 ? "abonnement" : "abonnementer"})
+                  </p>
+                  <div className="space-y-1.5">
+                    {completedActions
+                      .filter((a) => a.type === "downgrade")
+                      .map((a, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-700">{a.serviceName}</span>
+                          <span className="font-medium text-orange-600">
+                            -{a.savings} kr/md
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600">Estimeret besparelse</span>
+                  <span className="text-lg font-bold text-[#1B7A6E]">
+                    {totalCompletedSavings.toLocaleString("da-DK")} kr/md
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600">Årlig besparelse</span>
+                  <span className="text-sm font-bold text-[#1C2B2A]">
+                    {(totalCompletedSavings * 12).toLocaleString("da-DK")} kr/år
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Din pris</span>
+                  <span className="text-sm font-bold text-[#1C2B2A]">
+                    {fee.toLocaleString("da-DK")} kr (en gang, maks 149 kr)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment CTA */}
+            <button
+              className="w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg mb-4"
+              onClick={() => {
+                // Stripe integration comes in Phase 4
+                alert("Stripe betaling kommer snart!");
+              }}
+            >
+              Betal {fee.toLocaleString("da-DK")} kr nu
+            </button>
+
+            <p className="text-center text-xs text-gray-500 mb-6">
+              Ingen binding. Du betaler kun en gang for alle dine opsigelser.
+            </p>
+
+            <div className="text-center">
+              <button
+                onClick={() => setStep("results")}
+                className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors"
+              >
+                &larr; Tilbage til dine abonnementer
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Cancel/Downgrade Email Modal */}
+      {modal.isOpen && modal.item && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => !sending && setModal((prev) => ({ ...prev, isOpen: false }))}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal header */}
+            <div className={`px-6 py-4 border-b ${modal.type === "cancel" ? "bg-red-50 border-red-100" : "bg-orange-50 border-orange-100"}`}>
+              <div className="flex items-center justify-between">
+                <h2 className={`text-lg font-bold ${modal.type === "cancel" ? "text-red-800" : "text-orange-800"}`}>
+                  {modal.type === "cancel" ? "Opsig" : "Nedgrader"} {modal.item.service?.name || modal.item.name}
+                </h2>
+                <button
+                  onClick={() => !sending && setModal((prev) => ({ ...prev, isOpen: false }))}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                  disabled={sending}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Cancellation period warning */}
+              {modal.item.cancellation && modal.item.cancellation !== "løbende" && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-amber-800">
+                    <span className="font-semibold">OBS:</span>{" "}
+                    {modal.item.service?.name || modal.item.name} har{" "}
+                    {modal.item.cancellation} — du sparer fra{" "}
+                    <span className="font-semibold">
+                      {getCancellationDate(modal.item.cancellation as CancellationPeriod)}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* Cancel URL link */}
+              {modal.cancelUrl && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-blue-800 mb-1">
+                    Du kan også opsige direkte:
+                  </p>
+                  <a
+                    href={modal.cancelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
+                  >
+                    {modal.cancelUrl}
+                  </a>
+                </div>
+              )}
+
+              {/* Email preview */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Emne
+                </label>
+                <input
+                  type="text"
+                  value={modal.emailSubject}
+                  onChange={(e) =>
+                    setModal((prev) => ({ ...prev, emailSubject: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-[#1B7A6E] focus:ring-1 focus:ring-[#1B7A6E] outline-none text-sm"
+                  disabled={sending}
+                />
+              </div>
+
+              {modal.toEmail && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Til
+                  </label>
+                  <input
+                    type="email"
+                    value={modal.toEmail}
+                    onChange={(e) =>
+                      setModal((prev) => ({ ...prev, toEmail: e.target.value }))
+                    }
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-[#1B7A6E] focus:ring-1 focus:ring-[#1B7A6E] outline-none text-sm"
+                    disabled={sending}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Email-indhold
+                </label>
+                <textarea
+                  value={modal.emailBody}
+                  onChange={(e) =>
+                    setModal((prev) => ({ ...prev, emailBody: e.target.value }))
+                  }
+                  rows={8}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-[#1B7A6E] focus:ring-1 focus:ring-[#1B7A6E] outline-none text-sm font-mono resize-y"
+                  disabled={sending}
+                />
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Emailen sendes fra AboVagt med din email ({userEmail || "din email"}) som svar-adresse.
+              </p>
+
+              {sendError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                  <p className="text-sm text-red-700">{sendError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => !sending && setModal((prev) => ({ ...prev, isOpen: false }))}
+                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-all text-sm"
+                disabled={sending}
+              >
+                Annuller
+              </button>
+              <button
+                onClick={handleSendEmail}
+                disabled={sending}
+                className={`flex-1 px-4 py-2.5 text-white font-semibold rounded-lg transition-all text-sm ${
+                  modal.type === "cancel"
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-orange-500 hover:bg-orange-600"
+                } ${sending ? "opacity-60 cursor-not-allowed" : ""}`}
+              >
+                {sending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sender...
+                  </span>
+                ) : (
+                  `Send ${modal.type === "cancel" ? "opsigelse" : "nedgradering"}`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
