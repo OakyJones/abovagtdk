@@ -13,7 +13,7 @@ export default function Footer() {
                 <span className="text-[#1B7A6E]">Vagt</span>
               </a>
               <p className="mt-1 text-sm">
-                Halvfems Procent &middot; CVR: afventer &middot;{" "}
+                Halvfems Procent &middot; CVR: 46314697 &middot;{" "}
                 <a href="mailto:hej@abovagt.dk" className="text-[#4ECDC4] hover:text-white transition-colors">
                   hej@abovagt.dk
                 </a>
