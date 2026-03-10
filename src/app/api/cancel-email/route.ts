@@ -69,36 +69,34 @@ export async function POST(req: NextRequest) {
 </html>`.trim(),
     });
 
-    // Save action to database
+    // Save action to database (only if we have a subscription_id)
     const supabase = getSupabaseAdmin();
+    let actionId: string | null = null;
 
-    const { data: action, error: dbError } = await supabase
-      .from("actions")
-      .insert({
-        user_id: userId,
-        subscription_id: subscriptionId,
-        type: type || "cancel",
-        savings_from_date: savingsFromDate,
-      })
-      .select("id")
-      .single();
+    if (subscriptionId) {
+      const { data: action, error: dbError } = await supabase
+        .from("actions")
+        .insert({
+          user_id: userId,
+          subscription_id: subscriptionId,
+          type: type || "cancel",
+          savings_from_date: savingsFromDate,
+        })
+        .select("id")
+        .single();
 
-    if (dbError) {
-      console.error("Failed to save action:", dbError);
-      // Email was sent, so still return success but note the DB error
-      return NextResponse.json({
-        success: true,
-        emailSent: true,
-        actionSaved: false,
-        error: "Email sendt, men kunne ikke gemme handling i database",
-      });
+      if (dbError) {
+        console.error("Failed to save action:", dbError);
+      } else {
+        actionId = action.id;
+      }
     }
 
     return NextResponse.json({
       success: true,
       emailSent: true,
-      actionSaved: true,
-      actionId: action.id,
+      actionSaved: !!actionId,
+      actionId,
     });
   } catch (error) {
     console.error("Cancel email error:", error);
