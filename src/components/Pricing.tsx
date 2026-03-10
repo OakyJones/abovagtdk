@@ -70,7 +70,7 @@ export default function Pricing() {
           {/* Monitoring */}
           <div className="relative bg-white rounded-2xl border border-gray-200 p-8 shadow-sm flex flex-col">
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gray-700 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
-              Tilvalg
+              L&oslash;bende kontrol
             </div>
 
             <div className="text-center mb-8">
@@ -115,8 +115,14 @@ export default function Pricing() {
               ))}
             </div>
 
-            <p className="text-center text-sm text-gray-500">
-              Tilføj efter din første scanning — kræver bankforbindelse.
+            <a
+              href="/connect"
+              className="block w-full text-center px-5 py-3 bg-white text-[#1B7A6E] font-semibold rounded-xl border border-[#1B7A6E] hover:bg-teal-50 transition-colors text-sm mb-3"
+            >
+              Start monitoring &rarr;
+            </a>
+            <p className="text-center text-xs text-gray-500">
+              Inkl. f&oslash;rste scanning + opsigelseshj&aelig;lp. Ingen binding.
             </p>
           </div>
         </div>
