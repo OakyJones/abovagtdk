@@ -156,6 +156,7 @@ function DashboardContent() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [cardReserved, setCardReserved] = useState(false);
+  const [consentGivenAt, setConsentGivenAt] = useState<string | null>(null);
 
   // Confirm step state
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -184,11 +185,15 @@ function DashboardContent() {
     }
     if (storedName) setUserName(storedName);
 
-    // Restore paymentIntentId if returning from Tink redirect
+    // Restore paymentIntentId and consent if returning from Tink redirect
     const storedPiId = localStorage.getItem("abovagt_payment_intent_id");
     if (storedPiId) {
       setPaymentIntentId(storedPiId);
       setCardReserved(true);
+    }
+    const storedConsent = localStorage.getItem("abovagt_consent_given_at");
+    if (storedConsent) {
+      setConsentGivenAt(storedConsent);
     }
   }, []);
 
@@ -264,12 +269,14 @@ function DashboardContent() {
   };
 
   // Called when Stripe card is confirmed (status=requires_capture)
-  const onCardReserved = () => {
+  const onCardReserved = (consentTimestamp: string) => {
     setCardReserved(true);
-    // Store PI ID so it survives the Tink redirect
+    setConsentGivenAt(consentTimestamp);
+    // Store PI ID and consent so it survives the Tink redirect
     if (paymentIntentId) {
       localStorage.setItem("abovagt_payment_intent_id", paymentIntentId);
     }
+    localStorage.setItem("abovagt_consent_given_at", consentTimestamp);
     // Move to bank connection step
     setStep("connect");
   };
@@ -452,6 +459,7 @@ function DashboardContent() {
           userId,
           totalSavings,
           completedActions: actionList,
+          consentGivenAt,
         }),
       });
 
@@ -463,8 +471,9 @@ function DashboardContent() {
         return;
       }
 
-      // Clean up stored PI ID
+      // Clean up stored PI ID and consent
       localStorage.removeItem("abovagt_payment_intent_id");
+      localStorage.removeItem("abovagt_consent_given_at");
       setHasPaid(true);
       setStep("emails");
     } catch {
@@ -486,6 +495,7 @@ function DashboardContent() {
       // best-effort
     }
     localStorage.removeItem("abovagt_payment_intent_id");
+    localStorage.removeItem("abovagt_consent_given_at");
     setPaymentIntentId(null);
     setCardReserved(false);
   };
@@ -1461,18 +1471,24 @@ function DashboardContent() {
 }
 
 /** Stripe Reservation Form — confirms the card and reserves 149 kr */
-function ReservationForm({ onSuccess }: { onSuccess: () => void }) {
+function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptWaiver, setAcceptWaiver] = useState(false);
+
+  const canSubmit = acceptTerms && acceptWaiver && stripe && !processing;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!canSubmit || !elements) return;
 
     setProcessing(true);
     setError(null);
+
+    const consentGivenAt = new Date().toISOString();
 
     const result = await stripe.confirmPayment({
       elements,
@@ -1483,7 +1499,7 @@ function ReservationForm({ onSuccess }: { onSuccess: () => void }) {
       setError(result.error.message || "Betaling fejlede");
       setProcessing(false);
     } else if (result.paymentIntent?.status === "requires_capture") {
-      onSuccess();
+      onSuccess(consentGivenAt);
       setProcessing(false);
     } else {
       setError("Uventet betalingsstatus. Kontakt support.");
@@ -1494,6 +1510,36 @@ function ReservationForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={handleSubmit}>
       <PaymentElement />
+
+      <div className="mt-5 space-y-3">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={acceptTerms}
+            onChange={(e) => setAcceptTerms(e.target.checked)}
+            className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
+          />
+          <span className="text-sm text-gray-600 leading-relaxed">
+            Jeg accepterer{" "}
+            <a href="/handelsbetingelser" target="_blank" className="text-[#1B7A6E] underline">
+              handelsbetingelserne
+            </a>
+          </span>
+        </label>
+
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={acceptWaiver}
+            onChange={(e) => setAcceptWaiver(e.target.checked)}
+            className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
+          />
+          <span className="text-sm text-gray-600 leading-relaxed">
+            Jeg anmoder om at ydelsen starter med det samme, og jeg er indforst&aring;et med at min fortrydelsesret bortfalder n&aring;r ydelsen er leveret
+          </span>
+        </label>
+      </div>
+
       {error && (
         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
           <p className="text-sm text-red-700">{error}</p>
@@ -1501,9 +1547,9 @@ function ReservationForm({ onSuccess }: { onSuccess: () => void }) {
       )}
       <button
         type="submit"
-        disabled={!stripe || processing}
+        disabled={!canSubmit}
         className={`mt-4 w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg ${
-          processing ? "opacity-60 cursor-not-allowed" : ""
+          !canSubmit ? "opacity-40 cursor-not-allowed" : ""
         }`}
       >
         {processing ? (

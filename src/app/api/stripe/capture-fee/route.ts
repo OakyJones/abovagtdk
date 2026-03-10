@@ -7,7 +7,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   try {
-    const { paymentIntentId, userId, totalSavings, completedActions } = await req.json();
+    const { paymentIntentId, userId, totalSavings, completedActions, consentGivenAt } = await req.json();
 
     if (!paymentIntentId || !userId || !totalSavings || totalSavings <= 0) {
       return NextResponse.json(
@@ -70,6 +70,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Generate order number
+    const orderNumber = `AV-${Date.now().toString(36).toUpperCase()}`;
+
     // Save payment record to DB
     const supabase = getSupabaseAdmin();
 
@@ -89,9 +92,11 @@ export async function POST(req: NextRequest) {
       status: "captured",
       paid_at: new Date().toISOString(),
       captured_at: new Date().toISOString(),
+      consent_given_at: consentGivenAt || new Date().toISOString(),
+      order_number: orderNumber,
     });
 
-    // Send receipt email
+    // Send order confirmation email
     const { data: user } = await supabase
       .from("users")
       .select("email")
@@ -104,16 +109,22 @@ export async function POST(req: NextRequest) {
           (a: { type: string; serviceName: string; savings: number }) =>
             `<tr>
               <td style="padding:8px 16px;border-bottom:1px solid #eee;">${a.serviceName}</td>
-              <td style="padding:8px 16px;border-bottom:1px solid #eee;text-align:center;">${a.type === "cancel" ? "Opsagt" : "Nedgraderet"}</td>
+              <td style="padding:8px 16px;border-bottom:1px solid #eee;text-align:center;">${a.type === "cancel" ? "Opsigelse" : "Nedgradering"}</td>
               <td style="padding:8px 16px;border-bottom:1px solid #eee;text-align:right;font-weight:600;">-${a.savings} kr/md</td>
             </tr>`
         )
         .join("");
 
+      const orderDate = new Date().toLocaleDateString("da-DK", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
       await resend.emails.send({
         from: "AboVagt <noreply@abovagt.dk>",
         to: user.email,
-        subject: `Kvittering — du sparer nu ${totalSavings} kr/md`,
+        subject: `Ordrebekræftelse ${orderNumber} — AboVagt`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -127,18 +138,25 @@ export async function POST(req: NextRequest) {
     </div>
 
     <div style="background:#fff;border-radius:16px;padding:32px;border:1px solid #e5e7eb;">
-      <h1 style="font-size:24px;color:#111;margin:0 0 8px;">Tak for din betaling!</h1>
-      <p style="color:#6b7280;margin:0 0 24px;font-size:15px;">
-        Her er din kvittering for AboVagt opsigelsesservice.
+      <h1 style="font-size:22px;color:#111;margin:0 0 4px;">Ordrebekr&aelig;ftelse</h1>
+      <p style="color:#6b7280;margin:0 0 24px;font-size:14px;">
+        Ordrenummer: <strong>${orderNumber}</strong> &middot; ${orderDate}
       </p>
 
       <div style="background:#ecfdf5;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;border:2px solid #1B7A6E;">
-        <p style="color:#6b7280;font-size:12px;margin:0 0 4px;">Din månedlige besparelse</p>
+        <p style="color:#6b7280;font-size:12px;margin:0 0 4px;">Din m&aring;nedlige besparelse</p>
         <p style="font-size:32px;font-weight:700;color:#1B7A6E;margin:0;">${totalSavings} kr/md</p>
-        <p style="color:#6b7280;font-size:13px;margin:4px 0 0;">= ${totalSavings * 12} kr/år</p>
+        <p style="color:#6b7280;font-size:13px;margin:4px 0 0;">= ${totalSavings * 12} kr/&aring;r</p>
       </div>
 
-      <h2 style="font-size:16px;color:#111;margin:0 0 12px;">Dine handlinger:</h2>
+      <h2 style="font-size:15px;color:#111;margin:0 0 12px;">Ydelsen inkluderer:</h2>
+      <ul style="margin:0 0 20px;padding-left:20px;color:#374151;font-size:14px;line-height:1.7;">
+        <li>Automatisk scanning af dine abonnementer via bankforbindelse</li>
+        <li>Identifikation af besparelsesmuligheder</li>
+        <li>F&aelig;rdige opsigelsesmails klar til afsendelse</li>
+      </ul>
+
+      <h2 style="font-size:15px;color:#111;margin:0 0 12px;">Dine handlinger:</h2>
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
         <thead>
           <tr style="background:#f9fafb;">
@@ -150,9 +168,9 @@ export async function POST(req: NextRequest) {
         <tbody>${actionsHtml}</tbody>
       </table>
 
-      <div style="background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:16px;">
+      <div style="background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:20px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <span style="color:#6b7280;font-size:14px;">Trukket</span>
+          <span style="color:#6b7280;font-size:14px;">Pris (25% af besparelse, maks 149 kr)</span>
           <span style="font-weight:600;color:#111;font-size:14px;">${feeDKK} kr</span>
         </div>
         <div style="display:flex;justify-content:space-between;">
@@ -161,13 +179,27 @@ export async function POST(req: NextRequest) {
         </div>
       </div>
 
-      <p style="color:#9ca3af;font-size:13px;margin:0;">
-        Tak fordi du bruger AboVagt. Dine opsigelsesmails er nu låst op.
-      </p>
+      <div style="border-top:1px solid #e5e7eb;padding-top:20px;margin-bottom:20px;">
+        <h2 style="font-size:15px;color:#111;margin:0 0 8px;">Fortrydelsesret</h2>
+        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">
+          Du har givet samtykke til at ydelsen starter med det samme. Da ydelsen (opsigelsesmails) er leveret digitalt,
+          bortfalder fortrydelsesretten jf. forbrugeraftalelovens &sect; 18, stk. 2, nr. 13, n&aring;r ydelsen er fuldt leveret.
+          S&aring;fremt ydelsen endnu ikke er fuldt leveret, kan du fortryde ved at kontakte os inden 14 dage.
+        </p>
+      </div>
+
+      <div style="border-top:1px solid #e5e7eb;padding-top:20px;">
+        <h2 style="font-size:15px;color:#111;margin:0 0 8px;">Vilk&aring;r</h2>
+        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">
+          Se vores fulde <a href="https://abovagt.dk/handelsbetingelser" style="color:#1B7A6E;">handelsbetingelser</a>
+          og <a href="https://abovagt.dk/privatlivspolitik" style="color:#1B7A6E;">privatlivspolitik</a>.
+        </p>
+      </div>
     </div>
 
-    <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;">
-      <p>Halvfems Procent &middot; CVR 46314697</p>
+    <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;line-height:1.8;">
+      <p style="margin:0;">Halvfems Procent &middot; CVR 46314697</p>
+      <p style="margin:0;">Kontakt: <a href="mailto:hej@abovagt.dk" style="color:#1B7A6E;">hej@abovagt.dk</a></p>
     </div>
   </div>
 </body>
@@ -179,6 +211,7 @@ export async function POST(req: NextRequest) {
       success: true,
       capturedAmount: feeDKK,
       totalSavings,
+      orderNumber,
     });
   } catch (error) {
     console.error("Stripe capture-fee error:", error);
