@@ -34,13 +34,16 @@ export async function POST(req: NextRequest) {
 
     // Create Tink user (or get existing)
     try {
-      await createTinkUser(user.id);
-    } catch {
+      const tinkUserId = await createTinkUser(user.id);
+      console.log("Tink user created/found:", tinkUserId, "external_user_id:", user.id);
+    } catch (createErr) {
+      console.log("Tink user create note:", createErr);
       // User might already exist, continue
     }
 
     // Get authorization code
     const authCode = await getAuthorizationCode(user.id);
+    console.log("Tink auth code obtained for user:", user.id);
 
     // Build Tink Link URL
     const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://abovagt.dk"}/api/tink/callback`;
