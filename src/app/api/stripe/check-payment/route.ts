@@ -8,6 +8,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ hasPaid: false });
   }
 
+  if (process.env.SKIP_PAYMENT === "true") {
+    return NextResponse.json({ hasPaid: true });
+  }
+
   const supabase = getSupabaseAdmin();
   const { data: payment } = await supabase
     .from("payments")

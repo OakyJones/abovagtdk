@@ -500,9 +500,8 @@ function DashboardContent() {
     setCardReserved(false);
   };
 
-  // Open email modal (ONLY available after payment)
+  // Open email modal
   const openEmailModal = (item: DashboardItem) => {
-    if (!hasPaid) return;
     const serviceId = item.service?.id || "";
     const serviceName = item.service?.name || item.name;
     const cancellation = (item.cancellation || "løbende") as CancellationPeriod;
@@ -557,13 +556,9 @@ function DashboardContent() {
     setSendError(null);
   };
 
-  // Send email (requires payment)
+  // Send email (requires payment — server enforces this too)
   const handleSendEmail = async () => {
     if (!modal.item || !userId) return;
-    if (!hasPaid) {
-      setSendError("Du skal betale før du kan sende opsigelsesmails.");
-      return;
-    }
 
     setSending(true);
     setSendError(null);
@@ -1438,30 +1433,51 @@ function DashboardContent() {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-              <button
-                onClick={() => !sending && setModal((prev) => ({ ...prev, isOpen: false }))}
-                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-all text-sm"
-                disabled={sending}
-              >
-                Annuller
-              </button>
-              <button
-                onClick={handleSendEmail}
-                disabled={sending}
-                className={`flex-1 px-4 py-2.5 text-white font-semibold rounded-lg transition-all text-sm ${
-                  modal.type === "cancel" ? "bg-red-500 hover:bg-red-600" : "bg-orange-500 hover:bg-orange-600"
-                } ${sending ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                {sending ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Sender...
-                  </span>
+            <div className="px-6 py-4 border-t border-gray-100">
+              {!hasPaid && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-3">
+                  <p className="text-sm text-amber-800">
+                    Du skal gennemf&oslash;re betaling f&oslash;r du kan sende opsigelsesmails.
+                  </p>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => !sending && setModal((prev) => ({ ...prev, isOpen: false }))}
+                  className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-all text-sm"
+                  disabled={sending}
+                >
+                  Annuller
+                </button>
+                {hasPaid ? (
+                  <button
+                    onClick={handleSendEmail}
+                    disabled={sending}
+                    className={`flex-1 px-4 py-2.5 text-white font-semibold rounded-lg transition-all text-sm ${
+                      modal.type === "cancel" ? "bg-red-500 hover:bg-red-600" : "bg-orange-500 hover:bg-orange-600"
+                    } ${sending ? "opacity-60 cursor-not-allowed" : ""}`}
+                  >
+                    {sending ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Sender...
+                      </span>
+                    ) : (
+                      `Send ${modal.type === "cancel" ? "opsigelse" : "nedgradering"}`
+                    )}
+                  </button>
                 ) : (
-                  `Send ${modal.type === "cancel" ? "opsigelse" : "nedgradering"}`
+                  <button
+                    onClick={() => {
+                      setModal((prev) => ({ ...prev, isOpen: false }));
+                      setStep("confirm");
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-[#1B7A6E] text-white font-semibold rounded-lg hover:bg-[#155F56] transition-all text-sm"
+                  >
+                    Betal og l&aring;s op &rarr;
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
           </div>
         </div>
