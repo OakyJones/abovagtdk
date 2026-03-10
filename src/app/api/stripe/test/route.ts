@@ -11,7 +11,7 @@ export async function GET() {
     keyPrefix: key.substring(0, 7) + "...",
     keyLength: key.length,
     nodeVersion: process.version,
-    stripeSDK: Stripe.PACKAGE_VERSION,
+    stripeSDK: "20.4.1",
   };
 
   try {
@@ -34,7 +34,7 @@ export async function GET() {
   try {
     // Try with explicit apiVersion
     const stripe2 = new Stripe(key, {
-      apiVersion: "2026-02-25.clover" as Stripe.LatestApiVersion,
+      apiVersion: "2026-02-25.clover" as unknown as Stripe.LatestApiVersion,
       maxNetworkRetries: 2,
       timeout: 15000,
     });
