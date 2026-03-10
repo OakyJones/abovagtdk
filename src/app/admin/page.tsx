@@ -1,6 +1,8 @@
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import QuizChart from "./QuizChart";
 
+export const dynamic = "force-dynamic";
+
 async function getStats() {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();

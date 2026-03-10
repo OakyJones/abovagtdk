@@ -1,5 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
+export const dynamic = "force-dynamic";
+
 const emailTypeLabels: Record<number, string> = {
   0: "Quiz-resultat",
   3: "Dag 3 reminder",
