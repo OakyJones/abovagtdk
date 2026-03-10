@@ -60,7 +60,6 @@ interface SentEmail {
 /** Derive a display name from an email address */
 function nameFromEmail(email: string): string {
   const local = email.split("@")[0] || "";
-  // Replace dots, underscores, hyphens with spaces, then title-case
   return local
     .replace(/[._-]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -115,6 +114,9 @@ export default function DashboardPage() {
   );
 }
 
+// New flow steps: card → connect → scanning → results → confirm → emails
+type Step = "card" | "connect" | "scanning" | "results" | "confirm" | "emails";
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const connected = searchParams.get("connected") === "true";
@@ -122,10 +124,7 @@ function DashboardContent() {
   const tinkCode = searchParams.get("code");
   const error = searchParams.get("error");
 
-  // Steps: connect → scanning → results → payment → emails
-  const [step, setStep] = useState<"connect" | "scanning" | "results" | "payment" | "emails">(
-    connected ? "scanning" : "connect"
-  );
+  const [step, setStep] = useState<Step>(connected ? "scanning" : "card");
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [unknowns, setUnknowns] = useState<Subscription[]>([]);
   const [scanError, setScanError] = useState<string | null>(error || null);
@@ -151,30 +150,28 @@ function DashboardContent() {
   // Track which emails have been sent
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
 
-  // Stripe payment state
+  // Stripe payment state — card reservation
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [cardReserved, setCardReserved] = useState(false);
 
-  // Paywall state — tracks whether user has paid
+  // Confirm step state
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  // Paywall state
   const [hasPaid, setHasPaid] = useState(false);
 
-  // Load user data from localStorage + fetch email from DB if needed
+  // Load user data from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("abovagt_user_id");
     const storedEmail = localStorage.getItem("abovagt_user_email");
     const storedName = localStorage.getItem("abovagt_user_name");
     if (stored) {
       setUserId(stored);
-      // If we have the user ID but no email, fetch from DB
       if (!storedEmail) {
-        fetch(`/api/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: "lookup" }), // won't create — just need to get from another route
-        }).catch(() => {});
-        // Actually use the admin API or a simpler approach: fetch user data
         fetchUserEmail(stored);
       } else {
         setUserEmail(storedEmail);
@@ -186,21 +183,25 @@ function DashboardContent() {
       }
     }
     if (storedName) setUserName(storedName);
+
+    // Restore paymentIntentId if returning from Tink redirect
+    const storedPiId = localStorage.getItem("abovagt_payment_intent_id");
+    if (storedPiId) {
+      setPaymentIntentId(storedPiId);
+      setCardReserved(true);
+    }
   }, []);
 
   const fetchUserEmail = async (uid: string) => {
     try {
-      // Use the actions API to verify user exists, or create a simple user lookup
       const res = await fetch(`/api/actions?userId=${uid}`);
       if (!res.ok) return;
-      // The user email is stored in supabase — we need a route to get it
-      // For now, try to get it from quiz_results or the user table
     } catch {
       // silently fail
     }
   };
 
-  // Check if user has already paid (e.g. page reload after payment)
+  // Check if user already has a captured payment (page reload after full flow)
   useEffect(() => {
     if (userId) {
       fetch(`/api/stripe/check-payment?userId=${userId}`)
@@ -211,6 +212,13 @@ function DashboardContent() {
         .catch(() => {});
     }
   }, [userId]);
+
+  // If returning from Tink with card already reserved, go straight to scanning
+  useEffect(() => {
+    if (connected && userId && cardReserved && step === "card") {
+      setStep("scanning");
+    }
+  }, [connected, userId, cardReserved, step]);
 
   useEffect(() => {
     if (connected && userId && step === "scanning") {
@@ -227,6 +235,46 @@ function DashboardContent() {
     }
   }, [userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ---- Card step: create PaymentIntent for 149 kr reservation ----
+  const createReservation = async () => {
+    if (!userId) return;
+    setPaymentLoading(true);
+    setPaymentError(null);
+
+    try {
+      const res = await fetch("/api/stripe/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setPaymentError(data.error || "Kunne ikke oprette betaling");
+        setPaymentLoading(false);
+        return;
+      }
+
+      setClientSecret(data.clientSecret);
+      setPaymentIntentId(data.paymentIntentId);
+    } catch {
+      setPaymentError("Kunne ikke oprette betaling — prøv igen");
+    }
+    setPaymentLoading(false);
+  };
+
+  // Called when Stripe card is confirmed (status=requires_capture)
+  const onCardReserved = () => {
+    setCardReserved(true);
+    // Store PI ID so it survives the Tink redirect
+    if (paymentIntentId) {
+      localStorage.setItem("abovagt_payment_intent_id", paymentIntentId);
+    }
+    // Move to bank connection step
+    setStep("connect");
+  };
+
+  // ---- Connect step: Tink bank ----
   const handleConnect = async () => {
     if (!userId) {
       window.location.href = "/connect";
@@ -383,12 +431,68 @@ function DashboardContent() {
     setDowngradeTargets((prev) => ({ ...prev, [id]: tierId }));
   };
 
+  // ---- Confirm step: capture actual fee ----
+  const handleConfirm = async () => {
+    if (!paymentIntentId || !userId) return;
+    setConfirmLoading(true);
+    setConfirmError(null);
+
+    const actionList = actionItems.map((item) => ({
+      type: actions[item.id],
+      serviceName: item.service?.name || item.name,
+      savings: actions[item.id] === "cancel" ? item.price : getDowngradeSavingsForItem(item),
+    }));
+
+    try {
+      const res = await fetch("/api/stripe/capture-fee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentIntentId,
+          userId,
+          totalSavings,
+          completedActions: actionList,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setConfirmError(data.error || "Kunne ikke gennemføre betaling");
+        setConfirmLoading(false);
+        return;
+      }
+
+      // Clean up stored PI ID
+      localStorage.removeItem("abovagt_payment_intent_id");
+      setHasPaid(true);
+      setStep("emails");
+    } catch {
+      setConfirmError("Noget gik galt — prøv igen");
+    }
+    setConfirmLoading(false);
+  };
+
+  // ---- Cancel reservation (user doesn't want to proceed) ----
+  const handleCancelReservation = async () => {
+    if (!paymentIntentId) return;
+    try {
+      await fetch("/api/stripe/cancel-reservation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentIntentId, userId }),
+      });
+    } catch {
+      // best-effort
+    }
+    localStorage.removeItem("abovagt_payment_intent_id");
+    setPaymentIntentId(null);
+    setCardReserved(false);
+  };
+
   // Open email modal (ONLY available after payment)
   const openEmailModal = (item: DashboardItem) => {
-    if (!hasPaid) {
-      // Should not happen — UI prevents this, but double-check
-      return;
-    }
+    if (!hasPaid) return;
     const serviceId = item.service?.id || "";
     const serviceName = item.service?.name || item.name;
     const cancellation = (item.cancellation || "løbende") as CancellationPeriod;
@@ -504,75 +608,6 @@ function DashboardContent() {
     setSending(false);
   };
 
-  // Go to payment step + create PaymentIntent
-  const goToPayment = async () => {
-    setStep("payment");
-    setPaymentLoading(true);
-    setPaymentError(null);
-
-    try {
-      // Build action list for metadata
-      const actionList = actionItems.map((item) => ({
-        type: actions[item.id],
-        serviceName: item.service?.name || item.name,
-        savings: actions[item.id] === "cancel" ? item.price : getDowngradeSavingsForItem(item),
-      }));
-
-      const res = await fetch("/api/stripe/create-payment-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          totalSavings,
-          completedActions: actionList,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setPaymentError(data.error || "Kunne ikke oprette betaling");
-        setPaymentLoading(false);
-        return;
-      }
-
-      setClientSecret(data.clientSecret);
-      setPaymentIntentId(data.paymentIntentId);
-    } catch {
-      setPaymentError("Kunne ikke oprette betaling — prøv igen");
-    }
-    setPaymentLoading(false);
-  };
-
-  // After successful Stripe payment → save + go to emails step
-  const onPaymentSuccess = async () => {
-    if (!paymentIntentId || !userId) return;
-
-    const actionList = actionItems.map((item) => ({
-      type: actions[item.id],
-      serviceName: item.service?.name || item.name,
-      savings: actions[item.id] === "cancel" ? item.price : getDowngradeSavingsForItem(item),
-    }));
-
-    try {
-      await fetch("/api/stripe/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentIntentId,
-          userId,
-          completedActions: actionList,
-          totalSavings,
-        }),
-      });
-    } catch {
-      // Payment succeeded via Stripe, DB save is best-effort
-    }
-
-    setHasPaid(true);
-    setStep("emails");
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50/30 to-white">
       {/* Header */}
@@ -589,21 +624,123 @@ function DashboardContent() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* ============ STEP: Connect bank ============ */}
+
+        {/* ============ STEP 1: Card reservation ============ */}
+        {step === "card" && (
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-8">
+              <Inspektoeren
+                pose="pointing"
+                size={120}
+                speechBubble="Vi reserverer op til 149 kr — du betaler kun for det du sparer!"
+                className="mb-4"
+              />
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
+                Registrer dit kort
+              </h1>
+              <p className="mt-2 text-gray-600 text-sm">
+                Vi reserverer op til 149 kr. Du betaler kun 25% af din faktiske besparelse.
+              </p>
+            </div>
+
+            {/* How it works */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6">
+              <h3 className="text-sm font-bold text-[#1C2B2A] mb-3">S&aring;dan virker det</h3>
+              <div className="space-y-3">
+                {[
+                  { num: "1", text: "Vi reserverer op til 149 kr p\u00e5 dit kort (ingen penge tr\u00e6kkes endnu)" },
+                  { num: "2", text: "Du forbinder din bank s\u00e5 vi kan finde dine abonnementer" },
+                  { num: "3", text: "Du v\u00e6lger hvad du vil opsige eller nedgradere" },
+                  { num: "4", text: "Vi tr\u00e6kker kun 25% af din besparelse (maks 149 kr)" },
+                ].map((s) => (
+                  <div key={s.num} className="flex items-start gap-3">
+                    <span className="w-6 h-6 bg-[#1B7A6E] text-white text-xs font-bold rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                      {s.num}
+                    </span>
+                    <p className="text-sm text-gray-700">{s.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Stripe card form */}
+            {!clientSecret && !paymentLoading && (
+              <button
+                onClick={createReservation}
+                className="w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
+              >
+                Registrer kort og reserver
+              </button>
+            )}
+
+            {paymentLoading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-[#1B7A6E] border-t-transparent rounded-full animate-spin" />
+                <span className="ml-3 text-sm text-gray-500">Opretter reservation...</span>
+              </div>
+            )}
+
+            {paymentError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+                <p className="text-sm text-red-700">{paymentError}</p>
+              </div>
+            )}
+
+            {clientSecret && !paymentLoading && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+                <h3 className="text-sm font-bold text-[#1C2B2A] mb-4">Kortoplysninger</h3>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: "stripe",
+                      variables: { colorPrimary: "#1B7A6E", borderRadius: "8px" },
+                    },
+                    locale: "da",
+                  }}
+                >
+                  <ReservationForm onSuccess={onCardReserved} />
+                </Elements>
+              </div>
+            )}
+
+            <div className="mt-6 space-y-3">
+              {[
+                "Ingen penge tr\u00e6kkes nu \u2014 kun reservation",
+                "Du betaler kun hvis du f\u00e5r en besparelse",
+                "Reservationen annulleres automatisk efter 7 dage hvis du ikke handler",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-3 text-left">
+                  <svg className="w-5 h-5 text-[#1B7A6E] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 text-center">
+              <a href="/" className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors">&larr; Tilbage til forsiden</a>
+            </div>
+          </div>
+        )}
+
+        {/* ============ STEP 2: Connect bank ============ */}
         {step === "connect" && (
           <div className="max-w-md mx-auto text-center">
             <Inspektoeren
               pose="searching"
               size={120}
-              speechBubble="Lad mig finde dine abonnementer!"
+              speechBubble="Kort registreret! Nu forbinder vi din bank."
               className="mb-6"
             />
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A] mb-3">
               Forbind din bank
             </h1>
             <p className="text-gray-600 mb-8">
-              Vi forbinder sikkert via Tink. Vi kan kun læse dine transaktioner
-              — aldrig flytte penge.
+              Vi forbinder sikkert via Tink. Vi kan kun l&aelig;se dine transaktioner
+              &mdash; aldrig flytte penge.
             </p>
             {scanError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-6">
@@ -619,8 +756,8 @@ function DashboardContent() {
             <div className="mt-8 space-y-3">
               {[
                 "Sikker forbindelse via Tink (reguleret af Finanstilsynet)",
-                "Kun læseadgang — vi kan aldrig flytte penge",
-                "Dine data slettes når du vil",
+                "Kun l\u00e6seadgang \u2014 vi kan aldrig flytte penge",
+                "Dine data slettes n\u00e5r du vil",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3 text-left">
                   <svg className="w-5 h-5 text-[#1B7A6E] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -633,7 +770,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ============ STEP: Scanning ============ */}
+        {/* ============ STEP 3: Scanning ============ */}
         {step === "scanning" && (
           <div className="max-w-md mx-auto text-center py-12">
             <Inspektoeren pose="searching" size={120} className="mb-6" />
@@ -641,7 +778,7 @@ function DashboardContent() {
               Scanner dine transaktioner...
             </h2>
             <p className="text-gray-600 mb-8">
-              Inspektøren leder efter abonnementer i dine banktransaktioner
+              Inspekt&oslash;ren leder efter abonnementer i dine banktransaktioner
             </p>
             <div className="flex justify-center">
               <div className="w-8 h-8 border-3 border-[#1B7A6E] border-t-transparent rounded-full animate-spin" />
@@ -649,7 +786,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ============ STEP: Results (select actions, then pay) ============ */}
+        {/* ============ STEP 4: Results (select actions) ============ */}
         {step === "results" && (
           <div>
             <div className="text-center mb-8">
@@ -667,19 +804,19 @@ function DashboardContent() {
                 Dine abonnementer
               </h1>
               <p className="mt-2 text-gray-600 text-sm">
-                Vælg hvad du vil gøre med hvert abonnement
+                V&aelig;lg hvad du vil g&oslash;re med hvert abonnement
               </p>
             </div>
 
             {/* Overview cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
               <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Månedligt forbrug</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">M&aring;nedligt forbrug</p>
                 <p className="text-3xl font-bold text-[#1C2B2A]">{totalMonthly.toLocaleString("da-DK")} kr/md</p>
               </div>
               <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Årligt forbrug</p>
-                <p className="text-3xl font-bold text-[#1C2B2A]">{(totalMonthly * 12).toLocaleString("da-DK")} kr/år</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">&Aring;rligt forbrug</p>
+                <p className="text-3xl font-bold text-[#1C2B2A]">{(totalMonthly * 12).toLocaleString("da-DK")} kr/&aring;r</p>
               </div>
               <div className={`rounded-2xl border-2 p-5 text-center transition-all ${totalSavings > 0 ? "bg-teal-50 border-[#1B7A6E]" : "bg-white border-gray-200"}`}>
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Din besparelse</p>
@@ -778,7 +915,7 @@ function DashboardContent() {
                           {/* Downgrade tier picker */}
                           {action === "downgrade" && item.lowerTiers.length > 0 && (
                             <div className="mt-3 bg-orange-50 rounded-lg px-4 py-3 border border-orange-100">
-                              <p className="text-xs text-orange-700 font-semibold mb-2">Vælg billigere plan:</p>
+                              <p className="text-xs text-orange-700 font-semibold mb-2">V&aelig;lg billigere plan:</p>
                               <div className="space-y-1.5">
                                 {item.lowerTiers.map((tier) => {
                                   const isSelected = (downgradeTargets[item.id] || item.lowerTiers[0].tierId) === tier.tierId;
@@ -816,9 +953,9 @@ function DashboardContent() {
                               </svg>
                               <p className="text-sm text-orange-700">
                                 <span className="font-medium">{item.legacyDowngrade.fromLabel}</span>
-                                {" → "}
+                                {" \u2192 "}
                                 <span className="font-medium">{item.legacyDowngrade.toLabel}</span>
-                                {" — spar "}
+                                {" \u2014 spar "}
                                 <span className="font-bold">{item.legacyDowngrade.savingsPerMonth} kr/md</span>
                               </p>
                             </div>
@@ -832,7 +969,7 @@ function DashboardContent() {
                               </svg>
                               <p className="text-xs text-red-700">
                                 <span className="font-semibold">OBS:</span>{" "}
-                                {item.service?.name || item.name} har {item.cancellation} — du sparer fra{" "}
+                                {item.service?.name || item.name} har {item.cancellation} &mdash; du sparer fra{" "}
                                 {getCancellationDate(item.cancellation as CancellationPeriod)}
                               </p>
                             </div>
@@ -888,18 +1025,18 @@ function DashboardContent() {
                   <p className="text-xs text-white/60 uppercase tracking-wider">Samlet besparelse</p>
                   <p className="text-4xl font-bold text-[#4ECDC4]">{totalSavings.toLocaleString("da-DK")} kr/md</p>
                   {totalSavings > 0 && (
-                    <p className="text-sm text-white/50 mt-1">= {(totalSavings * 12).toLocaleString("da-DK")} kr/år</p>
+                    <p className="text-sm text-white/50 mt-1">= {(totalSavings * 12).toLocaleString("da-DK")} kr/&aring;r</p>
                   )}
                 </div>
                 {totalSavings === 0 && (
                   <p className="text-center text-sm text-white/60 mt-2">
-                    Vælg &quot;Opsig&quot; eller &quot;Nedgrader&quot; ovenfor for at se din besparelse
+                    V&aelig;lg &quot;Opsig&quot; eller &quot;Nedgrader&quot; ovenfor for at se din besparelse
                   </p>
                 )}
               </div>
             )}
 
-            {/* Payment CTA — pay to unlock emails (only show if NOT paid) */}
+            {/* CTA: Go to confirm step */}
             {totalSavings > 0 && !hasPaid && (
               <div className="relative bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-8 mb-8">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
@@ -912,91 +1049,34 @@ function DashboardContent() {
                       <span className="text-sm font-bold text-[#1C2B2A]">{totalSavings.toLocaleString("da-DK")} kr/md</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Du betaler</span>
+                      <span className="text-sm text-gray-600">Vi tr&aelig;kker</span>
                       <span className="text-sm font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr (en gang)</span>
                     </div>
                     <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
                       <span className="text-sm font-semibold text-[#1B7A6E]">Du beholder</span>
-                      <span className="text-lg font-bold text-[#1B7A6E]">{(totalSavings - fee).toLocaleString("da-DK")} kr/md — hver måned fremover</span>
+                      <span className="text-lg font-bold text-[#1B7A6E]">{(totalSavings - fee).toLocaleString("da-DK")} kr/md &mdash; hver m&aring;ned fremover</span>
                     </div>
                   </div>
                 </div>
                 <button
-                  onClick={goToPayment}
+                  onClick={() => setStep("confirm")}
                   className="mt-4 w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
                 >
-                  Betal {fee.toLocaleString("da-DK")} kr og få dine opsigelsesmails
+                  Godkend og f&aring; dine opsigelsesmails
                 </button>
                 <p className="mt-4 text-center text-xs text-gray-500">
-                  Beløbet reserveres og trækkes først når besparelsen er bekræftet. Ingen binding.
+                  Vi tr&aelig;kker {fee} kr af de {cardReserved ? "149" : fee} kr der er reserveret. Resten frigives.
                 </p>
               </div>
             )}
 
-            {/* Blurred email preview teaser (before payment) */}
-            {actionItems.length > 0 && !hasPaid && (
-              <div className="mb-8">
-                <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">Dine opsigelsesmails (låst)</h2>
-                <div className="space-y-3">
-                  {actionItems.map((item) => {
-                    const act = actions[item.id];
-                    const sav = act === "cancel" ? item.price : getDowngradeSavingsForItem(item);
-                    return (
-                      <div
-                        key={`preview-${item.id}`}
-                        className="bg-white rounded-xl border border-gray-200 overflow-hidden"
-                      >
-                        <div className="px-5 py-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">{item.icon}</span>
-                              <div>
-                                <p className="font-semibold text-[#1C2B2A]">
-                                  {item.service?.name || item.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {act === "cancel" ? "Opsigelse" : "Nedgradering"} — spar {sav} kr/md
-                                </p>
-                              </div>
-                            </div>
-                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">
-                              Låst
-                            </span>
-                          </div>
-                          {/* Blurred preview of email content */}
-                          <div className="relative">
-                            <div className="select-none pointer-events-none" style={{ filter: "blur(5px)" }}>
-                              <p className="text-xs text-gray-400 mb-1">Emne: Opsigelse af abonnement</p>
-                              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-400 leading-relaxed">
-                                Kære kundeservice, jeg ønsker hermed at opsige mit abonnement hos jer.
-                                Mit navn er ████████ og min email er ████████.
-                                Jeg beder venligst om bekræftelse på opsigelsen...
-                              </div>
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-lg">
-                              <div className="text-center">
-                                <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                                <p className="text-sm font-semibold text-gray-600">Betal for at låse op</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Paid: show "Go to emails" button on results page */}
+            {/* Already paid: go to emails */}
             {hasPaid && actionItems.length > 0 && (
               <div className="bg-green-50 rounded-2xl border-2 border-green-400 p-6 mb-8 text-center">
                 <svg className="w-10 h-10 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h3 className="text-lg font-bold text-green-800 mb-1">Betaling gennemført!</h3>
+                <h3 className="text-lg font-bold text-green-800 mb-1">Betaling gennemf&oslash;rt!</h3>
                 <p className="text-sm text-green-700 mb-4">Dine opsigelsesmails er klar til afsendelse.</p>
                 <button
                   onClick={() => setStep("emails")}
@@ -1019,11 +1099,11 @@ function DashboardContent() {
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-[#1C2B2A] mb-1">AboVagt Monitoring</h3>
                     <p className="text-sm text-gray-600 mb-4">
-                      Vi scanner dine transaktioner kvartalsvis og giver dig besked ved nye abonnementer eller prisændringer.
+                      Vi scanner dine transaktioner kvartalsvis og giver dig besked ved nye abonnementer eller pris&aelig;ndringer.
                     </p>
                     <div className="flex items-center gap-4">
                       <span className="text-2xl font-bold text-[#1C2B2A]">15 kr/md</span>
-                      <span className="text-xs text-gray-500">Kvartalsvis scanning &middot; Opsig når som helst</span>
+                      <span className="text-xs text-gray-500">Kvartalsvis scanning &middot; Opsig n&aring;r som helst</span>
                     </div>
                   </div>
                 </div>
@@ -1036,27 +1116,27 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ============ STEP: Payment ============ */}
-        {step === "payment" && (
+        {/* ============ STEP 5: Confirm (capture actual fee) ============ */}
+        {step === "confirm" && (
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
               <Inspektoeren
                 pose="thumbsup"
                 size={120}
-                speechBubble={`Betal ${fee} kr og spar ${totalSavings} kr/md!`}
+                speechBubble={`Vi tr\u00e6kker kun ${fee} kr af de 149 kr!`}
                 className="mb-4"
               />
               <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
-                Betaling
+                Bekr&aelig;ft betaling
               </h1>
               <p className="mt-2 text-gray-600 text-sm">
-                Betal for at få dine færdige opsigelsesmails
+                Gennemg&aring; din besparelse og godkend
               </p>
             </div>
 
             {/* Order summary */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-              <h2 className="text-sm font-bold text-[#1C2B2A] mb-3">Din ordre</h2>
+              <h2 className="text-sm font-bold text-[#1C2B2A] mb-3">Dine handlinger</h2>
               {actionItems.map((item) => {
                 const act = actions[item.id];
                 const sav = act === "cancel" ? item.price : getDowngradeSavingsForItem(item);
@@ -1073,64 +1153,82 @@ function DashboardContent() {
                   </div>
                 );
               })}
-              <div className="border-t border-gray-200 mt-3 pt-3 space-y-2">
+            </div>
+
+            {/* Payment breakdown */}
+            <div className="bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 mb-6">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Besparelse</span>
-                  <span className="text-sm font-bold text-[#1B7A6E]">{totalSavings.toLocaleString("da-DK")} kr/md</span>
+                  <span className="text-sm text-gray-600">Din besparelse</span>
+                  <span className="text-sm font-bold text-[#1C2B2A]">{totalSavings.toLocaleString("da-DK")} kr/md</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[#1C2B2A]">Du betaler</span>
-                  <span className="text-lg font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr</span>
+                  <span className="text-sm text-gray-600">&Aring;rlig besparelse</span>
+                  <span className="text-sm font-bold text-[#1C2B2A]">{(totalSavings * 12).toLocaleString("da-DK")} kr/&aring;r</span>
+                </div>
+                <div className="border-t border-[#1B7A6E]/20 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Reserveret p&aring; dit kort</span>
+                    <span className="text-sm text-gray-500">149 kr</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-sm font-semibold text-[#1C2B2A]">Vi tr&aelig;kker</span>
+                    <span className="text-lg font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr</span>
+                  </div>
+                  {fee < 149 && (
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-sm text-gray-500">Frigives til dit kort</span>
+                      <span className="text-sm text-gray-500">{149 - fee} kr</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Stripe checkout */}
-            {paymentLoading && (
-              <div className="flex items-center justify-center py-8">
-                <div className="w-6 h-6 border-2 border-[#1B7A6E] border-t-transparent rounded-full animate-spin" />
-                <span className="ml-3 text-sm text-gray-500">Opretter betaling...</span>
-              </div>
-            )}
-
-            {paymentError && (
+            {confirmError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
-                <p className="text-sm text-red-700">{paymentError}</p>
+                <p className="text-sm text-red-700">{confirmError}</p>
               </div>
             )}
 
-            {clientSecret && !paymentLoading && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-                <h3 className="text-sm font-bold text-[#1C2B2A] mb-4">Kortbetaling</h3>
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: "stripe",
-                      variables: { colorPrimary: "#1B7A6E", borderRadius: "8px" },
-                    },
-                    locale: "da",
-                  }}
-                >
-                  <CheckoutForm fee={fee} onSuccess={onPaymentSuccess} />
-                </Elements>
-              </div>
-            )}
+            <button
+              onClick={handleConfirm}
+              disabled={confirmLoading}
+              className={`w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg mb-4 ${
+                confirmLoading ? "opacity-60 cursor-not-allowed" : ""
+              }`}
+            >
+              {confirmLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Behandler...
+                </span>
+              ) : (
+                `Godkend \u2014 tr\u00e6k ${fee.toLocaleString("da-DK")} kr`
+              )}
+            </button>
 
-            <p className="text-center text-xs text-gray-500 mb-6">
-              Beløbet reserveres og trækkes først når besparelsen er bekræftet. Ingen binding.
-            </p>
-
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <button onClick={() => setStep("results")} className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors">
                 &larr; Tilbage til dine abonnementer
               </button>
+              <p className="text-xs text-gray-400">
+                Vil du ikke alligevel?{" "}
+                <button
+                  onClick={async () => {
+                    await handleCancelReservation();
+                    setStep("card");
+                  }}
+                  className="text-red-500 hover:text-red-700 underline"
+                >
+                  Annull&eacute;r reservation
+                </button>
+              </p>
             </div>
           </div>
         )}
 
-        {/* ============ STEP: Emails (unlocked after payment — with hasPaid guard) ============ */}
+        {/* ============ STEP 6: Emails (unlocked after payment) ============ */}
         {step === "emails" && hasPaid && (
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
@@ -1144,7 +1242,7 @@ function DashboardContent() {
                 Dine opsigelsesmails
               </h1>
               <p className="mt-2 text-gray-600 text-sm">
-                Klik på hver for at se og sende opsigelsesmailen
+                Klik p&aring; hver for at se og sende opsigelsesmailen
               </p>
             </div>
 
@@ -1191,7 +1289,7 @@ function DashboardContent() {
                               )}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {act === "cancel" ? "Opsigelse" : "Nedgradering"} — spar {sav} kr/md
+                              {act === "cancel" ? "Opsigelse" : "Nedgradering"} &mdash; spar {sav} kr/md
                               {item.cancellation && item.cancellation !== "løbende" && (
                                 <span className="ml-1 text-orange-600">({item.cancellation})</span>
                               )}
@@ -1220,7 +1318,7 @@ function DashboardContent() {
               <div className="bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 mb-6 text-center">
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Du sparer nu</p>
                 <p className="text-4xl font-bold text-[#1B7A6E]">{totalSavings.toLocaleString("da-DK")} kr/md</p>
-                <p className="text-sm text-gray-500 mt-1">= {(totalSavings * 12).toLocaleString("da-DK")} kr/år</p>
+                <p className="text-sm text-gray-500 mt-1">= {(totalSavings * 12).toLocaleString("da-DK")} kr/&aring;r</p>
                 <p className="text-sm text-[#1B7A6E] font-medium mt-3">
                   Alle {actionItems.length} opsigelsesmails er sendt!
                 </p>
@@ -1266,7 +1364,7 @@ function DashboardContent() {
                 <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
                   <p className="text-sm text-amber-800">
                     <span className="font-semibold">OBS:</span>{" "}
-                    {modal.item.service?.name || modal.item.name} har {modal.item.cancellation} — du sparer fra{" "}
+                    {modal.item.service?.name || modal.item.name} har {modal.item.cancellation} &mdash; du sparer fra{" "}
                     <span className="font-semibold">{getCancellationDate(modal.item.cancellation as CancellationPeriod)}</span>
                   </p>
                 </div>
@@ -1275,7 +1373,7 @@ function DashboardContent() {
               {/* Cancel URL */}
               {modal.cancelUrl && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-                  <p className="text-sm text-blue-800 mb-1">Du kan også opsige direkte:</p>
+                  <p className="text-sm text-blue-800 mb-1">Du kan ogs&aring; opsige direkte:</p>
                   <a href={modal.cancelUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 underline break-all">
                     {modal.cancelUrl}
                   </a>
@@ -1362,8 +1460,8 @@ function DashboardContent() {
   );
 }
 
-/** Stripe Checkout Form component */
-function CheckoutForm({ fee, onSuccess }: { fee: number; onSuccess: () => void }) {
+/** Stripe Reservation Form — confirms the card and reserves 149 kr */
+function ReservationForm({ onSuccess }: { onSuccess: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
@@ -1414,7 +1512,7 @@ function CheckoutForm({ fee, onSuccess }: { fee: number; onSuccess: () => void }
             Behandler...
           </span>
         ) : (
-          `Betal ${fee.toLocaleString("da-DK")} kr`
+          "Reserver 149 kr"
         )}
       </button>
     </form>
