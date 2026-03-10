@@ -9,48 +9,52 @@ export async function GET() {
     return NextResponse.json({ error: "STRIPE_SECRET_KEY not set" });
   }
 
+  const trimmedKey = key.trim();
   const info: Record<string, unknown> = {
-    keyPrefix: key.substring(0, 7) + "...",
-    keyLength: key.length,
+    keyPrefix: trimmedKey.substring(0, 10) + "...",
+    keyLength: trimmedKey.length,
+    rawKeyLength: key.length,
+    hasWhitespace: key !== trimmedKey,
+    keyEndsWithNewline: key.endsWith("\n") || key.endsWith("\r"),
     nodeVersion: process.version,
-    stripeSDK: "20.4.1",
   };
 
+  // Test 1: Raw fetch to Stripe API (bypass SDK entirely)
   try {
-    // Try without explicit apiVersion first
-    const stripe = new Stripe(key, {
-      maxNetworkRetries: 2,
-      timeout: 15000,
+    const res = await fetch("https://api.stripe.com/v1/balance", {
+      headers: {
+        Authorization: `Bearer ${trimmedKey}`,
+      },
+    });
+    const data = await res.json();
+    info.rawFetchStatus = res.status;
+    info.rawFetchOk = res.ok;
+    if (res.ok) {
+      info.rawFetchCurrency = data.available?.[0]?.currency;
+    } else {
+      info.rawFetchError = data.error?.message;
+    }
+  } catch (e: unknown) {
+    const err = e as { message?: string };
+    info.rawFetchStatus = "EXCEPTION";
+    info.rawFetchError = err.message;
+  }
+
+  // Test 2: Stripe SDK with fetch client
+  try {
+    const stripe = new Stripe(trimmedKey, {
+      maxNetworkRetries: 1,
+      timeout: 10000,
       httpClient: Stripe.createFetchHttpClient(),
     });
     const balance = await stripe.balance.retrieve();
-    info.connection = "OK";
-    info.currency = balance.available?.[0]?.currency;
+    info.sdkFetch = "OK";
+    info.sdkCurrency = balance.available?.[0]?.currency;
   } catch (e: unknown) {
-    const err = e as { type?: string; message?: string; code?: string };
-    info.connection = "FAILED";
-    info.errorType = err.type;
-    info.errorMessage = err.message;
-    info.errorCode = err.code;
-  }
-
-  try {
-    // Try with explicit apiVersion
-    const stripe2 = new Stripe(key, {
-      apiVersion: "2026-02-25.clover" as unknown as Stripe.LatestApiVersion,
-      maxNetworkRetries: 2,
-      timeout: 15000,
-      httpClient: Stripe.createFetchHttpClient(),
-    });
-    const balance2 = await stripe2.balance.retrieve();
-    info.connectionWithApiVersion = "OK";
-    info.currency2 = balance2.available?.[0]?.currency;
-  } catch (e: unknown) {
-    const err = e as { type?: string; message?: string; code?: string };
-    info.connectionWithApiVersion = "FAILED";
-    info.errorType2 = err.type;
-    info.errorMessage2 = err.message;
-    info.errorCode2 = err.code;
+    const err = e as { type?: string; message?: string };
+    info.sdkFetch = "FAILED";
+    info.sdkFetchError = err.message;
+    info.sdkFetchType = err.type;
   }
 
   return NextResponse.json(info);
