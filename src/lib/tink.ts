@@ -74,7 +74,7 @@ export async function getAuthorizationCode(externalUserId: string): Promise<stri
     },
     body: new URLSearchParams({
       external_user_id: externalUserId,
-      scope: "user:read,accounts:read,transactions:read,credentials:read",
+      scope: "user:read,credentials:write,credentials:read,accounts:read,transactions:read",
     }),
   });
 
