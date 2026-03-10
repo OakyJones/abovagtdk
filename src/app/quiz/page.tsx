@@ -6,7 +6,7 @@ import StepSelect from "@/components/quiz/StepSelect";
 import StepUsage from "@/components/quiz/StepUsage";
 import StepResult from "@/components/quiz/StepResult";
 import { UsageFrequency, services, getEffectivePrice, getTierDowngrade } from "@/lib/services";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase"; // used for quiz_results (non-RLS table)
 
 const stepLabels = ["", "Vælg abonnementer", "Hvor tit bruger du dem?", "Resultat"];
 
@@ -28,38 +28,20 @@ export default function QuizPage() {
     setEmail(userEmail);
 
     try {
-      const { data: existing } = await supabase
-        .from("users")
-        .select("id")
-        .eq("email", userEmail)
-        .maybeSingle();
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          newsletterConsent,
+          signupPath: "quiz",
+        }),
+      });
 
-      if (existing) {
-        setUserId(existing.id);
-        localStorage.setItem("abovagt_user_id", existing.id);
-        // Update newsletter consent on re-visit
-        await supabase
-          .from("users")
-          .update({ newsletter_consent: newsletterConsent })
-          .eq("id", existing.id);
-      } else {
-        // Try with signup_path, fall back without if column doesn't exist yet
-        let res = await supabase
-          .from("users")
-          .insert({ email: userEmail, newsletter_consent: newsletterConsent, signup_path: "quiz" })
-          .select("id")
-          .single();
-        if (res.error) {
-          res = await supabase
-            .from("users")
-            .insert({ email: userEmail, newsletter_consent: newsletterConsent })
-            .select("id")
-            .single();
-        }
-        if (res.data) {
-          setUserId(res.data.id);
-          localStorage.setItem("abovagt_user_id", res.data.id);
-        }
+      const data = await res.json();
+      if (res.ok && data.userId) {
+        setUserId(data.userId);
+        localStorage.setItem("abovagt_user_id", data.userId);
       }
     } catch {
       // Continue without user — quiz still works

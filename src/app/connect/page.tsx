@@ -3,7 +3,6 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Inspektoeren from "@/components/Inspektoeren";
-import { supabase } from "@/lib/supabase";
 
 export default function ConnectPage() {
   return (
@@ -45,60 +44,26 @@ function ConnectContent() {
     setEmailError("");
 
     try {
-      // Create or find user
-      const { data: existing, error: lookupError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("email", email)
-        .maybeSingle();
+      // Create or find user via server-side API (bypasses RLS)
+      const regRes = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          newsletterConsent: newsletter,
+          signupPath: "connect",
+        }),
+      });
 
-      if (lookupError) {
-        console.error("User lookup error:", lookupError);
+      const regData = await regRes.json();
+
+      if (!regRes.ok || !regData.userId) {
+        setConnectError(regData.error || "Kunne ikke oprette bruger — prøv igen");
+        setLoading(false);
+        return;
       }
 
-      let userId: string;
-
-      if (existing) {
-        userId = existing.id;
-        await supabase
-          .from("users")
-          .update({ newsletter_consent: newsletter })
-          .eq("id", userId);
-      } else {
-        // Try insert with signup_path, fall back without it if column doesn't exist yet
-        let newUser = null;
-        let insertError = null;
-
-        const res1 = await supabase
-          .from("users")
-          .insert({ email, newsletter_consent: newsletter, signup_path: "connect" })
-          .select("id")
-          .single();
-
-        if (res1.error) {
-          // Column might not exist yet — retry without signup_path
-          const res2 = await supabase
-            .from("users")
-            .insert({ email, newsletter_consent: newsletter })
-            .select("id")
-            .single();
-          newUser = res2.data;
-          insertError = res2.error;
-        } else {
-          newUser = res1.data;
-        }
-
-        if (insertError || !newUser) {
-          console.error("User insert error:", insertError);
-          setConnectError(
-            insertError?.message || "Kunne ikke oprette bruger — prøv igen"
-          );
-          setLoading(false);
-          return;
-        }
-        userId = newUser.id;
-      }
-
+      const userId = regData.userId;
       localStorage.setItem("abovagt_user_id", userId);
 
       // Go directly to Tink
