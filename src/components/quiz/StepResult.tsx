@@ -8,11 +8,15 @@ import {
   formatPrice,
   getEstimatedSavings,
   getCancellationDate,
+  getEffectivePrice,
+  getSelectedTierLabel,
+  getTierDowngrade,
 } from "@/lib/services";
 import Inspektoeren from "@/components/Inspektoeren";
 
 interface Props {
   selectedServices: string[];
+  selectedPlans: Record<string, string>;
   customServices: { name: string; price: number }[];
   usageFrequency: Record<string, UsageFrequency>;
   onBack: () => void;
@@ -23,6 +27,7 @@ type ActionType = "cancel" | "downgrade" | "keep";
 
 export default function StepResult({
   selectedServices,
+  selectedPlans,
   customServices,
   usageFrequency,
   onBack,
@@ -33,12 +38,13 @@ export default function StepResult({
   );
 
   const totalMonthly =
-    selectedServiceObjects.reduce((sum, s) => sum + s.monthlyPrice, 0) +
+    selectedServiceObjects.reduce((sum, s) => sum + getEffectivePrice(s, selectedPlans), 0) +
     customServices.reduce((sum, c) => sum + c.price, 0);
 
   const { monthlySavings, wastedServices } = getEstimatedSavings(
     selectedServices,
-    usageFrequency
+    usageFrequency,
+    selectedPlans
   );
 
   const wastedCustom = customServices.filter(
@@ -48,14 +54,16 @@ export default function StepResult({
   );
   const customWaste = wastedCustom.reduce((sum, c) => sum + c.price, 0);
 
-  // Downgrade candidates: services used daily/weekly that have downgrade options
-  const downgradeServices = selectedServiceObjects.filter(
-    (s) =>
-      s.downgrade &&
+  // Downgrade candidates: services used daily/weekly that have a downgrade path
+  const downgradeServices = selectedServiceObjects.filter((s) => {
+    const downgrade = getTierDowngrade(s, selectedPlans);
+    return (
+      downgrade &&
       (usageFrequency[s.id] === "daily" || usageFrequency[s.id] === "weekly")
-  );
+    );
+  });
   const downgradeSavings = downgradeServices.reduce(
-    (sum, s) => sum + (s.downgrade?.savingsPerMonth || 0),
+    (sum, s) => sum + (getTierDowngrade(s, selectedPlans)?.savingsPerMonth || 0),
     0
   );
 
@@ -76,16 +84,20 @@ export default function StepResult({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allWasted = [
-    ...wastedServices.map((s) => ({
-      id: s.id,
-      name: s.name,
-      icon: s.icon,
-      price: s.monthlyPrice,
-      priceLabel: formatPrice(s),
-      freq: usageFrequency[s.id],
-      cancellation: s.cancellation,
-      downgrade: s.downgrade,
-    })),
+    ...wastedServices.map((s) => {
+      const price = getEffectivePrice(s, selectedPlans);
+      const tierLabel = getSelectedTierLabel(s, selectedPlans);
+      return {
+        id: s.id,
+        name: tierLabel ? `${s.name} (${tierLabel})` : s.name,
+        icon: s.icon,
+        price,
+        priceLabel: `${price} kr/md`,
+        freq: usageFrequency[s.id],
+        cancellation: s.cancellation,
+        downgrade: getTierDowngrade(s, selectedPlans),
+      };
+    }),
     ...wastedCustom.map((c) => ({
       id: c.name,
       name: c.name,
@@ -279,6 +291,9 @@ export default function StepResult({
           <div className="space-y-3">
             {downgradeServices.map((s) => {
               const action = actions[s.id];
+              const dg = getTierDowngrade(s, selectedPlans)!;
+              const tierLabel = getSelectedTierLabel(s, selectedPlans);
+              const price = getEffectivePrice(s, selectedPlans);
               return (
                 <div
                   key={s.id}
@@ -288,14 +303,16 @@ export default function StepResult({
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{s.icon}</span>
                       <div>
-                        <p className="font-semibold text-[#1C2B2A]">{s.name}</p>
+                        <p className="font-semibold text-[#1C2B2A]">
+                          {tierLabel ? `${s.name} (${tierLabel})` : s.name}
+                        </p>
                         <p className="text-sm text-gray-500">
                           Brugt: <span className="text-green-600 font-medium">{frequencyLabels[usageFrequency[s.id]]}</span>
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-[#1C2B2A]">{formatPrice(s)}</p>
+                      <p className="font-bold text-[#1C2B2A]">{price} kr/md</p>
                     </div>
                   </div>
 
@@ -306,13 +323,13 @@ export default function StepResult({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                         </svg>
                         <p className="text-sm text-[#1C2B2A]">
-                          <span className="font-medium">{s.downgrade!.fromLabel}</span>
+                          <span className="font-medium">{dg.fromLabel}</span>
                           {" → "}
-                          <span className="font-semibold text-[#1B7A6E]">{s.downgrade!.toLabel}</span>
+                          <span className="font-semibold text-[#1B7A6E]">{dg.toLabel}</span>
                         </p>
                       </div>
                       <span className="text-sm font-bold text-[#1B7A6E]">
-                        Spar {s.downgrade!.savingsPerMonth} kr/md
+                        Spar {dg.savingsPerMonth} kr/md
                       </span>
                     </div>
                   </div>

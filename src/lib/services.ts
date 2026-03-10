@@ -6,15 +6,23 @@ export interface DowngradeOption {
   savingsPerMonth: number;
 }
 
+export interface ServiceTier {
+  id: string;
+  label: string;
+  price: number;
+  isDefault?: boolean;
+}
+
 export interface Service {
   id: string;
   name: string;
   category: string;
-  monthlyPrice: number; // DKK
+  monthlyPrice: number; // DKK — default/lowest price
   priceNote?: string; // e.g. "9-79 kr/md"
   cancellation: CancellationPeriod;
   icon: string;
   downgrade?: DowngradeOption;
+  tiers?: ServiceTier[];
 }
 
 export const categoryLabels: Record<string, string> = {
@@ -45,10 +53,39 @@ export const categoryOrder = [
 
 export const services: Service[] = [
   // STREAMING & TV
-  { id: "netflix", name: "Netflix", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "🎬", downgrade: { fromLabel: "Premium", toLabel: "Standard", savingsPerMonth: 50 } },
-  { id: "viaplay", name: "Viaplay", category: "streaming", monthlyPrice: 119, cancellation: "løbende", icon: "📺", downgrade: { fromLabel: "Total", toLabel: "Film & Serier", savingsPerMonth: 300 } },
-  { id: "disney", name: "Disney+", category: "streaming", monthlyPrice: 49, cancellation: "løbende", icon: "🏰" },
-  { id: "max-hbo", name: "Max/HBO", category: "streaming", monthlyPrice: 89, cancellation: "løbende", icon: "🎭", downgrade: { fromLabel: "Ultimate", toLabel: "Standard", savingsPerMonth: 40 } },
+  {
+    id: "netflix", name: "Netflix", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "🎬",
+    tiers: [
+      { id: "netflix-basis", label: "Basis med reklamer", price: 79 },
+      { id: "netflix-standard", label: "Standard", price: 109, isDefault: true },
+      { id: "netflix-premium", label: "Premium", price: 169 },
+    ],
+  },
+  {
+    id: "viaplay", name: "Viaplay", category: "streaming", monthlyPrice: 99, cancellation: "løbende", icon: "📺",
+    tiers: [
+      { id: "viaplay-reklamer", label: "Film & Serier m. reklamer", price: 99 },
+      { id: "viaplay-standard", label: "Film & Serier", price: 149, isDefault: true },
+      { id: "viaplay-total", label: "Total", price: 449 },
+      { id: "viaplay-premium", label: "Premium", price: 499 },
+    ],
+  },
+  {
+    id: "disney", name: "Disney+", category: "streaming", monthlyPrice: 49, cancellation: "løbende", icon: "🏰",
+    tiers: [
+      { id: "disney-reklamer", label: "Standard m. reklamer", price: 49 },
+      { id: "disney-standard", label: "Standard", price: 79, isDefault: true },
+      { id: "disney-premium", label: "Premium", price: 119 },
+    ],
+  },
+  {
+    id: "max-hbo", name: "Max/HBO", category: "streaming", monthlyPrice: 89, cancellation: "løbende", icon: "🎭",
+    tiers: [
+      { id: "max-basis", label: "Basis", price: 89, isDefault: true },
+      { id: "max-standard", label: "Standard", price: 129 },
+      { id: "max-premium", label: "Premium", price: 169 },
+    ],
+  },
   { id: "tv2-play", name: "TV2 Play", category: "streaming", monthlyPrice: 69, cancellation: "løbende", icon: "📡" },
   { id: "amazon-prime-video", name: "Amazon Prime Video", category: "streaming", monthlyPrice: 59, cancellation: "løbende", icon: "▶️" },
   { id: "apple-tv", name: "Apple TV+", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "🍎" },
@@ -61,9 +98,28 @@ export const services: Service[] = [
   { id: "hayu", name: "Hayu", category: "streaming", monthlyPrice: 49, cancellation: "løbende", icon: "💅" },
 
   // MUSIK & LYDBØGER
-  { id: "spotify", name: "Spotify", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎵", downgrade: { fromLabel: "Family", toLabel: "Individual", savingsPerMonth: 80 } },
-  { id: "apple-music", name: "Apple Music", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎶", downgrade: { fromLabel: "Family", toLabel: "Individual", savingsPerMonth: 60 } },
-  { id: "youtube-premium", name: "YouTube Premium", category: "music", monthlyPrice: 79, cancellation: "løbende", icon: "🔴", downgrade: { fromLabel: "Family", toLabel: "Individual", savingsPerMonth: 50 } },
+  {
+    id: "spotify", name: "Spotify", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎵",
+    tiers: [
+      { id: "spotify-individual", label: "Individual", price: 99, isDefault: true },
+      { id: "spotify-duo", label: "Duo", price: 139 },
+      { id: "spotify-family", label: "Family", price: 179 },
+    ],
+  },
+  {
+    id: "apple-music", name: "Apple Music", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🎶",
+    tiers: [
+      { id: "apple-music-individual", label: "Individual", price: 99, isDefault: true },
+      { id: "apple-music-family", label: "Family", price: 169 },
+    ],
+  },
+  {
+    id: "youtube-premium", name: "YouTube Premium", category: "music", monthlyPrice: 79, cancellation: "løbende", icon: "🔴",
+    tiers: [
+      { id: "yt-individual", label: "Individual", price: 79, isDefault: true },
+      { id: "yt-family", label: "Family", price: 149 },
+    ],
+  },
   { id: "tidal", name: "Tidal", category: "music", monthlyPrice: 99, cancellation: "løbende", icon: "🌊" },
   { id: "mofibo", name: "Mofibo", category: "music", monthlyPrice: 149, cancellation: "løbende", icon: "📖" },
   { id: "audible", name: "Audible", category: "music", monthlyPrice: 149, cancellation: "løbende", icon: "🎧" },
@@ -83,8 +139,23 @@ export const services: Service[] = [
   // SOFTWARE & CLOUD
   { id: "microsoft365", name: "Microsoft 365", category: "software", monthlyPrice: 89, cancellation: "løbende", icon: "💼" },
   { id: "adobe", name: "Adobe Creative Cloud", category: "software", monthlyPrice: 189, cancellation: "12 md binding", icon: "🎨" },
-  { id: "icloud", name: "iCloud+", category: "software", monthlyPrice: 9, priceNote: "9-79 kr/md", cancellation: "løbende", icon: "☁️", downgrade: { fromLabel: "200 GB", toLabel: "50 GB", savingsPerMonth: 20 } },
-  { id: "google-one", name: "Google One", category: "software", monthlyPrice: 20, priceNote: "20-139 kr/md", cancellation: "løbende", icon: "🌐", downgrade: { fromLabel: "200 GB", toLabel: "100 GB", savingsPerMonth: 10 } },
+  {
+    id: "icloud", name: "iCloud+", category: "software", monthlyPrice: 9, cancellation: "løbende", icon: "☁️",
+    tiers: [
+      { id: "icloud-50", label: "50 GB", price: 9, isDefault: true },
+      { id: "icloud-200", label: "200 GB", price: 29 },
+      { id: "icloud-2tb", label: "2 TB", price: 79 },
+    ],
+  },
+  {
+    id: "google-one", name: "Google One", category: "software", monthlyPrice: 20, cancellation: "løbende", icon: "🌐",
+    tiers: [
+      { id: "google-100", label: "100 GB", price: 20, isDefault: true },
+      { id: "google-200", label: "200 GB", price: 30 },
+      { id: "google-2tb", label: "2 TB", price: 70 },
+      { id: "google-5tb", label: "5 TB", price: 139 },
+    ],
+  },
   { id: "dropbox", name: "Dropbox", category: "software", monthlyPrice: 99, cancellation: "løbende", icon: "📦", downgrade: { fromLabel: "Plus", toLabel: "Basic (gratis)", savingsPerMonth: 99 } },
   { id: "1password", name: "1Password", category: "software", monthlyPrice: 29, cancellation: "løbende", icon: "🔐" },
   { id: "nordvpn", name: "NordVPN", category: "software", monthlyPrice: 49, cancellation: "løbende", icon: "🛡️" },
@@ -92,8 +163,22 @@ export const services: Service[] = [
   { id: "canva-pro", name: "Canva Pro", category: "software", monthlyPrice: 99, cancellation: "løbende", icon: "🖌️" },
 
   // GAMING
-  { id: "ps-plus", name: "PlayStation Plus", category: "gaming", monthlyPrice: 59, cancellation: "løbende", icon: "🎮" },
-  { id: "xbox-game-pass", name: "Xbox Game Pass", category: "gaming", monthlyPrice: 79, cancellation: "løbende", icon: "🟢", downgrade: { fromLabel: "Ultimate", toLabel: "Core", savingsPerMonth: 40 } },
+  {
+    id: "ps-plus", name: "PlayStation Plus", category: "gaming", monthlyPrice: 59, cancellation: "løbende", icon: "🎮",
+    tiers: [
+      { id: "ps-essential", label: "Essential", price: 59, isDefault: true },
+      { id: "ps-extra", label: "Extra", price: 99 },
+      { id: "ps-premium", label: "Premium", price: 119 },
+    ],
+  },
+  {
+    id: "xbox-game-pass", name: "Xbox Game Pass", category: "gaming", monthlyPrice: 59, cancellation: "løbende", icon: "🟢",
+    tiers: [
+      { id: "xbox-core", label: "Core", price: 59 },
+      { id: "xbox-standard", label: "Standard", price: 79, isDefault: true },
+      { id: "xbox-ultimate", label: "Ultimate", price: 119 },
+    ],
+  },
   { id: "nintendo-online", name: "Nintendo Switch Online", category: "gaming", monthlyPrice: 29, cancellation: "løbende", icon: "🕹️" },
   { id: "ea-play", name: "EA Play", category: "gaming", monthlyPrice: 39, cancellation: "løbende", icon: "⚡" },
   { id: "geforce-now", name: "GeForce NOW", category: "gaming", monthlyPrice: 99, cancellation: "løbende", icon: "💚" },
@@ -149,14 +234,71 @@ export function getServiceById(id: string): Service | undefined {
   return services.find((s) => s.id === id);
 }
 
-export function formatPrice(service: Service): string {
+/** Get the effective price for a service given selected plans */
+export function getEffectivePrice(
+  service: Service,
+  selectedPlans: Record<string, string>
+): number {
+  if (service.tiers && selectedPlans[service.id]) {
+    const tier = service.tiers.find((t) => t.id === selectedPlans[service.id]);
+    if (tier) return tier.price;
+  }
+  return service.monthlyPrice;
+}
+
+/** Get the selected tier label */
+export function getSelectedTierLabel(
+  service: Service,
+  selectedPlans: Record<string, string>
+): string | null {
+  if (!service.tiers || !selectedPlans[service.id]) return null;
+  const tier = service.tiers.find((t) => t.id === selectedPlans[service.id]);
+  return tier?.label || null;
+}
+
+/** Get default tier for a service */
+export function getDefaultTier(service: Service): ServiceTier | undefined {
+  if (!service.tiers) return undefined;
+  return service.tiers.find((t) => t.isDefault) || service.tiers[0];
+}
+
+/** Compute downgrade suggestion from tiers */
+export function getTierDowngrade(
+  service: Service,
+  selectedPlans: Record<string, string>
+): DowngradeOption | null {
+  if (!service.tiers || !selectedPlans[service.id]) {
+    return service.downgrade || null;
+  }
+  const currentTierId = selectedPlans[service.id];
+  const currentIndex = service.tiers.findIndex((t) => t.id === currentTierId);
+  if (currentIndex <= 0) return null; // already on cheapest tier
+  const currentTier = service.tiers[currentIndex];
+  const lowerTier = service.tiers[currentIndex - 1];
+  return {
+    fromLabel: currentTier.label,
+    toLabel: lowerTier.label,
+    savingsPerMonth: currentTier.price - lowerTier.price,
+  };
+}
+
+export function formatPrice(service: Service, selectedPlans?: Record<string, string>): string {
+  if (selectedPlans && service.tiers && selectedPlans[service.id]) {
+    const tier = service.tiers.find((t) => t.id === selectedPlans[service.id]);
+    if (tier) return `${tier.price} kr/md`;
+  }
   if (service.priceNote) return service.priceNote;
+  if (service.tiers) {
+    const prices = service.tiers.map((t) => t.price);
+    return `${Math.min(...prices)}-${Math.max(...prices)} kr/md`;
+  }
   return `${service.monthlyPrice} kr/md`;
 }
 
 export function getEstimatedSavings(
   selectedServices: string[],
-  usageFrequency: Record<string, UsageFrequency>
+  usageFrequency: Record<string, UsageFrequency>,
+  selectedPlans?: Record<string, string>
 ): { monthlySavings: number; yearlySavings: number; wastedServices: Service[] } {
   const wastedServices = services.filter(
     (s) =>
@@ -164,7 +306,10 @@ export function getEstimatedSavings(
       (usageFrequency[s.id] === "rarely" || usageFrequency[s.id] === "never")
   );
 
-  const monthlySavings = wastedServices.reduce((sum, s) => sum + s.monthlyPrice, 0);
+  const monthlySavings = wastedServices.reduce(
+    (sum, s) => sum + getEffectivePrice(s, selectedPlans || {}),
+    0
+  );
 
   return {
     monthlySavings,

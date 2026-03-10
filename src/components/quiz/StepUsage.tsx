@@ -1,10 +1,11 @@
 "use client";
 
-import { services, UsageFrequency, frequencyLabels, formatPrice } from "@/lib/services";
+import { services, UsageFrequency, frequencyLabels, formatPrice, getEffectivePrice, getSelectedTierLabel } from "@/lib/services";
 import Inspektoeren from "@/components/Inspektoeren";
 
 interface Props {
   selectedServices: string[];
+  selectedPlans: Record<string, string>;
   customServices: { name: string; price: number }[];
   usageFrequency: Record<string, UsageFrequency>;
   setUsageFrequency: (freq: Record<string, UsageFrequency>) => void;
@@ -30,6 +31,7 @@ const frequencyActiveStyles: Record<UsageFrequency, string> = {
 
 export default function StepUsage({
   selectedServices,
+  selectedPlans,
   customServices,
   usageFrequency,
   setUsageFrequency,
@@ -49,13 +51,17 @@ export default function StepUsage({
   }[] = [
     ...services
       .filter((s) => selectedServices.includes(s.id))
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        icon: s.icon,
-        priceLabel: formatPrice(s),
-        monthlyPrice: s.monthlyPrice,
-      })),
+      .map((s) => {
+        const tierLabel = getSelectedTierLabel(s, selectedPlans);
+        const price = getEffectivePrice(s, selectedPlans);
+        return {
+          id: s.id,
+          name: tierLabel ? `${s.name} (${tierLabel})` : s.name,
+          icon: s.icon,
+          priceLabel: `${price} kr/md`,
+          monthlyPrice: price,
+        };
+      }),
     ...customServices.map((c) => ({
       id: c.name,
       name: c.name,

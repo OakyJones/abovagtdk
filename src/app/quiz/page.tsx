@@ -5,7 +5,7 @@ import StepEmail from "@/components/quiz/StepEmail";
 import StepSelect from "@/components/quiz/StepSelect";
 import StepUsage from "@/components/quiz/StepUsage";
 import StepResult from "@/components/quiz/StepResult";
-import { UsageFrequency, services } from "@/lib/services";
+import { UsageFrequency, services, getEffectivePrice, getTierDowngrade } from "@/lib/services";
 import { supabase } from "@/lib/supabase";
 
 const stepLabels = ["", "Vælg abonnementer", "Hvor tit bruger du dem?", "Resultat"];
@@ -15,6 +15,7 @@ export default function QuizPage() {
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedPlans, setSelectedPlans] = useState<Record<string, string>>({});
   const [customServices, setCustomServices] = useState<
     { name: string; price: number }[]
   >([]);
@@ -99,9 +100,9 @@ export default function QuizPage() {
             const svc = services.find((s) => s.id === id);
             return {
               name: svc?.name || id,
-              price: svc?.monthlyPrice ||
-                customServices.find((c) => c.name === id)?.price ||
-                0,
+              price: svc
+                ? getEffectivePrice(svc, selectedPlans)
+                : customServices.find((c) => c.name === id)?.price || 0,
               frequency: frequencyLabelMap[usageFrequency[id]] || "Ukendt",
             };
           });
@@ -111,16 +112,19 @@ export default function QuizPage() {
             .filter(
               (s) =>
                 selectedServices.includes(s.id) &&
-                s.downgrade &&
+                getTierDowngrade(s, selectedPlans) &&
                 (usageFrequency[s.id] === "daily" ||
                   usageFrequency[s.id] === "weekly")
             )
-            .map((s) => ({
-              name: s.name,
-              fromLabel: s.downgrade!.fromLabel,
-              toLabel: s.downgrade!.toLabel,
-              savingsPerMonth: s.downgrade!.savingsPerMonth,
-            }));
+            .map((s) => {
+              const dg = getTierDowngrade(s, selectedPlans)!;
+              return {
+                name: s.name,
+                fromLabel: dg.fromLabel,
+                toLabel: dg.toLabel,
+                savingsPerMonth: dg.savingsPerMonth,
+              };
+            });
 
           const downgradeSavingsTotal = downgradeSuggestions.reduce(
             (sum, d) => sum + d.savingsPerMonth * 12,
@@ -187,7 +191,7 @@ export default function QuizPage() {
         // Silently fail
       }
     },
-    [saved, selectedServices, customServices, usageFrequency, email, userId]
+    [saved, selectedServices, selectedPlans, customServices, usageFrequency, email, userId]
   );
 
   return (
@@ -256,6 +260,8 @@ export default function QuizPage() {
           <StepSelect
             selectedServices={selectedServices}
             setSelectedServices={setSelectedServices}
+            selectedPlans={selectedPlans}
+            setSelectedPlans={setSelectedPlans}
             customServices={customServices}
             setCustomServices={setCustomServices}
             onNext={() => {
@@ -274,6 +280,7 @@ export default function QuizPage() {
         {step === 2 && (
           <StepUsage
             selectedServices={selectedServices}
+            selectedPlans={selectedPlans}
             customServices={customServices}
             usageFrequency={usageFrequency}
             setUsageFrequency={setUsageFrequency}
@@ -284,6 +291,7 @@ export default function QuizPage() {
         {step === 3 && (
           <StepResult
             selectedServices={selectedServices}
+            selectedPlans={selectedPlans}
             customServices={customServices}
             usageFrequency={usageFrequency}
             onBack={() => setStep(2)}
