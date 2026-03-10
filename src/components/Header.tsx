@@ -40,7 +40,7 @@ export default function Header() {
               FAQ
             </a>
             <a
-              href="#kom-igang"
+              href="/dashboard"
               className="inline-flex items-center px-5 py-2.5 bg-[#1B7A6E] text-white text-sm font-medium rounded-lg hover:bg-[#155F56] transition-colors"
             >
               Kom i gang
@@ -108,7 +108,7 @@ export default function Header() {
               FAQ
             </a>
             <a
-              href="#kom-igang"
+              href="/dashboard"
               className="inline-flex items-center justify-center px-5 py-2.5 bg-[#1B7A6E] text-white text-sm font-medium rounded-lg hover:bg-[#155F56] transition-colors"
               onClick={() => setMenuOpen(false)}
             >

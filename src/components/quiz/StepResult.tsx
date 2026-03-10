@@ -430,7 +430,7 @@ export default function StepResult({
               </p>
             )}
             <a
-              href="#kom-igang"
+              href="/dashboard"
               className="block w-full text-center px-6 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20"
             >
               Find mine abonnementer &rarr;

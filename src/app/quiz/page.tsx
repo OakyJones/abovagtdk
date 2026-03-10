@@ -36,6 +36,7 @@ export default function QuizPage() {
 
       if (existing) {
         setUserId(existing.id);
+        localStorage.setItem("abovagt_user_id", existing.id);
         // Update newsletter consent on re-visit
         await supabase
           .from("users")
@@ -47,7 +48,10 @@ export default function QuizPage() {
           .insert({ email: userEmail, newsletter_consent: newsletterConsent })
           .select("id")
           .single();
-        if (newUser) setUserId(newUser.id);
+        if (newUser) {
+          setUserId(newUser.id);
+          localStorage.setItem("abovagt_user_id", newUser.id);
+        }
       }
     } catch {
       // Continue without user — quiz still works
