@@ -445,66 +445,56 @@ export default function StepResult({
         )}
       </div>
 
-      {/* Two paths */}
-      <div className="mb-8">
-        <h2 className="text-lg font-bold text-[#1C2B2A] mb-4 text-center">
-          Hvad vil du gøre nu?
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* DIY */}
-          <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6 sm:p-8 flex flex-col">
-            <div className="inline-flex items-center gap-2 bg-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full w-fit mb-4">
-              100% gratis
-            </div>
-            <h3 className="text-xl font-bold text-[#1C2B2A] mb-2">
-              Gør det selv
-            </h3>
-            <p className="text-gray-500 text-sm mb-6 flex-1">
-              Du har nu dit overblik over abonnementer du kan spare på. Find
-              opsigelsesinfo og send mails manuelt.
-            </p>
-            <a
-              href="/"
-              className="block w-full text-center px-6 py-3 bg-white text-[#1C2B2A] font-semibold rounded-xl border border-gray-300 hover:bg-gray-100 transition-colors"
-            >
-              Jeg klarer det selv
-            </a>
-          </div>
-
-          {/* Full service */}
-          <div className="relative bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-8 flex flex-col">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
-              Anbefalet
-            </div>
-            <div className="flex items-start justify-between mb-4">
-              <div className="inline-flex items-center gap-2 bg-[#1B7A6E]/10 text-[#1B7A6E] text-xs font-bold px-3 py-1.5 rounded-full w-fit">
-                25% af besparelsen
-              </div>
-              <Inspektoeren pose="searching" size={48} />
-            </div>
-            <h3 className="text-xl font-bold text-[#1C2B2A] mb-2">
-              Hjælp mig med det
-            </h3>
-            <p className="text-gray-600 text-sm mb-4 flex-1">
-              Forbind din bank, find alle abonnementer automatisk, og få
-              færdige opsigelsesmails du bare sender.
-            </p>
-            {totalSavings > 0 && (
-              <p className="text-sm text-[#1B7A6E] font-medium mb-4">
-                Pris:{" "}
-                {Math.round(totalSavings * 0.25).toLocaleString("da-DK")}{" "}
-                kr/md (25% af {totalSavings.toLocaleString("da-DK")} kr/md
-                besparelse)
-              </p>
-            )}
-            <a
-              href="/connect"
-              className="block w-full text-center px-6 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20"
-            >
-              Find mine abonnementer &rarr;
-            </a>
-          </div>
+      {/* CTA: Skal vi hjælpe dig? */}
+      <div className="relative bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-8 mb-8">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
+          Anbefalet
         </div>
+
+        <div className="flex items-start justify-between mt-1 mb-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1C2B2A]">
+            Skal vi hjælpe dig?
+          </h2>
+          <Inspektoeren pose="searching" size={48} />
+        </div>
+        <p className="text-gray-600 text-sm mb-6">
+          Vi forbinder til din bank, finder alle dine abonnementer, og laver
+          færdige opsigelsesmails du selv sender.
+        </p>
+
+        {totalSavings > 0 && (() => {
+          const fee = Math.round(totalSavings * 0.25);
+          const kept = totalSavings - fee;
+          return (
+            <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Din besparelse</span>
+                  <span className="text-sm font-bold text-[#1C2B2A]">{totalSavings.toLocaleString("da-DK")} kr/md</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Du betaler</span>
+                  <span className="text-sm font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr (en gang)</span>
+                </div>
+                <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-[#1B7A6E]">Du beholder</span>
+                  <span className="text-lg font-bold text-[#1B7A6E]">{kept.toLocaleString("da-DK")} kr/md — hver måned fremover</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        <a
+          href="/connect"
+          className="block w-full text-center px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
+        >
+          Find mine abonnementer &rarr;
+        </a>
+
+        <p className="mt-4 text-center text-xs text-gray-500">
+          Ingen binding. Ingen skjulte gebyrer. Du betaler kun en gang.
+        </p>
       </div>
 
       {/* Back */}
