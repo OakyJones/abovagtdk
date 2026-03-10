@@ -157,6 +157,9 @@ function DashboardContent() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  // Paywall state — tracks whether user has paid
+  const [hasPaid, setHasPaid] = useState(false);
+
   // Load user data from localStorage + fetch email from DB if needed
   useEffect(() => {
     const stored = localStorage.getItem("abovagt_user_id");
@@ -196,6 +199,18 @@ function DashboardContent() {
       // silently fail
     }
   };
+
+  // Check if user has already paid (e.g. page reload after payment)
+  useEffect(() => {
+    if (userId) {
+      fetch(`/api/stripe/check-payment?userId=${userId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.hasPaid) setHasPaid(true);
+        })
+        .catch(() => {});
+    }
+  }, [userId]);
 
   useEffect(() => {
     if (connected && userId && step === "scanning") {
@@ -368,8 +383,12 @@ function DashboardContent() {
     setDowngradeTargets((prev) => ({ ...prev, [id]: tierId }));
   };
 
-  // Open email modal (only available after payment)
+  // Open email modal (ONLY available after payment)
   const openEmailModal = (item: DashboardItem) => {
+    if (!hasPaid) {
+      // Should not happen — UI prevents this, but double-check
+      return;
+    }
     const serviceId = item.service?.id || "";
     const serviceName = item.service?.name || item.name;
     const cancellation = (item.cancellation || "løbende") as CancellationPeriod;
@@ -424,9 +443,13 @@ function DashboardContent() {
     setSendError(null);
   };
 
-  // Send email
+  // Send email (requires payment)
   const handleSendEmail = async () => {
     if (!modal.item || !userId) return;
+    if (!hasPaid) {
+      setSendError("Du skal betale før du kan sende opsigelsesmails.");
+      return;
+    }
 
     setSending(true);
     setSendError(null);
@@ -546,6 +569,7 @@ function DashboardContent() {
       // Payment succeeded via Stripe, DB save is best-effort
     }
 
+    setHasPaid(true);
     setStep("emails");
   };
 
@@ -875,8 +899,8 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* Payment CTA — pay to unlock emails */}
-            {totalSavings > 0 && (
+            {/* Payment CTA — pay to unlock emails (only show if NOT paid) */}
+            {totalSavings > 0 && !hasPaid && (
               <div className="relative bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-8 mb-8">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
                   Din pris
@@ -906,6 +930,80 @@ function DashboardContent() {
                 <p className="mt-4 text-center text-xs text-gray-500">
                   Beløbet reserveres og trækkes først når besparelsen er bekræftet. Ingen binding.
                 </p>
+              </div>
+            )}
+
+            {/* Blurred email preview teaser (before payment) */}
+            {actionItems.length > 0 && !hasPaid && (
+              <div className="mb-8">
+                <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">Dine opsigelsesmails (låst)</h2>
+                <div className="space-y-3">
+                  {actionItems.map((item) => {
+                    const act = actions[item.id];
+                    const sav = act === "cancel" ? item.price : getDowngradeSavingsForItem(item);
+                    return (
+                      <div
+                        key={`preview-${item.id}`}
+                        className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+                      >
+                        <div className="px-5 py-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">{item.icon}</span>
+                              <div>
+                                <p className="font-semibold text-[#1C2B2A]">
+                                  {item.service?.name || item.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {act === "cancel" ? "Opsigelse" : "Nedgradering"} — spar {sav} kr/md
+                                </p>
+                              </div>
+                            </div>
+                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">
+                              Låst
+                            </span>
+                          </div>
+                          {/* Blurred preview of email content */}
+                          <div className="relative">
+                            <div className="select-none pointer-events-none" style={{ filter: "blur(5px)" }}>
+                              <p className="text-xs text-gray-400 mb-1">Emne: Opsigelse af abonnement</p>
+                              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-400 leading-relaxed">
+                                Kære kundeservice, jeg ønsker hermed at opsige mit abonnement hos jer.
+                                Mit navn er ████████ og min email er ████████.
+                                Jeg beder venligst om bekræftelse på opsigelsen...
+                              </div>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-lg">
+                              <div className="text-center">
+                                <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                <p className="text-sm font-semibold text-gray-600">Betal for at låse op</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Paid: show "Go to emails" button on results page */}
+            {hasPaid && actionItems.length > 0 && (
+              <div className="bg-green-50 rounded-2xl border-2 border-green-400 p-6 mb-8 text-center">
+                <svg className="w-10 h-10 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 className="text-lg font-bold text-green-800 mb-1">Betaling gennemført!</h3>
+                <p className="text-sm text-green-700 mb-4">Dine opsigelsesmails er klar til afsendelse.</p>
+                <button
+                  onClick={() => setStep("emails")}
+                  className="px-6 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20"
+                >
+                  Se og send dine opsigelsesmails
+                </button>
               </div>
             )}
 
@@ -1032,8 +1130,8 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* ============ STEP: Emails (unlocked after payment) ============ */}
-        {step === "emails" && (
+        {/* ============ STEP: Emails (unlocked after payment — with hasPaid guard) ============ */}
+        {step === "emails" && hasPaid && (
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
               <Inspektoeren

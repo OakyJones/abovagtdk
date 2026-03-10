@@ -37,6 +37,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // SERVER-SIDE PAYWALL: Verify user has a valid payment before sending
+    const supabaseCheck = getSupabaseAdmin();
+    const { data: payment, error: paymentCheckError } = await supabaseCheck
+      .from("payments")
+      .select("id, status")
+      .eq("user_id", userId)
+      .in("status", ["authorized", "captured"])
+      .order("paid_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (paymentCheckError || !payment) {
+      return NextResponse.json(
+        { error: "Betaling påkrævet. Du skal betale før du kan sende opsigelsesmails." },
+        { status: 403 }
+      );
+    }
+
     // Send email via Resend with user's email as reply-to
     // If we have a toEmail (service's email), send to that
     // Otherwise send to the user as confirmation
