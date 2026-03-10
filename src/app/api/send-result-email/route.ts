@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     <div style="background:#fff;border-radius:16px;padding:32px;border:1px solid #e5e7eb;">
 
       <h1 style="font-size:24px;color:#111;margin:0 0 8px;">
-        ${hasWaste ? "Vi fandt besparelser!" : "Dit quiz-resultat"}
+        ${hasWaste ? "Du har fundet besparelser!" : "Dit quiz-resultat"}
       </h1>
       <p style="color:#6b7280;margin:0 0 24px;font-size:15px;">
         Her er en oversigt over dine abonnementer.
@@ -82,8 +82,8 @@ export async function POST(req: NextRequest) {
       </table>
       ` : `
       <p style="color:#6b7280;font-size:15px;">
-        Flot — du bruger dine abonnementer godt! Men vidste du at vores
-        fulde service kan finde skjulte abonnementer via din bank?
+        Flot — du bruger dine abonnementer godt! Vidste du at du kan
+        finde skjulte abonnementer ved at forbinde din bank?
       </p>
       `}
 
@@ -91,11 +91,11 @@ export async function POST(req: NextRequest) {
         <a href="https://abovagt.dk"
            style="display:inline-block;padding:14px 32px;background:#1B7A6E;color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:16px;">
           ${hasWaste
-            ? "Vil du have os til at ordne det? →"
-            : "Prøv vores fulde service →"}
+            ? "Se hvordan du kan spare mere →"
+            : "Tjek om du har skjulte abonnementer →"}
         </a>
         <p style="color:#9ca3af;font-size:13px;margin-top:12px;">
-          Forbind din bank og vi finder ALT — på 5 minutter.
+          Forbind din bank og find ALT — på 5 minutter.
         </p>
       </div>
     </div>

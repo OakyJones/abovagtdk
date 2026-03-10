@@ -107,7 +107,7 @@ export default function StepResult({
           size={120}
           speechBubble={
             grandTotalYearly > 0
-              ? `Jeg fandt ${grandTotalYearly.toLocaleString("da-DK")} kr du kan spare!`
+              ? `Du kan spare ${grandTotalYearly.toLocaleString("da-DK")} kr om året!`
               : "Flot — du bruger dine abonnementer godt!"
           }
           className="mb-4"
@@ -386,7 +386,7 @@ export default function StepResult({
               Gør det selv
             </h3>
             <p className="text-gray-500 text-sm mb-6 flex-1">
-              Du har nu listen over abonnementer du kan spare. Find selv
+              Du har nu dit overblik over abonnementer du kan spare på. Find
               opsigelsesinfo og send mails manuelt.
             </p>
             <a
@@ -412,8 +412,8 @@ export default function StepResult({
               Fix det for mig
             </h3>
             <p className="text-gray-600 text-sm mb-4 flex-1">
-              Vi forbinder til din bank, finder alle abonnementer automatisk, og
-              laver færdige opsigelsesmails du bare sender.
+              Forbind din bank, find alle abonnementer automatisk, og få
+              færdige opsigelsesmails du bare sender.
             </p>
             {grandTotalYearly > 0 && (
               <p className="text-sm text-[#1B7A6E] font-medium mb-4">

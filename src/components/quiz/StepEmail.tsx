@@ -36,7 +36,7 @@ export default function StepEmail({ onNext }: Props) {
           Indtast din email for at gemme dit resultat
         </h1>
         <p className="mt-3 text-gray-600">
-          Vi sender dit resultat til din inbox. 100% gratis, ingen spam.
+          Dit resultat sendes til din inbox. 100% gratis, ingen spam.
         </p>
       </div>
 

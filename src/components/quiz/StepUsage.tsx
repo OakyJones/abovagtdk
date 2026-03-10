@@ -87,8 +87,8 @@ export default function StepUsage({
           size={80}
           speechBubble={
             wastingCount > 0
-              ? `${wastingCount} abonnement${wastingCount !== 1 ? "er" : ""} ser mistænkeligt ud!`
-              : "Vær ærlig — det er her jeg finder besparelserne!"
+              ? `Du har ${wastingCount} abonnement${wastingCount !== 1 ? "er" : ""} der ser mistænkelig${wastingCount !== 1 ? "e" : "t"} ud!`
+              : "Vær ærlig — det er her besparelserne gemmer sig!"
           }
           className="mb-3"
         />
