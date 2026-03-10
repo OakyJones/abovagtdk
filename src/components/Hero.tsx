@@ -120,7 +120,7 @@ export default function Hero() {
               <span className="ml-1">&rarr;</span>
             </a>
             <p className="mt-3 text-center text-xs text-gray-500">
-              Engangsbetaling: 25% af besparelsen
+              Engangsbetaling: 25% af besparelsen — maks 149 kr
             </p>
           </div>
         </div>

@@ -11,7 +11,7 @@ const faqs = [
   {
     question: "Hvad er forskellen på quiz og fuld service?",
     answer:
-      "Quizzen giver dig et estimat baseret på dine svar. Fuld service forbinder til din bank via Tink, finder alle dine faktiske abonnementer automatisk, og genererer færdige opsigelsesmails. Du betaler en engangsbetaling på 25% af besparelsen — ingen løbende udgifter.",
+      "Quizzen giver dig et estimat baseret på dine svar. Fuld service forbinder til din bank via Tink, finder alle dine faktiske abonnementer automatisk, og genererer færdige opsigelsesmails. Du betaler en engangsbetaling på 25% af besparelsen — maks 149 kr, ingen løbende udgifter.",
   },
   {
     question: "Er det sikkert at forbinde min bank?",
@@ -24,9 +24,9 @@ const faqs = [
       "Nej, aldrig. Vi genererer færdige opsigelsesmails, men du trykker selv send. Du er altid i fuld kontrol over dine abonnementer. Vi handler aldrig uden din godkendelse.",
   },
   {
-    question: "Hvornår skal jeg betale engangsbetalingen på 25%?",
+    question: "Hvornår skal jeg betale engangsbetalingen?",
     answer:
-      "Kun når du faktisk sparer penge. Du betaler 25% af din månedlige besparelse som en engangsbetaling — ikke hver måned, bare én gang. Ingen besparelse = ingen betaling.",
+      "Kun når du faktisk sparer penge. Du betaler 25% af din månedlige besparelse som en engangsbetaling — maks 149 kr. Sparer du fx 200 kr/md, betaler du 50 kr. Sparer du 800 kr/md, betaler du 149 kr (maks). Ingen besparelse = ingen betaling.",
   },
   {
     question: "Hvad er AboVagt Monitoring?",

@@ -760,7 +760,7 @@ function DashboardContent() {
 
             {/* Pricing CTA */}
             {totalSavings > 0 && (() => {
-              const fee = Math.round(totalSavings * 0.25);
+              const fee = Math.min(Math.round(totalSavings * 0.25), 149);
               const kept = totalSavings - fee;
               return (
                 <div className="relative bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-8 mb-8">
