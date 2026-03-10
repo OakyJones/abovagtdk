@@ -298,7 +298,7 @@ export default async function AdminDashboard() {
                   Mdr. forbrug
                 </th>
                 <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
-                  Besparelse/år
+                  Besparelse
                 </th>
               </tr>
             </thead>
@@ -327,10 +327,10 @@ export default async function AdminDashboard() {
                       {(q.selected_services as string[])?.length || 0}
                     </td>
                     <td className="px-6 py-3 text-right text-gray-900">
-                      {Number(q.estimated_monthly_cost || 0).toLocaleString("da-DK")} kr
+                      {Number(q.estimated_monthly_cost || 0).toLocaleString("da-DK")} kr/md
                     </td>
                     <td className="px-6 py-3 text-right font-semibold text-[#1B7A6E]">
-                      {Number(q.estimated_savings || 0).toLocaleString("da-DK")} kr
+                      {Number(q.estimated_savings || 0).toLocaleString("da-DK")} kr/md
                     </td>
                   </tr>
                 ))
