@@ -62,7 +62,6 @@ export default function QuizPage() {
         ...selectedServices,
         ...customServices.map((c) => c.name),
       ];
-      const yearlySavings = monthlySavings * 12;
 
       try {
         // Try with user_actions, fall back without if column doesn't exist yet
@@ -75,7 +74,7 @@ export default function QuizPage() {
             selected_plans: selectedPlans,
             usage_frequency: usageFrequency,
             estimated_monthly_cost: monthlyCost,
-            estimated_savings: yearlySavings,
+            estimated_savings: monthlySavings,
             converted_to_scan: false,
             user_actions: userActions,
           })
@@ -92,7 +91,7 @@ export default function QuizPage() {
               selected_plans: selectedPlans,
               usage_frequency: usageFrequency,
               estimated_monthly_cost: monthlyCost,
-              estimated_savings: yearlySavings,
+              estimated_savings: monthlySavings,
               converted_to_scan: false,
             })
             .select("id")
@@ -151,11 +150,6 @@ export default function QuizPage() {
               };
             });
 
-          const downgradeSavingsTotal = downgradeSuggestions.reduce(
-            (sum, d) => sum + d.savingsPerMonth * 12,
-            0
-          );
-
           await fetch("/api/quiz-result-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -166,7 +160,7 @@ export default function QuizPage() {
               totalServices: allServices.length,
               totalMonthly: monthlyCost,
               totalYearly: monthlyCost * 12,
-              yearlySavings: yearlySavings + downgradeSavingsTotal,
+              yearlySavings: monthlySavings * 12,
               wastedServices: wastedDetails,
               downgradeSuggestions,
             }),

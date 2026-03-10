@@ -184,12 +184,12 @@ export const services: Service[] = [
   { id: "geforce-now", name: "GeForce NOW", category: "gaming", monthlyPrice: 99, cancellation: "løbende", icon: "💚" },
 
   // MADLEVERING & BOKSE
-  { id: "hellofresh", name: "HelloFresh", category: "food", monthlyPrice: 1596, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🥗" },
+  { id: "hellofresh", name: "HelloFresh", category: "food", monthlyPrice: 1728, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🥗" },
   { id: "goodiebox", name: "Goodiebox", category: "food", monthlyPrice: 249, cancellation: "løbende", icon: "🎁" },
-  { id: "simplecook", name: "SimpleCook", category: "food", monthlyPrice: 1396, priceNote: "349 kr/uge", cancellation: "løbende", icon: "🍳" },
-  { id: "retnemt", name: "RetNemt", category: "food", monthlyPrice: 1596, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🍱" },
-  { id: "aarstiderne", name: "Aarstiderne", category: "food", monthlyPrice: 1596, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🌿" },
-  { id: "greenmeal", name: "GreenMeal", category: "food", monthlyPrice: 1396, priceNote: "349 kr/uge", cancellation: "løbende", icon: "🥬" },
+  { id: "simplecook", name: "SimpleCook", category: "food", monthlyPrice: 1511, priceNote: "349 kr/uge", cancellation: "løbende", icon: "🍳" },
+  { id: "retnemt", name: "RetNemt", category: "food", monthlyPrice: 1728, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🍱" },
+  { id: "aarstiderne", name: "Aarstiderne", category: "food", monthlyPrice: 1728, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🌿" },
+  { id: "greenmeal", name: "GreenMeal", category: "food", monthlyPrice: 1511, priceNote: "349 kr/uge", cancellation: "løbende", icon: "🥬" },
 
   // AVISER & MAGASINER
   { id: "politiken", name: "Politiken", category: "news", monthlyPrice: 199, cancellation: "1 md opsigelse", icon: "📰" },

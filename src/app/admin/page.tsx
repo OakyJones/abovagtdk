@@ -110,8 +110,8 @@ export default async function AdminDashboard() {
     { label: "Emails indsamlet", value: stats.totalEmails, color: "text-blue-600" },
     { label: "Konvertering → bank", value: `${stats.conversionRate}%`, color: "text-orange-600" },
     {
-      label: "Samlet besparelse fundet",
-      value: `${stats.totalSavings.toLocaleString("da-DK")} kr/md`,
+      label: "Gns. besparelse/quiz",
+      value: `${stats.totalQuiz > 0 ? Math.round(stats.totalSavings / stats.totalQuiz).toLocaleString("da-DK") : 0} kr/md`,
       color: "text-[#1B7A6E]",
     },
   ];
