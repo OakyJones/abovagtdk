@@ -66,10 +66,19 @@ export async function POST(req: NextRequest) {
       paymentIntentId: paymentIntent.id,
       reservedAmount: MAX_FEE_DKK,
     });
-  } catch (error) {
-    console.error("Stripe PaymentIntent error:", error);
+  } catch (error: unknown) {
+    const err = error as { type?: string; message?: string; code?: string; statusCode?: number };
+    console.error("Stripe PaymentIntent error:", {
+      type: err.type,
+      message: err.message,
+      code: err.code,
+      statusCode: err.statusCode,
+    });
     return NextResponse.json(
-      { error: "Kunne ikke oprette betaling" },
+      {
+        error: "Kunne ikke oprette betaling",
+        detail: err.message || "Ukendt fejl",
+      },
       { status: 500 }
     );
   }

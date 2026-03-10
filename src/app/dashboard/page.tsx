@@ -250,7 +250,7 @@ function DashboardContent() {
 
       const data = await res.json();
       if (!res.ok) {
-        setPaymentError(data.error || "Kunne ikke oprette betaling");
+        setPaymentError(data.detail ? `${data.error}: ${data.detail}` : data.error || "Kunne ikke oprette betaling");
         setPaymentLoading(false);
         return;
       }
