@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { getDelegatedToken, getTransactions, getAccounts } from "@/lib/tink";
+import { getDelegatedToken, getUserToken, getTransactions, getAccounts } from "@/lib/tink";
 import { scanTransactions } from "@/lib/subscription-scanner";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, credentialsId } = await req.json();
+    const { userId, credentialsId, code } = await req.json();
 
     if (!userId) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 });
@@ -22,8 +22,13 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Get delegated user token
-    const userToken = await getDelegatedToken(userId);
+    // Get user token — use code from Tink Link callback if available, otherwise try delegation
+    let userToken: string;
+    if (code) {
+      userToken = await getUserToken(code);
+    } else {
+      userToken = await getDelegatedToken(userId);
+    }
 
     // Fetch accounts
     const accounts = await getAccounts(userToken);

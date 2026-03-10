@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { createTinkUser, getAuthorizationCode, buildTinkLinkUrl } from "@/lib/tink";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
 
-    if (!process.env.TINK_CLIENT_ID || !process.env.TINK_CLIENT_SECRET) {
+    if (!process.env.TINK_CLIENT_ID) {
       return NextResponse.json(
         { error: "Tink is not configured" },
         { status: 503 }
@@ -21,10 +20,10 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Get user email for external_user_id
+    // Verify user exists
     const { data: user } = await supabase
       .from("users")
-      .select("id, email")
+      .select("id")
       .eq("id", userId)
       .single();
 
@@ -32,27 +31,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Create Tink user (or get existing)
-    try {
-      const tinkUserId = await createTinkUser(user.id);
-      console.log("Tink user created/found:", tinkUserId, "external_user_id:", user.id);
-    } catch (createErr) {
-      console.log("Tink user create note:", createErr);
-      // User might already exist, continue
-    }
+    // Build Tink Link URL without authorization_code
+    // Tink Link will create a temporary user and return credentialsId + code on callback
+    const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://abovagt.dk"}/api/tink/callback?userId=${userId}`;
 
-    // Get authorization code
-    const authCode = await getAuthorizationCode(user.id);
-    console.log("Tink auth code obtained for user:", user.id);
-
-    // Build Tink Link URL
-    const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://abovagt.dk"}/api/tink/callback`;
-
-    const tinkLinkUrl = buildTinkLinkUrl({
-      clientId: process.env.TINK_CLIENT_ID,
-      redirectUri: callbackUrl,
-      authorizationCode: authCode,
+    const params = new URLSearchParams({
+      client_id: process.env.TINK_CLIENT_ID,
+      redirect_uri: callbackUrl,
+      market: "DK",
+      locale: "da_DK",
     });
+
+    const tinkLinkUrl = `https://link.tink.com/1.0/transactions/connect-accounts/?${params.toString()}`;
 
     return NextResponse.json({ url: tinkLinkUrl });
   } catch (error) {

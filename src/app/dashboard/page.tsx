@@ -29,6 +29,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const connected = searchParams.get("connected") === "true";
   const credentialsId = searchParams.get("credentialsId");
+  const tinkCode = searchParams.get("code");
   const error = searchParams.get("error");
 
   const [step, setStep] = useState<"connect" | "scanning" | "results">(
@@ -95,7 +96,7 @@ function DashboardContent() {
       const res = await fetch("/api/tink/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, credentialsId }),
+        body: JSON.stringify({ userId, credentialsId, code: tinkCode }),
       });
 
       const data = await res.json();

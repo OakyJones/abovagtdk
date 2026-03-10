@@ -5,10 +5,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const credentialsId = req.nextUrl.searchParams.get("credentialsId");
+  const code = req.nextUrl.searchParams.get("code");
+  const userId = req.nextUrl.searchParams.get("userId");
   const error = req.nextUrl.searchParams.get("error");
 
   if (error) {
-    // Redirect to dashboard with error
     return NextResponse.redirect(
       new URL(`/dashboard?error=${encodeURIComponent(error)}`, req.url)
     );
@@ -20,17 +21,36 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Store the credentials ID in a cookie so the dashboard can use it
-  // The actual scanning happens when the user loads the dashboard
-  const response = NextResponse.redirect(
-    new URL(`/dashboard?connected=true&credentialsId=${credentialsId}`, req.url)
-  );
+  // Save the Tink code and credentialsId for later use (scanning)
+  if (userId && code) {
+    try {
+      const supabase = getSupabaseAdmin();
+      // Store Tink connection info on the user
+      await supabase
+        .from("users")
+        .update({
+          tink_code: code,
+          tink_credentials_id: credentialsId,
+        })
+        .eq("id", userId);
+    } catch (e) {
+      console.error("Failed to save Tink data:", e);
+      // Continue anyway — we pass credentialsId via URL
+    }
+  }
+
+  const dashboardUrl = new URL("/dashboard", req.url);
+  dashboardUrl.searchParams.set("connected", "true");
+  dashboardUrl.searchParams.set("credentialsId", credentialsId);
+  if (code) dashboardUrl.searchParams.set("code", code);
+
+  const response = NextResponse.redirect(dashboardUrl);
 
   response.cookies.set("tink_credentials_id", credentialsId, {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
-    maxAge: 60 * 60, // 1 hour
+    maxAge: 60 * 60,
     path: "/",
   });
 
