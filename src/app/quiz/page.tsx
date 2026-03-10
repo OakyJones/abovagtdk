@@ -83,6 +83,13 @@ export default function QuizPage() {
         }
 
         if (quizResult) {
+          const frequencyLabelMap: Record<string, string> = {
+            daily: "Dagligt",
+            weekly: "Ugentligt",
+            rarely: "Sjældent",
+            never: "Aldrig",
+          };
+
           const wastedNames = allServices.filter(
             (id) =>
               usageFrequency[id] === "rarely" ||
@@ -95,19 +102,44 @@ export default function QuizPage() {
               price: svc?.monthlyPrice ||
                 customServices.find((c) => c.name === id)?.price ||
                 0,
+              frequency: frequencyLabelMap[usageFrequency[id]] || "Ukendt",
             };
           });
 
-          await fetch("/api/send-result-email", {
+          // Downgrade suggestions: services used daily/weekly with downgrade options
+          const downgradeSuggestions = services
+            .filter(
+              (s) =>
+                selectedServices.includes(s.id) &&
+                s.downgrade &&
+                (usageFrequency[s.id] === "daily" ||
+                  usageFrequency[s.id] === "weekly")
+            )
+            .map((s) => ({
+              name: s.name,
+              fromLabel: s.downgrade!.fromLabel,
+              toLabel: s.downgrade!.toLabel,
+              savingsPerMonth: s.downgrade!.savingsPerMonth,
+            }));
+
+          const downgradeSavingsTotal = downgradeSuggestions.reduce(
+            (sum, d) => sum + d.savingsPerMonth * 12,
+            0
+          );
+
+          await fetch("/api/quiz-result-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               email,
+              userId,
               quizResultId: quizResult.id,
+              totalServices: allServices.length,
               totalMonthly: monthlyCost,
               totalYearly: monthlyCost * 12,
-              yearlySavings,
+              yearlySavings: yearlySavings + downgradeSavingsTotal,
               wastedServices: wastedDetails,
+              downgradeSuggestions,
             }),
           });
         }
