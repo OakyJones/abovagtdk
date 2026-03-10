@@ -495,6 +495,9 @@ export default function StepResult({
         <p className="mt-4 text-center text-xs text-gray-500">
           Ingen binding. Ingen skjulte gebyrer. Du betaler kun en gang.
         </p>
+        <p className="mt-2 text-center text-xs text-gray-400">
+          Tilvalg: AboVagt Monitoring for 15 kr/md — kvartalsvis scanning og besked ved nye abonnementer.
+        </p>
       </div>
 
       {/* Back */}

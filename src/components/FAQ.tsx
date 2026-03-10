@@ -29,6 +29,11 @@ const faqs = [
       "Kun når du faktisk sparer penge. Du betaler 25% af din månedlige besparelse som en engangsbetaling — ikke hver måned, bare én gang. Ingen besparelse = ingen betaling.",
   },
   {
+    question: "Hvad er AboVagt Monitoring?",
+    answer:
+      "Monitoring er et tilvalg til 15 kr/md. Vi scanner dine transaktioner kvartalsvis (hver 3. måned) og giver dig besked hvis der dukker nye abonnementer op, eller hvis dine eksisterende ændrer pris. Du kan opsige monitoring når som helst.",
+  },
+  {
     question: "Hvad sker der med mine data?",
     answer:
       "Dine data behandles i EU i fuld overensstemmelse med GDPR. Vi sælger aldrig dine oplysninger til tredjepart. Du kan til enhver tid bede om at få alle dine data slettet.",

@@ -91,6 +91,7 @@ export default function Hero() {
                 "Vi laver færdige opsigelsesmails — du trykker send",
                 "På kun 5 minutter",
                 "Du betaler kun en engangsbetaling når du sparer penge",
+                "Tilvalg: Monitoring for kun 15 kr/md med kvartalsvis scanning",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <svg
