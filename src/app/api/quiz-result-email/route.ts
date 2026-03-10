@@ -66,7 +66,6 @@ export async function POST(req: NextRequest) {
             </td>
             <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6;text-align:right;">
               <span style="font-weight:700;color:#dc2626;">${s.price} kr/md</span>
-              <br><span style="font-size:12px;color:#9ca3af;">${(s.price * 12).toLocaleString("da-DK")} kr/år</span>
             </td>
           </tr>`
       )
@@ -82,7 +81,6 @@ export async function POST(req: NextRequest) {
             </td>
             <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6;text-align:right;">
               <span style="font-weight:700;color:#1B7A6E;">Spar ${d.savingsPerMonth} kr/md</span>
-              <br><span style="font-size:12px;color:#9ca3af;">${(d.savingsPerMonth * 12).toLocaleString("da-DK")} kr/år</span>
             </td>
           </tr>`
       )
@@ -128,12 +126,12 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="width:${hasWaste || hasDowngrades ? "33%" : "50%"};padding:12px;text-align:center;background:#f9fafb;border-radius:12px;">
             <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Månedligt forbrug</p>
-            <p style="font-size:22px;font-weight:700;color:#111;margin:0;">${totalMonthly.toLocaleString("da-DK")} kr</p>
+            <p style="font-size:22px;font-weight:700;color:#111;margin:0;">${totalMonthly.toLocaleString("da-DK")} kr/md</p>
           </td>
           <td style="width:8px;"></td>
           <td style="width:${hasWaste || hasDowngrades ? "33%" : "50%"};padding:12px;text-align:center;background:#f9fafb;border-radius:12px;">
             <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Årligt forbrug</p>
-            <p style="font-size:22px;font-weight:700;color:#111;margin:0;">${totalYearly.toLocaleString("da-DK")} kr</p>
+            <p style="font-size:22px;font-weight:700;color:#111;margin:0;">${totalYearly.toLocaleString("da-DK")} kr/år</p>
           </td>
           ${
             hasWaste || hasDowngrades
@@ -141,7 +139,7 @@ export async function POST(req: NextRequest) {
           <td style="width:8px;"></td>
           <td style="width:33%;padding:12px;text-align:center;background:#ecfdf5;border-radius:12px;border:2px solid #1B7A6E;">
             <p style="color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Mulig besparelse</p>
-            <p style="font-size:22px;font-weight:700;color:#1B7A6E;margin:0;">${yearlySavings.toLocaleString("da-DK")} kr/år</p>
+            <p style="font-size:22px;font-weight:700;color:#1B7A6E;margin:0;">${totalSavingsMonthly.toLocaleString("da-DK")} kr/md</p>
           </td>
           `
               : ""
@@ -154,7 +152,7 @@ export async function POST(req: NextRequest) {
           ? `
       <!-- Wasted subscriptions -->
       <h2 style="font-size:16px;color:#111;margin:0 0 4px;">Abonnementer du bruger sjældent eller aldrig</h2>
-      <p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Estimeret besparelse: ${wastedMonthly.toLocaleString("da-DK")} kr/md (${(wastedMonthly * 12).toLocaleString("da-DK")} kr/år)</p>
+      <p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Estimeret besparelse: ${wastedMonthly.toLocaleString("da-DK")} kr/md</p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px;background:#fef2f2;border-radius:12px;overflow:hidden;">
         <tr style="background:#fde8e8;">
           <td style="padding:8px 16px;font-size:12px;font-weight:600;color:#991b1b;">Abonnement</td>
@@ -201,8 +199,7 @@ export async function POST(req: NextRequest) {
       <!-- Savings summary -->
       <div style="background:#1C2B2A;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
         <p style="color:rgba(255,255,255,0.6);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Din mulige besparelse</p>
-        <p style="font-size:32px;font-weight:700;color:#4ECDC4;margin:0;">${yearlySavings.toLocaleString("da-DK")} kr/år</p>
-        <p style="color:rgba(255,255,255,0.6);font-size:13px;margin:8px 0 0;">(${totalSavingsMonthly.toLocaleString("da-DK")} kr/md)</p>
+        <p style="font-size:32px;font-weight:700;color:#4ECDC4;margin:0;">${totalSavingsMonthly.toLocaleString("da-DK")} kr/md</p>
       </div>
       `
           : ""

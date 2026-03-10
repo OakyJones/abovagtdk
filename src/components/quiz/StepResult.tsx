@@ -68,9 +68,7 @@ export default function StepResult({
   );
 
   const totalMonthlySavings = monthlySavings + customWaste;
-  const totalYearlySavings = totalMonthlySavings * 12;
-  const totalDowngradeYearly = downgradeSavings * 12;
-  const grandTotalYearly = totalYearlySavings + totalDowngradeYearly;
+  const grandTotalMonthly = totalMonthlySavings + downgradeSavings;
 
   // Track user actions per service
   const [actions, setActions] = useState<Record<string, ActionType>>({});
@@ -80,7 +78,7 @@ export default function StepResult({
   };
 
   useEffect(() => {
-    onSave(totalMonthly, totalMonthlySavings + downgradeSavings);
+    onSave(totalMonthly, grandTotalMonthly);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allWasted = [
@@ -118,8 +116,8 @@ export default function StepResult({
           pose="waving"
           size={120}
           speechBubble={
-            grandTotalYearly > 0
-              ? `Du kan spare ${grandTotalYearly.toLocaleString("da-DK")} kr om året!`
+            grandTotalMonthly > 0
+              ? `Du kan spare ${grandTotalMonthly.toLocaleString("da-DK")} kr/md!`
               : "Flot — du bruger dine abonnementer godt!"
           }
           className="mb-4"
@@ -137,20 +135,18 @@ export default function StepResult({
         <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Månedligt forbrug</p>
           <p className="text-3xl font-bold text-[#1C2B2A]">
-            {totalMonthly.toLocaleString("da-DK")} kr
+            {totalMonthly.toLocaleString("da-DK")} kr/md
           </p>
-          <p className="text-sm text-gray-500">pr. måned</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Årligt forbrug</p>
           <p className="text-3xl font-bold text-[#1C2B2A]">
-            {(totalMonthly * 12).toLocaleString("da-DK")} kr
+            {(totalMonthly * 12).toLocaleString("da-DK")} kr/år
           </p>
-          <p className="text-sm text-gray-500">pr. år</p>
         </div>
         <div
           className={`rounded-2xl border-2 p-5 text-center ${
-            grandTotalYearly > 0
+            grandTotalMonthly > 0
               ? "bg-teal-50 border-[#1B7A6E]"
               : "bg-white border-gray-200"
           }`}
@@ -158,12 +154,11 @@ export default function StepResult({
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Mulig besparelse</p>
           <p
             className={`text-3xl font-bold ${
-              grandTotalYearly > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"
+              grandTotalMonthly > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"
             }`}
           >
-            {grandTotalYearly.toLocaleString("da-DK")} kr
+            {grandTotalMonthly.toLocaleString("da-DK")} kr/md
           </p>
-          <p className="text-sm text-gray-500">pr. år</p>
         </div>
       </div>
 
@@ -199,9 +194,6 @@ export default function StepResult({
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-[#1C2B2A]">{item.priceLabel}</p>
-                        <p className="text-xs text-gray-500">
-                          {(item.price * 12).toLocaleString("da-DK")} kr/år
-                        </p>
                       </div>
                     </div>
 
@@ -253,9 +245,6 @@ export default function StepResult({
                           <span className="font-medium">{item.name} {item.downgrade.toLabel}</span>
                           {" — spar "}
                           <span className="font-bold">{item.downgrade.savingsPerMonth} kr/md</span>
-                          {" ("}
-                          {(item.downgrade.savingsPerMonth * 12).toLocaleString("da-DK")}
-                          {" kr/år)"}
                         </p>
                       </div>
                     )}
@@ -364,26 +353,26 @@ export default function StepResult({
       )}
 
       {/* Savings summary */}
-      {grandTotalYearly > 0 && (
+      {grandTotalMonthly > 0 && (
         <div className="bg-[#1C2B2A] text-white rounded-2xl p-6 mb-8">
           <h3 className="text-lg font-bold mb-4 text-center">Din samlede besparelse</h3>
           <div className="grid grid-cols-2 gap-4">
             {totalMonthlySavings > 0 && (
               <div className="text-center">
                 <p className="text-xs text-white/60 uppercase tracking-wider">Opsigelser</p>
-                <p className="text-2xl font-bold text-white">{totalYearlySavings.toLocaleString("da-DK")} kr/år</p>
+                <p className="text-2xl font-bold text-white">{totalMonthlySavings.toLocaleString("da-DK")} kr/md</p>
               </div>
             )}
             {downgradeSavings > 0 && (
               <div className="text-center">
                 <p className="text-xs text-white/60 uppercase tracking-wider">Nedgraderinger</p>
-                <p className="text-2xl font-bold text-[#4ECDC4]">{totalDowngradeYearly.toLocaleString("da-DK")} kr/år</p>
+                <p className="text-2xl font-bold text-[#4ECDC4]">{downgradeSavings.toLocaleString("da-DK")} kr/md</p>
               </div>
             )}
           </div>
           <div className="border-t border-white/20 mt-4 pt-4 text-center">
             <p className="text-xs text-white/60 uppercase tracking-wider">I alt mulig besparelse</p>
-            <p className="text-4xl font-bold text-[#4ECDC4]">{grandTotalYearly.toLocaleString("da-DK")} kr/år</p>
+            <p className="text-4xl font-bold text-[#4ECDC4]">{grandTotalMonthly.toLocaleString("da-DK")} kr/md</p>
           </div>
         </div>
       )}
@@ -432,11 +421,11 @@ export default function StepResult({
               Forbind din bank, find alle abonnementer automatisk, og få
               færdige opsigelsesmails du bare sender.
             </p>
-            {grandTotalYearly > 0 && (
+            {grandTotalMonthly > 0 && (
               <p className="text-sm text-[#1B7A6E] font-medium mb-4">
                 Pris:{" "}
-                {Math.round(grandTotalYearly * 0.25).toLocaleString("da-DK")}{" "}
-                kr (25% af {grandTotalYearly.toLocaleString("da-DK")} kr
+                {Math.round(grandTotalMonthly * 0.25).toLocaleString("da-DK")}{" "}
+                kr/md (25% af {grandTotalMonthly.toLocaleString("da-DK")} kr/md
                 besparelse)
               </p>
             )}
