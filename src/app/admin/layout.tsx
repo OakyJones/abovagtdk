@@ -7,6 +7,7 @@ const navItems = [
   { label: "Dashboard", href: "/admin" },
   { label: "Brugere", href: "/admin/users" },
   { label: "Emails", href: "/admin/emails" },
+  { label: "Indbakke", href: "/admin/inbox" },
   { label: "Forslag", href: "/admin/suggestions" },
 ];
 
