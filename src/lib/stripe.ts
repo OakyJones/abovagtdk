@@ -5,5 +5,6 @@ export function getStripe(): Stripe {
     apiVersion: "2026-02-25.clover",
     maxNetworkRetries: 3,
     timeout: 20000,
+    httpClient: Stripe.createFetchHttpClient(),
   });
 }

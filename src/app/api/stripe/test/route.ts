@@ -21,6 +21,7 @@ export async function GET() {
     const stripe = new Stripe(key, {
       maxNetworkRetries: 2,
       timeout: 15000,
+      httpClient: Stripe.createFetchHttpClient(),
     });
     const balance = await stripe.balance.retrieve();
     info.connection = "OK";
@@ -39,6 +40,7 @@ export async function GET() {
       apiVersion: "2026-02-25.clover" as unknown as Stripe.LatestApiVersion,
       maxNetworkRetries: 2,
       timeout: 15000,
+      httpClient: Stripe.createFetchHttpClient(),
     });
     const balance2 = await stripe2.balance.retrieve();
     info.connectionWithApiVersion = "OK";
