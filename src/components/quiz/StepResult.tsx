@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   services,
+  Service,
   UsageFrequency,
   frequencyLabels,
-  formatPrice,
-  getEstimatedSavings,
   getCancellationDate,
   getEffectivePrice,
   getSelectedTierLabel,
   getTierDowngrade,
+  getLowerTiers,
 } from "@/lib/services";
 import Inspektoeren from "@/components/Inspektoeren";
 
@@ -20,10 +20,27 @@ interface Props {
   customServices: { name: string; price: number }[];
   usageFrequency: Record<string, UsageFrequency>;
   onBack: () => void;
-  onSave: (monthlyCost: number, monthlySavings: number) => void;
+  onSave: (
+    monthlyCost: number,
+    monthlySavings: number,
+    userActions: Record<string, { action: string; downgradeToTier?: string }>
+  ) => void;
 }
 
-type ActionType = "cancel" | "downgrade" | "keep";
+type ActionType = "keep" | "downgrade" | "cancel";
+
+interface ServiceItem {
+  id: string;
+  name: string;
+  icon: string;
+  price: number;
+  freq: UsageFrequency;
+  cancellation: string;
+  isCustom: boolean;
+  service?: Service;
+  lowerTiers: { tierId: string; label: string; price: number; savingsPerMonth: number }[];
+  legacyDowngrade?: { fromLabel: string; toLabel: string; savingsPerMonth: number };
+}
 
 export default function StepResult({
   selectedServices,
@@ -33,91 +50,127 @@ export default function StepResult({
   onBack,
   onSave,
 }: Props) {
-  const selectedServiceObjects = services.filter((s) =>
-    selectedServices.includes(s.id)
-  );
-
-  const totalMonthly =
-    selectedServiceObjects.reduce((sum, s) => sum + getEffectivePrice(s, selectedPlans), 0) +
-    customServices.reduce((sum, c) => sum + c.price, 0);
-
-  const { monthlySavings, wastedServices } = getEstimatedSavings(
-    selectedServices,
-    usageFrequency,
-    selectedPlans
-  );
-
-  const wastedCustom = customServices.filter(
-    (c) =>
-      usageFrequency[c.name] === "rarely" ||
-      usageFrequency[c.name] === "never"
-  );
-  const customWaste = wastedCustom.reduce((sum, c) => sum + c.price, 0);
-
-  // Downgrade candidates: services used daily/weekly that have a downgrade path
-  const downgradeServices = selectedServiceObjects.filter((s) => {
-    const downgrade = getTierDowngrade(s, selectedPlans);
-    return (
-      downgrade &&
-      (usageFrequency[s.id] === "daily" || usageFrequency[s.id] === "weekly")
-    );
-  });
-  const downgradeSavings = downgradeServices.reduce(
-    (sum, s) => sum + (getTierDowngrade(s, selectedPlans)?.savingsPerMonth || 0),
-    0
-  );
-
-  const totalMonthlySavings = monthlySavings + customWaste;
-  const grandTotalMonthly = totalMonthlySavings + downgradeSavings;
-
-  // Track user actions per service
   const [actions, setActions] = useState<Record<string, ActionType>>({});
+  const [downgradeTargets, setDowngradeTargets] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState(false);
+
+  // Build unified list of all services
+  const allItems: ServiceItem[] = useMemo(() => {
+    const known = services
+      .filter((s) => selectedServices.includes(s.id))
+      .map((s) => {
+        const price = getEffectivePrice(s, selectedPlans);
+        const tierLabel = getSelectedTierLabel(s, selectedPlans);
+        const lowerTiers = getLowerTiers(s, selectedPlans);
+        const legacyDowngrade = !s.tiers ? getTierDowngrade(s, selectedPlans) || undefined : undefined;
+        return {
+          id: s.id,
+          name: tierLabel ? `${s.name} (${tierLabel})` : s.name,
+          icon: s.icon,
+          price,
+          freq: usageFrequency[s.id],
+          cancellation: s.cancellation,
+          isCustom: false,
+          service: s,
+          lowerTiers,
+          legacyDowngrade,
+        };
+      });
+
+    const custom = customServices.map((c) => ({
+      id: c.name,
+      name: c.name,
+      icon: "📦",
+      price: c.price,
+      freq: usageFrequency[c.name],
+      cancellation: "løbende",
+      isCustom: true,
+      service: undefined,
+      lowerTiers: [],
+      legacyDowngrade: undefined,
+    }));
+
+    return [...known, ...custom];
+  }, [selectedServices, selectedPlans, customServices, usageFrequency]);
+
+  // Initialize all actions to "keep"
+  useEffect(() => {
+    const initial: Record<string, ActionType> = {};
+    allItems.forEach((item) => {
+      if (!actions[item.id]) initial[item.id] = "keep";
+    });
+    if (Object.keys(initial).length > 0) {
+      setActions((prev) => ({ ...initial, ...prev }));
+    }
+  }, [allItems]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const totalMonthly = allItems.reduce((sum, item) => sum + item.price, 0);
+
+  // Calculate dynamic savings based on user choices
+  const cancelledItems = allItems.filter((item) => actions[item.id] === "cancel");
+  const downgradedItems = allItems.filter((item) => actions[item.id] === "downgrade");
+
+  const cancelSavings = cancelledItems.reduce((sum, item) => sum + item.price, 0);
+
+  const downgradeSavings = downgradedItems.reduce((sum, item) => {
+    if (item.lowerTiers.length > 0) {
+      const targetTierId = downgradeTargets[item.id];
+      const target = item.lowerTiers.find((t) => t.tierId === targetTierId);
+      return sum + (target?.savingsPerMonth || item.lowerTiers[0].savingsPerMonth);
+    }
+    if (item.legacyDowngrade) {
+      return sum + item.legacyDowngrade.savingsPerMonth;
+    }
+    return sum;
+  }, 0);
+
+  const totalSavings = cancelSavings + downgradeSavings;
+
+  // Save once when component mounts (and again when actions change via effect)
+  useEffect(() => {
+    if (saved) return;
+    const userActions: Record<string, { action: string; downgradeToTier?: string }> = {};
+    allItems.forEach((item) => {
+      const action = actions[item.id] || "keep";
+      userActions[item.id] = { action };
+      if (action === "downgrade" && downgradeTargets[item.id]) {
+        userActions[item.id].downgradeToTier = downgradeTargets[item.id];
+      }
+    });
+    onSave(totalMonthly, totalSavings, userActions);
+    setSaved(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setAction = (id: string, action: ActionType) => {
     setActions((prev) => ({ ...prev, [id]: action }));
   };
 
-  useEffect(() => {
-    onSave(totalMonthly, grandTotalMonthly);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const setDowngradeTarget = (id: string, tierId: string) => {
+    setDowngradeTargets((prev) => ({ ...prev, [id]: tierId }));
+  };
 
-  const allWasted = [
-    ...wastedServices.map((s) => {
-      const price = getEffectivePrice(s, selectedPlans);
-      const tierLabel = getSelectedTierLabel(s, selectedPlans);
-      return {
-        id: s.id,
-        name: tierLabel ? `${s.name} (${tierLabel})` : s.name,
-        icon: s.icon,
-        price,
-        priceLabel: `${price} kr/md`,
-        freq: usageFrequency[s.id],
-        cancellation: s.cancellation,
-        downgrade: getTierDowngrade(s, selectedPlans),
-      };
-    }),
-    ...wastedCustom.map((c) => ({
-      id: c.name,
-      name: c.name,
-      icon: "📦",
-      price: c.price,
-      priceLabel: `${c.price} kr/md`,
-      freq: usageFrequency[c.name],
-      cancellation: "løbende" as const,
-      downgrade: undefined,
-    })),
-  ];
+  const hasDowngrade = (item: ServiceItem) =>
+    item.lowerTiers.length > 0 || !!item.legacyDowngrade;
+
+  const getDowngradeSavingsForItem = (item: ServiceItem): number => {
+    if (item.lowerTiers.length > 0) {
+      const targetTierId = downgradeTargets[item.id];
+      const target = item.lowerTiers.find((t) => t.tierId === targetTierId);
+      return target?.savingsPerMonth || item.lowerTiers[0].savingsPerMonth;
+    }
+    return item.legacyDowngrade?.savingsPerMonth || 0;
+  };
 
   return (
     <div>
-      {/* Header with Inspektøren */}
+      {/* Header with Inspektoeren */}
       <div className="text-center mb-8 sm:mb-10">
         <Inspektoeren
           pose="waving"
           size={120}
           speechBubble={
-            grandTotalMonthly > 0
-              ? `Du kan spare ${grandTotalMonthly.toLocaleString("da-DK")} kr/md!`
+            totalSavings > 0
+              ? `Du kan spare ${totalSavings.toLocaleString("da-DK")} kr/md!`
               : "Flot — du bruger dine abonnementer godt!"
           }
           className="mb-4"
@@ -126,7 +179,7 @@ export default function StepResult({
           Dit resultat
         </h1>
         <p className="mt-2 text-gray-600 text-sm">
-          Her er en oversigt over dine abonnementer og besparelser
+          Vælg hvad du vil gøre med hvert abonnement
         </p>
       </div>
 
@@ -145,237 +198,252 @@ export default function StepResult({
           </p>
         </div>
         <div
-          className={`rounded-2xl border-2 p-5 text-center ${
-            grandTotalMonthly > 0
+          className={`rounded-2xl border-2 p-5 text-center transition-all ${
+            totalSavings > 0
               ? "bg-teal-50 border-[#1B7A6E]"
               : "bg-white border-gray-200"
           }`}
         >
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Mulig besparelse</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Din besparelse</p>
           <p
             className={`text-3xl font-bold ${
-              grandTotalMonthly > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"
+              totalSavings > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"
             }`}
           >
-            {grandTotalMonthly.toLocaleString("da-DK")} kr/md
+            {totalSavings.toLocaleString("da-DK")} kr/md
           </p>
         </div>
       </div>
 
-      {/* Wasted services — cancel suggestions */}
-      {allWasted.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-[#1C2B2A] mb-1 flex items-center gap-2">
-            <span className="text-red-500">&#x2716;</span> Abonnementer du kan opsige
-          </h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Du bruger disse sjældent eller aldrig — spar {totalMonthlySavings.toLocaleString("da-DK")} kr/md
-          </p>
-          <div className="space-y-3">
-            {allWasted.map((item) => {
-              const action = actions[item.id];
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden"
-                >
-                  <div className="px-5 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{item.icon}</span>
-                        <div>
-                          <p className="font-semibold text-[#1C2B2A]">{item.name}</p>
-                          <p className="text-sm text-gray-500">
-                            Brugt: <span className={`font-medium ${item.freq === "never" ? "text-red-600" : "text-orange-600"}`}>
-                              {frequencyLabels[item.freq]}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-[#1C2B2A]">{item.priceLabel}</p>
-                      </div>
-                    </div>
+      {/* All services with action buttons */}
+      <div className="mb-8">
+        <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">
+          Dine abonnementer
+        </h2>
+        <div className="space-y-3">
+          {allItems.map((item) => {
+            const action = actions[item.id] || "keep";
+            const canDowngrade = hasDowngrade(item);
 
-                    {/* Action chips */}
-                    <div className="flex gap-2 mt-3">
-                      <button
-                        onClick={() => setAction(item.id, "cancel")}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                          action === "cancel"
-                            ? "bg-red-500 text-white border-red-500"
-                            : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                        }`}
-                      >
-                        Opsig
-                      </button>
-                      {item.downgrade && (
-                        <button
-                          onClick={() => setAction(item.id, "downgrade")}
-                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                            action === "downgrade"
-                              ? "bg-[#1B7A6E] text-white border-[#1B7A6E]"
-                              : "bg-teal-50 text-[#1B7A6E] border-teal-200 hover:bg-teal-100"
-                          }`}
-                        >
-                          Nedgrader (spar {item.downgrade.savingsPerMonth} kr/md)
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setAction(item.id, "keep")}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                          action === "keep"
-                            ? "bg-gray-700 text-white border-gray-700"
-                            : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                        }`}
-                      >
-                        Behold
-                      </button>
-                    </div>
-
-                    {/* Downgrade detail */}
-                    {action === "downgrade" && item.downgrade && (
-                      <div className="mt-3 bg-teal-50 rounded-lg px-3 py-2.5 flex items-start gap-2">
-                        <svg className="w-4 h-4 text-[#1B7A6E] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                        <p className="text-sm text-[#1B7A6E]">
-                          <span className="font-medium">{item.name} {item.downgrade.fromLabel}</span>
-                          {" → "}
-                          <span className="font-medium">{item.name} {item.downgrade.toLabel}</span>
-                          {" — spar "}
-                          <span className="font-bold">{item.downgrade.savingsPerMonth} kr/md</span>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Cancellation notice */}
-                  {item.cancellation !== "løbende" && (
-                    <div className="bg-orange-50 border-t border-orange-200 px-5 py-2.5 flex items-center gap-2">
-                      <svg className="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-xs text-orange-700">
-                        <span className="font-semibold">OBS:</span> {item.name} har {item.cancellation} — du sparer fra {getCancellationDate(item.cancellation)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Downgrade suggestions for active services */}
-      {downgradeServices.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-[#1C2B2A] mb-1 flex items-center gap-2">
-            <span className="text-[#1B7A6E]">&#x2193;</span> Nedgraderingsforslag
-          </h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Du bruger disse aktivt — men du kan stadig spare ved at nedgradere
-          </p>
-          <div className="space-y-3">
-            {downgradeServices.map((s) => {
-              const action = actions[s.id];
-              const dg = getTierDowngrade(s, selectedPlans)!;
-              const tierLabel = getSelectedTierLabel(s, selectedPlans);
-              const price = getEffectivePrice(s, selectedPlans);
-              return (
-                <div
-                  key={s.id}
-                  className="bg-white rounded-xl border border-gray-200 px-5 py-4"
-                >
+            return (
+              <div
+                key={item.id}
+                className={`bg-white rounded-xl border overflow-hidden transition-all ${
+                  action === "cancel"
+                    ? "border-red-300"
+                    : action === "downgrade"
+                    ? "border-orange-300"
+                    : "border-gray-200"
+                }`}
+              >
+                <div className="px-5 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">{s.icon}</span>
+                      <span className="text-xl">{item.icon}</span>
                       <div>
-                        <p className="font-semibold text-[#1C2B2A]">
-                          {tierLabel ? `${s.name} (${tierLabel})` : s.name}
+                        <p className={`font-semibold ${action === "cancel" ? "text-gray-400 line-through" : "text-[#1C2B2A]"}`}>
+                          {item.name}
                         </p>
                         <p className="text-sm text-gray-500">
-                          Brugt: <span className="text-green-600 font-medium">{frequencyLabels[usageFrequency[s.id]]}</span>
+                          Brugt:{" "}
+                          <span
+                            className={`font-medium ${
+                              item.freq === "never"
+                                ? "text-red-600"
+                                : item.freq === "rarely"
+                                ? "text-orange-600"
+                                : item.freq === "weekly"
+                                ? "text-blue-600"
+                                : "text-green-600"
+                            }`}
+                          >
+                            {frequencyLabels[item.freq]}
+                          </span>
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-[#1C2B2A]">{price} kr/md</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 bg-teal-50/60 rounded-lg px-4 py-3 border border-teal-100">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-[#1B7A6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                        </svg>
-                        <p className="text-sm text-[#1C2B2A]">
-                          <span className="font-medium">{dg.fromLabel}</span>
-                          {" → "}
-                          <span className="font-semibold text-[#1B7A6E]">{dg.toLabel}</span>
+                      <p className={`font-bold ${action === "cancel" ? "text-gray-400 line-through" : "text-[#1C2B2A]"}`}>
+                        {item.price} kr/md
+                      </p>
+                      {action === "cancel" && (
+                        <p className="text-xs text-red-600 font-medium">
+                          Spar {item.price} kr/md
                         </p>
-                      </div>
-                      <span className="text-sm font-bold text-[#1B7A6E]">
-                        Spar {dg.savingsPerMonth} kr/md
-                      </span>
+                      )}
+                      {action === "downgrade" && (
+                        <p className="text-xs text-orange-600 font-medium">
+                          Spar {getDowngradeSavingsForItem(item)} kr/md
+                        </p>
+                      )}
                     </div>
                   </div>
 
+                  {/* Action buttons */}
                   <div className="flex gap-2 mt-3">
                     <button
-                      onClick={() => setAction(s.id, "downgrade")}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                        action === "downgrade"
-                          ? "bg-[#1B7A6E] text-white border-[#1B7A6E]"
-                          : "bg-teal-50 text-[#1B7A6E] border-teal-200 hover:bg-teal-100"
-                      }`}
-                    >
-                      Nedgrader
-                    </button>
-                    <button
-                      onClick={() => setAction(s.id, "keep")}
+                      onClick={() => setAction(item.id, "keep")}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
                         action === "keep"
                           ? "bg-gray-700 text-white border-gray-700"
                           : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                       }`}
                     >
-                      Behold nuværende
+                      Behold
+                    </button>
+                    {canDowngrade && (
+                      <button
+                        onClick={() => setAction(item.id, "downgrade")}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                          action === "downgrade"
+                            ? "bg-orange-500 text-white border-orange-500"
+                            : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                        }`}
+                      >
+                        Nedgrader
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setAction(item.id, "cancel")}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                        action === "cancel"
+                          ? "bg-red-500 text-white border-red-500"
+                          : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                      }`}
+                    >
+                      Opsig
                     </button>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
-      {/* Savings summary */}
-      {grandTotalMonthly > 0 && (
-        <div className="bg-[#1C2B2A] text-white rounded-2xl p-6 mb-8">
-          <h3 className="text-lg font-bold mb-4 text-center">Din samlede besparelse</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {totalMonthlySavings > 0 && (
-              <div className="text-center">
-                <p className="text-xs text-white/60 uppercase tracking-wider">Opsigelser</p>
-                <p className="text-2xl font-bold text-white">{totalMonthlySavings.toLocaleString("da-DK")} kr/md</p>
+                  {/* Downgrade tier picker */}
+                  {action === "downgrade" && item.lowerTiers.length > 0 && (
+                    <div className="mt-3 bg-orange-50 rounded-lg px-4 py-3 border border-orange-100">
+                      <p className="text-xs text-orange-700 font-semibold mb-2">Vælg billigere plan:</p>
+                      <div className="space-y-1.5">
+                        {item.lowerTiers.map((tier) => {
+                          const isSelected = (downgradeTargets[item.id] || item.lowerTiers[0].tierId) === tier.tierId;
+                          return (
+                            <label
+                              key={tier.tierId}
+                              className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all ${
+                                isSelected
+                                  ? "bg-orange-100 border border-orange-300"
+                                  : "bg-white border border-gray-200 hover:bg-orange-50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`downgrade-${item.id}`}
+                                  checked={isSelected}
+                                  onChange={() => setDowngradeTarget(item.id, tier.tierId)}
+                                  className="w-3.5 h-3.5 text-orange-500 focus:ring-orange-400"
+                                />
+                                <span className="text-sm text-gray-800">
+                                  {item.service?.name} {tier.label}
+                                </span>
+                                <span className="text-xs text-gray-500">{tier.price} kr/md</span>
+                              </div>
+                              <span className="text-xs font-bold text-orange-600">
+                                Spar {tier.savingsPerMonth} kr/md
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Legacy downgrade info (services without tiers, like SATS/Dropbox) */}
+                  {action === "downgrade" && item.lowerTiers.length === 0 && item.legacyDowngrade && (
+                    <div className="mt-3 bg-orange-50 rounded-lg px-3 py-2.5 flex items-start gap-2">
+                      <svg className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      <p className="text-sm text-orange-700">
+                        <span className="font-medium">{item.legacyDowngrade.fromLabel}</span>
+                        {" → "}
+                        <span className="font-medium">{item.legacyDowngrade.toLabel}</span>
+                        {" — spar "}
+                        <span className="font-bold">{item.legacyDowngrade.savingsPerMonth} kr/md</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Cancel info */}
+                  {action === "cancel" && item.cancellation !== "løbende" && (
+                    <div className="mt-3 bg-red-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs text-red-700">
+                        <span className="font-semibold">OBS:</span> {item.service?.name || item.name} har {item.cancellation} — du sparer fra {getCancellationDate(item.cancellation as "løbende" | "1 md opsigelse" | "12 md binding")}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-            {downgradeSavings > 0 && (
-              <div className="text-center">
-                <p className="text-xs text-white/60 uppercase tracking-wider">Nedgraderinger</p>
-                <p className="text-2xl font-bold text-[#4ECDC4]">{downgradeSavings.toLocaleString("da-DK")} kr/md</p>
-              </div>
-            )}
-          </div>
-          <div className="border-t border-white/20 mt-4 pt-4 text-center">
-            <p className="text-xs text-white/60 uppercase tracking-wider">I alt mulig besparelse</p>
-            <p className="text-4xl font-bold text-[#4ECDC4]">{grandTotalMonthly.toLocaleString("da-DK")} kr/md</p>
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
+
+      {/* Dynamic savings summary */}
+      <div className="bg-[#1C2B2A] text-white rounded-2xl p-6 mb-8">
+        <h3 className="text-lg font-bold mb-4 text-center">Din samlede besparelse</h3>
+
+        {cancelledItems.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-white/80">
+                Du sparer <span className="font-bold text-white">{cancelSavings.toLocaleString("da-DK")} kr/md</span> ved at opsige {cancelledItems.length} {cancelledItems.length === 1 ? "abonnement" : "abonnementer"}
+              </p>
+            </div>
+            <div className="mt-1.5 space-y-1">
+              {cancelledItems.map((item) => (
+                <p key={item.id} className="text-xs text-white/50 pl-2">
+                  {item.icon} {item.name}: {item.price} kr/md
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {downgradedItems.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-white/80">
+                Du sparer <span className="font-bold text-[#4ECDC4]">{downgradeSavings.toLocaleString("da-DK")} kr/md</span> ved at nedgradere {downgradedItems.length} {downgradedItems.length === 1 ? "abonnement" : "abonnementer"}
+              </p>
+            </div>
+            <div className="mt-1.5 space-y-1">
+              {downgradedItems.map((item) => (
+                <p key={item.id} className="text-xs text-white/50 pl-2">
+                  {item.icon} {item.name}: spar {getDowngradeSavingsForItem(item)} kr/md
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="border-t border-white/20 mt-4 pt-4 text-center">
+          <p className="text-xs text-white/60 uppercase tracking-wider">Samlet besparelse</p>
+          <p className="text-4xl font-bold text-[#4ECDC4]">
+            {totalSavings.toLocaleString("da-DK")} kr/md
+          </p>
+          {totalSavings > 0 && (
+            <p className="text-sm text-white/50 mt-1">
+              = {(totalSavings * 12).toLocaleString("da-DK")} kr/år
+            </p>
+          )}
+        </div>
+
+        {totalSavings === 0 && (
+          <p className="text-center text-sm text-white/60 mt-2">
+            Vælg &quot;Opsig&quot; eller &quot;Nedgrader&quot; ovenfor for at se din besparelse
+          </p>
+        )}
+      </div>
 
       {/* Two paths */}
       <div className="mb-8">
@@ -421,11 +489,11 @@ export default function StepResult({
               Forbind din bank, find alle abonnementer automatisk, og få
               færdige opsigelsesmails du bare sender.
             </p>
-            {grandTotalMonthly > 0 && (
+            {totalSavings > 0 && (
               <p className="text-sm text-[#1B7A6E] font-medium mb-4">
                 Pris:{" "}
-                {Math.round(grandTotalMonthly * 0.25).toLocaleString("da-DK")}{" "}
-                kr/md (25% af {grandTotalMonthly.toLocaleString("da-DK")} kr/md
+                {Math.round(totalSavings * 0.25).toLocaleString("da-DK")}{" "}
+                kr/md (25% af {totalSavings.toLocaleString("da-DK")} kr/md
                 besparelse)
               </p>
             )}

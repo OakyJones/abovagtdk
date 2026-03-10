@@ -61,7 +61,11 @@ export default function QuizPage() {
   };
 
   const saveResults = useCallback(
-    async (monthlyCost: number, monthlySavings: number) => {
+    async (
+      monthlyCost: number,
+      monthlySavings: number,
+      userActions: Record<string, { action: string; downgradeToTier?: string }>
+    ) => {
       if (saved) return;
 
       const allServices = [
@@ -82,6 +86,7 @@ export default function QuizPage() {
             estimated_monthly_cost: monthlyCost,
             estimated_savings: yearlySavings,
             converted_to_scan: false,
+            user_actions: userActions,
           })
           .select("id")
           .single();

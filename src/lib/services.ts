@@ -282,6 +282,27 @@ export function getTierDowngrade(
   };
 }
 
+/** Get all cheaper tiers below the currently selected one */
+export function getLowerTiers(
+  service: Service,
+  selectedPlans: Record<string, string>
+): { tierId: string; label: string; price: number; savingsPerMonth: number }[] {
+  if (!service.tiers || !selectedPlans[service.id]) return [];
+  const currentTierId = selectedPlans[service.id];
+  const currentIndex = service.tiers.findIndex((t) => t.id === currentTierId);
+  if (currentIndex <= 0) return [];
+  const currentPrice = service.tiers[currentIndex].price;
+  return service.tiers
+    .slice(0, currentIndex)
+    .map((t) => ({
+      tierId: t.id,
+      label: t.label,
+      price: t.price,
+      savingsPerMonth: currentPrice - t.price,
+    }))
+    .reverse(); // show highest savings first
+}
+
 export function formatPrice(service: Service, selectedPlans?: Record<string, string>): string {
   if (selectedPlans && service.tiers && selectedPlans[service.id]) {
     const tier = service.tiers.find((t) => t.id === selectedPlans[service.id]);
