@@ -144,6 +144,44 @@ export default function QuizPage() {
           });
         }
 
+        // Save custom services to unknown_services for admin review
+        if (customServices.length > 0) {
+          for (const cs of customServices) {
+            try {
+              // Check if already exists
+              const { data: existing } = await supabase
+                .from("unknown_services")
+                .select("id, observation_count, observed_price")
+                .eq("transaction_name", cs.name)
+                .maybeSingle();
+
+              if (existing) {
+                // Update: increment count, running average price
+                const newCount = existing.observation_count + 1;
+                const avgPrice = existing.observed_price
+                  ? (existing.observed_price * existing.observation_count + cs.price) / newCount
+                  : cs.price;
+                await supabase
+                  .from("unknown_services")
+                  .update({
+                    observation_count: newCount,
+                    observed_price: Math.round(avgPrice),
+                  })
+                  .eq("id", existing.id);
+              } else {
+                await supabase.from("unknown_services").insert({
+                  transaction_name: cs.name,
+                  observed_price: cs.price,
+                  observation_count: 1,
+                  reviewed: false,
+                });
+              }
+            } catch {
+              // Continue even if tracking fails
+            }
+          }
+        }
+
         setSaved(true);
       } catch {
         // Silently fail

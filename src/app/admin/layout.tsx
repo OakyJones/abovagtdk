@@ -7,6 +7,7 @@ const navItems = [
   { label: "Dashboard", href: "/admin" },
   { label: "Brugere", href: "/admin/users" },
   { label: "Emails", href: "/admin/emails" },
+  { label: "Forslag", href: "/admin/suggestions" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
