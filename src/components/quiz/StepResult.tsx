@@ -415,7 +415,7 @@ export default function StepResult({
               <Inspektoeren pose="searching" size={48} />
             </div>
             <h3 className="text-xl font-bold text-[#1C2B2A] mb-2">
-              Fix det for mig
+              Hjælp mig med det
             </h3>
             <p className="text-gray-600 text-sm mb-4 flex-1">
               Forbind din bank, find alle abonnementer automatisk, og få

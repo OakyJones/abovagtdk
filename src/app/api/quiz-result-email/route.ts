@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
       <div style="text-align:center;margin-top:24px;">
         <a href="https://abovagt.dk"
            style="display:inline-block;padding:16px 36px;background:#1B7A6E;color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:16px;">
-          Vil du spare tid? Lad os ordne det &rarr;
+          Vil du spare tid? Lad os hjælpe dig &rarr;
         </a>
       </div>
     </div>

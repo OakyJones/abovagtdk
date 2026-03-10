@@ -11,8 +11,8 @@ const quizSteps = [
   },
   {
     number: "3",
-    title: "Opsig selv",
-    description: "Brug vores tips til at opsige det du ikke bruger.",
+    title: "Tag action",
+    description: "Brug vores tips til selv at opsige det du ikke bruger.",
   },
 ];
 

@@ -71,7 +71,7 @@ export default function Hero() {
 
             <div className="flex items-start justify-between mt-2 mb-3">
               <h2 className="text-2xl font-bold text-gray-900">
-                Fix det for mig
+                Hjælp mig med det
               </h2>
               <Inspektoeren
                 pose="searching"
