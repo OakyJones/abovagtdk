@@ -24,7 +24,7 @@ export default function QuizPage() {
   >({});
   const [saved, setSaved] = useState(false);
 
-  const handleEmailSubmit = async (userEmail: string) => {
+  const handleEmailSubmit = async (userEmail: string, newsletterConsent: boolean) => {
     setEmail(userEmail);
 
     try {
@@ -36,10 +36,15 @@ export default function QuizPage() {
 
       if (existing) {
         setUserId(existing.id);
+        // Update newsletter consent on re-visit
+        await supabase
+          .from("users")
+          .update({ newsletter_consent: newsletterConsent })
+          .eq("id", existing.id);
       } else {
         const { data: newUser } = await supabase
           .from("users")
-          .insert({ email: userEmail })
+          .insert({ email: userEmail, newsletter_consent: newsletterConsent })
           .select("id")
           .single();
         if (newUser) setUserId(newUser.id);

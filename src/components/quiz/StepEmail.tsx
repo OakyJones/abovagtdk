@@ -4,12 +4,13 @@ import { useState } from "react";
 import Inspektoeren from "@/components/Inspektoeren";
 
 interface Props {
-  onNext: (email: string) => void;
+  onNext: (email: string, newsletterConsent: boolean) => void;
 }
 
 export default function StepEmail({ onNext }: Props) {
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
+  const [newsletter, setNewsletter] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,7 +26,7 @@ export default function StepEmail({ onNext }: Props) {
 
     setLoading(true);
     setError("");
-    onNext(email);
+    onNext(email, newsletter);
   };
 
   return (
@@ -66,8 +67,19 @@ export default function StepEmail({ onNext }: Props) {
             className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
           />
           <span className="text-sm text-gray-600 leading-relaxed">
-            Jeg accepterer at AboVagt må sende mig mit resultat og tips til
-            at spare på abonnementer
+            Jeg accepterer at AboVagt må sende mig mit quiz-resultat per email
+          </span>
+        </label>
+
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={newsletter}
+            onChange={(e) => setNewsletter(e.target.checked)}
+            className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
+          />
+          <span className="text-sm text-gray-600 leading-relaxed">
+            Hold mig opdateret med tips til at spare penge på abonnementer
           </span>
         </label>
 
