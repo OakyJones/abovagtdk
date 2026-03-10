@@ -37,11 +37,19 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
+        <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <p>
             &copy; {new Date().getFullYear()} AboVagt.dk. Alle rettigheder
             forbeholdes.
           </p>
+          <div className="flex items-center gap-6">
+            <a href="/privatlivspolitik" className="hover:text-white transition-colors">
+              Privatlivspolitik
+            </a>
+            <a href="/handelsbetingelser" className="hover:text-white transition-colors">
+              Handelsbetingelser
+            </a>
+          </div>
         </div>
       </div>
     </footer>
