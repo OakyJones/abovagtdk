@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Inspektoeren from "@/components/Inspektoeren";
 
@@ -8,13 +9,49 @@ const navItems = [
   { label: "Brugere", href: "/admin/users" },
   { label: "Email liste", href: "/admin/email-list" },
   { label: "Emails", href: "/admin/emails" },
-  { label: "Indbakke", href: "/admin/inbox" },
+  { label: "Indbakke", href: "/admin/inbox", badge: true },
   { label: "Forslag", href: "/admin/suggestions" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    async function fetchUnread() {
+      try {
+        const res = await fetch("/api/admin/inbox");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Refresh count when navigating to inbox
+  useEffect(() => {
+    if (pathname === "/admin/inbox") {
+      const timer = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/admin/inbox");
+          if (res.ok) {
+            const data = await res.json();
+            setUnreadCount(data.unreadCount || 0);
+          }
+        } catch {
+          // silently fail
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
 
   const handleLogout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -58,13 +95,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <a
                   key={item.href}
                   href={item.href}
-                  className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                  className={`relative px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
                     isActive
                       ? "text-[#4ECDC4] border-[#4ECDC4]"
                       : "text-white/60 border-transparent hover:text-white hover:border-white/30"
                   }`}
                 >
                   {item.label}
+                  {item.badge && unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </a>
               );
             })}

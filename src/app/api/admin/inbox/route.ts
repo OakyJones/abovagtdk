@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  const { data: emails, error } = await getSupabaseAdmin()
+  const supabase = getSupabaseAdmin();
+
+  const { data: emails, error } = await supabase
     .from("inbound_emails")
-    .select("id, from_email, to_email, subject, body_html, body_text, tag, is_read, received_at")
+    .select("id, from_email, to_email, subject, body_html, body_text, tag, is_read, direction, received_at")
     .order("received_at", { ascending: false })
     .limit(200);
 
@@ -12,7 +16,11 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ emails: emails || [] });
+  const unreadCount = (emails || []).filter(
+    (e) => !e.is_read && (e.direction === "inbound" || !e.direction)
+  ).length;
+
+  return NextResponse.json({ emails: emails || [], unreadCount });
 }
 
 export async function PATCH(req: NextRequest) {
