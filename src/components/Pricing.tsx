@@ -1,3 +1,5 @@
+"use client";
+
 export default function Pricing() {
   return (
     <section id="pris" className="bg-gray-50 py-16 sm:py-24">
@@ -117,6 +119,7 @@ export default function Pricing() {
 
             <a
               href="/connect"
+              onClick={() => { if (typeof umami !== 'undefined') umami.track('signup_monitoring'); }}
               className="block w-full text-center px-5 py-3 bg-white text-[#1B7A6E] font-semibold rounded-xl border border-[#1B7A6E] hover:bg-teal-50 transition-colors text-sm mb-3"
             >
               Start monitoring &rarr;

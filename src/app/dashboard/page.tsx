@@ -221,6 +221,7 @@ function DashboardContent() {
   // If returning from Tink with card already reserved, go straight to scanning
   useEffect(() => {
     if (connected && userId && cardReserved && step === "card") {
+      if (typeof umami !== 'undefined') umami.track('tink_connected');
       setStep("scanning");
     }
   }, [connected, userId, cardReserved, step]);
@@ -245,6 +246,7 @@ function DashboardContent() {
     if (!userId) return;
     setPaymentLoading(true);
     setPaymentError(null);
+    if (typeof umami !== 'undefined') umami.track('payment_start');
 
     try {
       const res = await fetch("/api/stripe/create-payment-intent", {
@@ -287,6 +289,7 @@ function DashboardContent() {
       window.location.href = "/connect";
       return;
     }
+    if (typeof umami !== 'undefined') umami.track('tink_start');
     try {
       const res = await fetch("/api/tink/link", {
         method: "POST",
@@ -325,6 +328,7 @@ function DashboardContent() {
       }
       setSubs(data.subscriptions || []);
       setUnknowns(data.unknownRecurring || []);
+      if (typeof umami !== 'undefined') umami.track('scan_complete', { found: (data.subscriptions || []).length + (data.unknownRecurring || []).length });
       setStep("results");
     } catch {
       setScanError("Scanning fejlede — prøv igen");
@@ -432,6 +436,10 @@ function DashboardContent() {
 
   const setAction = (id: string, action: ActionType) => {
     setActions((prev) => ({ ...prev, [id]: action }));
+    const item = allItems.find((i) => i.id === id);
+    const serviceName = item?.service?.name || item?.name || id;
+    if (action === "cancel" && typeof umami !== 'undefined') umami.track('action_cancel', { service: serviceName });
+    if (action === "downgrade" && typeof umami !== 'undefined') umami.track('action_downgrade', { service: serviceName });
   };
 
   const setDowngradeTarget = (id: string, tierId: string) => {
@@ -474,6 +482,7 @@ function DashboardContent() {
       // Clean up stored PI ID and consent
       localStorage.removeItem("abovagt_payment_intent_id");
       localStorage.removeItem("abovagt_consent_given_at");
+      if (typeof umami !== 'undefined') umami.track('payment_complete', { amount: data.captured || fee });
       setHasPaid(true);
       setStep("emails");
     } catch {
@@ -597,6 +606,7 @@ function DashboardContent() {
         ? modal.item.price
         : getDowngradeSavingsForItem(modal.item);
 
+      if (typeof umami !== 'undefined') umami.track('email_sent', { service: modal.item!.service?.name || modal.item!.name });
       setSentEmails((prev) => [
         ...prev,
         {
