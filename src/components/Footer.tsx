@@ -25,7 +25,7 @@ export default function Footer() {
             <a href="#hvordan" className="hover:text-white transition-colors">
               Sådan virker det
             </a>
-            <a href="#sikkerhed" className="hover:text-white transition-colors">
+            <a href="/sikkerhed" className="hover:text-white transition-colors">
               Sikkerhed
             </a>
             <a href="#pris" className="hover:text-white transition-colors">
@@ -48,6 +48,9 @@ export default function Footer() {
             </a>
             <a href="/handelsbetingelser" className="hover:text-white transition-colors">
               Handelsbetingelser
+            </a>
+            <a href="/sikkerhed" className="hover:text-white transition-colors">
+              Sikkerhed
             </a>
           </div>
         </div>

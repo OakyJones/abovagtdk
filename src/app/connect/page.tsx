@@ -167,11 +167,33 @@ function ConnectContent() {
             </button>
           </form>
 
-          <div className="mt-8 space-y-3">
+          {/* Tink/Visa trust box */}
+          <div className="mt-8 bg-gray-50 rounded-2xl border border-gray-200 p-5">
+            <div className="flex items-center gap-3 mb-3">
+              {/* Visa logo */}
+              <svg className="h-6 shrink-0" viewBox="0 0 1000 324" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M433.3 7.4l-96.6 230.3h-63.1L212.4 48.3c-3.7-14.6-6.9-19.9-18.2-26.1C178 13.8 151.2 6 127 1l1.5-7.4h101.7c13 0 24.6 8.6 27.6 23.5L281.5 155l62.9-161.5h63.1l25.8 13.9zm45.4-5.9l-49.7 236.2h-60.1l49.7-236.2h60.1zm227.3 159c.2-62.3-86.2-65.7-85.6-93.5.2-8.5 8.3-17.5 25.9-19.8 8.7-1.2 32.8-2.1 60.2 10.7l10.7-50.1C703.5 3 685.2-1.5 663-1.5c-59.4 0-101.2 31.6-101.5 76.8-.4 33.5 29.8 52.1 52.6 63.3 23.5 11.4 31.4 18.8 31.3 29-.2 15.6-18.8 22.6-36.1 22.8-30.4.5-48-8.2-62-14.7l-10.9 51.1c14.1 6.5 40.2 12.1 67.2 12.4 63.1 0 104.4-31.2 104.6-79.5M891.7 237.7h55.6L899.5 1.5h-51.3c-11.5 0-21.2 6.7-25.5 17.1l-89.9 219.1h63l12.5-34.7h77l7.3 34.7zm-67-82.3l31.6-87.2 18.2 87.2h-49.8z" fill="#1A1F71" transform="translate(50,40)"/>
+              </svg>
+              <span className="text-xs text-gray-400">+</span>
+              <span className="text-sm font-bold text-[#1C2B2A]">Tink</span>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Din bankforbindelse h&aring;ndteres af <strong>Tink</strong>, en del af <strong>Visa</strong>.
+              Vi kan kun l&aelig;se dine transaktioner &mdash; aldrig flytte penge eller se dit saldo.
+            </p>
+            <a
+              href="/sikkerhed"
+              className="inline-block mt-3 text-sm font-medium text-[#1B7A6E] hover:underline"
+            >
+              L&aelig;s mere om sikkerheden &rarr;
+            </a>
+          </div>
+
+          <div className="mt-5 space-y-3">
             {[
-              "Ingen penge trækkes før du godkender",
-              "Sikker bankforbindelse via Tink (kun læseadgang)",
-              "Dine data slettes når du vil",
+              "Ingen penge tr\u00e6kkes f\u00f8r du godkender",
+              "Sikker bankforbindelse via Tink (kun l\u00e6seadgang)",
+              "Dine data slettes n\u00e5r du vil",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3 text-left">
                 <svg

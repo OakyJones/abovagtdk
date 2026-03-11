@@ -141,19 +141,21 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Trust indicators */}
-        <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mt-12 sm:mt-16">
-          {[
-            "GDPR-compliant",
-            "Kun l\u00e6seadgang til bank",
-            "Ingen binding",
-            "Dansk virksomhed",
-          ].map((item) => (
-            <div key={item} className="flex items-center gap-2">
-              {shieldIcon}
-              <span className="text-sm text-gray-600">{item}</span>
-            </div>
-          ))}
+        {/* Trust bar */}
+        <div className="mt-12 sm:mt-16 bg-white/80 rounded-2xl border border-gray-200 px-6 py-4 max-w-4xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+            {[
+              { icon: "\uD83D\uDD12", text: "Drevet af Visa" },
+              { icon: "\uD83D\uDC41\uFE0F", text: "Kun l\u00e6seadgang" },
+              { icon: "\uD83C\uDDE9\uD83C\uDDF0", text: "Dansk virksomhed (CVR 46314697)" },
+              { icon: "\uD83D\uDEE1\uFE0F", text: "GDPR-compliant" },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-2">
+                <span className="text-lg">{item.icon}</span>
+                <span className="text-sm font-medium text-gray-700">{item.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

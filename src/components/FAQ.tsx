@@ -34,9 +34,24 @@ const faqs = [
       "Monitoring er et tilvalg til 15 kr/md. Vi scanner dine transaktioner kvartalsvis (hver 3. måned) og giver dig besked hvis der dukker nye abonnementer op, eller hvis dine eksisterende ændrer pris. Du kan opsige monitoring når som helst.",
   },
   {
+    question: "Kan I se min saldo?",
+    answer:
+      "Nej. Vi bruger en AISP-licens (Account Information Service Provider) via Tink/Visa. Det betyder vi kun har adgang til dine transaktioner — aldrig din saldo, kontonummer eller andre følsomme oplysninger.",
+  },
+  {
+    question: "Kan I flytte mine penge?",
+    answer:
+      "Nej, aldrig. Vi har kun læseadgang (AISP) — ikke betalingsadgang (PISP). Det er teknisk umuligt for os at flytte penge, foretage betalinger eller ændre noget i din bank. Vi kan udelukkende læse dine transaktioner.",
+  },
+  {
+    question: "Hvem er Tink?",
+    answer:
+      "Tink er en Open Banking-platform ejet af Visa. De forbinder din bank sikkert via PSD2-regulering og er godkendt af Finanstilsynet. Tink bruges af banker i hele Europa, bl.a. BNP Paribas, ABN AMRO og PayPal.",
+  },
+  {
     question: "Hvad sker der med mine data?",
     answer:
-      "Dine data behandles i EU i fuld overensstemmelse med GDPR. Vi sælger aldrig dine oplysninger til tredjepart. Du kan til enhver tid bede om at få alle dine data slettet.",
+      "Dine data behandles i EU (Frankfurt) i fuld overensstemmelse med GDPR. Alt er krypteret både under overførsel og opbevaring. Vi sletter dine bankdata automatisk efter 30 dage. Du kan til enhver tid bede om at få alle dine data slettet. Vi sælger aldrig dine oplysninger til tredjepart.",
   },
   {
     question: "Hvilke typer abonnementer finder I?",

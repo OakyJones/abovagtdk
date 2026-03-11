@@ -1,3 +1,5 @@
+export const revalidate = 300; // revalidate every 5 minutes
+
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Stats from "@/components/Stats";
