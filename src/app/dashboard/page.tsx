@@ -240,7 +240,7 @@ function DashboardContent() {
     }
   }, [userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ---- Card step: create PaymentIntent for 149 kr reservation ----
+  // ---- Card step: create PaymentIntent for 45 kr reservation ----
   const createReservation = async () => {
     if (!userId) return;
     setPaymentLoading(true);
@@ -425,7 +425,7 @@ function DashboardContent() {
   );
 
   const totalSavings = cancelSavings + downgradeSavings;
-  const fee = totalSavings > 0 ? Math.min(Math.round(totalSavings * 0.25), 149) : 0;
+  const fee = totalSavings > 0 ? Math.min(Math.round(totalSavings * 0.25), 45) : 0;
 
   const hasDowngrade = (item: DashboardItem) =>
     item.lowerTiers.length > 0 || !!item.legacyDowngrade;
@@ -637,14 +637,14 @@ function DashboardContent() {
               <Inspektoeren
                 pose="pointing"
                 size={120}
-                speechBubble="Vi reserverer op til 149 kr — du betaler kun for det du sparer!"
+                speechBubble="Vi reserverer op til 45 kr — du betaler kun for det du sparer!"
                 className="mb-4"
               />
               <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
                 Registrer dit kort
               </h1>
               <p className="mt-2 text-gray-600 text-sm">
-                Vi reserverer op til 149 kr. Du betaler kun 25% af din faktiske besparelse.
+                Vi reserverer op til 45 kr. Du betaler kun 25% af din faktiske besparelse.
               </p>
             </div>
 
@@ -653,10 +653,10 @@ function DashboardContent() {
               <h3 className="text-sm font-bold text-[#1C2B2A] mb-3">S&aring;dan virker det</h3>
               <div className="space-y-3">
                 {[
-                  { num: "1", text: "Vi reserverer op til 149 kr p\u00e5 dit kort (ingen penge tr\u00e6kkes endnu)" },
+                  { num: "1", text: "Vi reserverer op til 45 kr p\u00e5 dit kort (ingen penge tr\u00e6kkes endnu)" },
                   { num: "2", text: "Du forbinder din bank s\u00e5 vi kan finde dine abonnementer" },
                   { num: "3", text: "Du v\u00e6lger hvad du vil opsige eller nedgradere" },
-                  { num: "4", text: "Vi tr\u00e6kker kun 25% af din besparelse (maks 149 kr)" },
+                  { num: "4", text: "Vi tr\u00e6kker kun 25% af din besparelse (maks 45 kr)" },
                 ].map((s) => (
                   <div key={s.num} className="flex items-start gap-3">
                     <span className="w-6 h-6 bg-[#1B7A6E] text-white text-xs font-bold rounded-full flex items-center justify-center shrink-0 mt-0.5">
@@ -1058,8 +1058,8 @@ function DashboardContent() {
                       <span className="text-sm font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr (en gang)</span>
                     </div>
                     <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
-                      <span className="text-sm font-semibold text-[#1B7A6E]">Du beholder</span>
-                      <span className="text-lg font-bold text-[#1B7A6E]">{(totalSavings - fee).toLocaleString("da-DK")} kr/md &mdash; hver m&aring;ned fremover</span>
+                      <span className="text-sm font-semibold text-[#1B7A6E]">Du kan spare</span>
+                      <span className="text-lg font-bold text-[#1B7A6E]">{(totalSavings - fee).toLocaleString("da-DK")} kr/md &mdash; hvis du opsiger de valgte</span>
                     </div>
                   </div>
                 </div>
@@ -1070,7 +1070,7 @@ function DashboardContent() {
                   Godkend og f&aring; dine opsigelsesmails
                 </button>
                 <p className="mt-4 text-center text-xs text-gray-500">
-                  Vi tr&aelig;kker {fee} kr af de {cardReserved ? "149" : fee} kr der er reserveret. Resten frigives.
+                  Vi tr&aelig;kker {fee} kr af de {cardReserved ? "45" : fee} kr der er reserveret. Resten frigives.
                 </p>
               </div>
             )}
@@ -1128,7 +1128,7 @@ function DashboardContent() {
               <Inspektoeren
                 pose="thumbsup"
                 size={120}
-                speechBubble={`Vi tr\u00e6kker kun ${fee} kr af de 149 kr!`}
+                speechBubble={`Vi tr\u00e6kker kun ${fee} kr af de 45 kr!`}
                 className="mb-4"
               />
               <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A]">
@@ -1174,16 +1174,16 @@ function DashboardContent() {
                 <div className="border-t border-[#1B7A6E]/20 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Reserveret p&aring; dit kort</span>
-                    <span className="text-sm text-gray-500">149 kr</span>
+                    <span className="text-sm text-gray-500">45 kr</span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-sm font-semibold text-[#1C2B2A]">Vi tr&aelig;kker</span>
                     <span className="text-lg font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr</span>
                   </div>
-                  {fee < 149 && (
+                  {fee < 45 && (
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-sm text-gray-500">Frigives til dit kort</span>
-                      <span className="text-sm text-gray-500">{149 - fee} kr</span>
+                      <span className="text-sm text-gray-500">{45 - fee} kr</span>
                     </div>
                   )}
                 </div>
@@ -1486,7 +1486,7 @@ function DashboardContent() {
   );
 }
 
-/** Stripe Reservation Form — confirms the card and reserves 149 kr */
+/** Stripe Reservation Form — confirms the card and reserves 45 kr */
 function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) => void }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -1574,7 +1574,7 @@ function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) =>
             Behandler...
           </span>
         ) : (
-          "Reserver 149 kr"
+          "Reserver 45 kr"
         )}
       </button>
     </form>

@@ -103,7 +103,7 @@ export default function Hero() {
               Find mine abonnementer &rarr;
             </a>
             <p className="mt-2.5 text-center text-[11px] text-gray-500">
-              Engangsbetaling: 25% af besparelsen &mdash; maks 149 kr
+              Engangsbetaling: 25% af besparelsen &mdash; maks 45 kr
             </p>
           </div>
 
@@ -130,7 +130,7 @@ export default function Hero() {
             </ul>
 
             <a
-              href="/connect"
+              href="/signup?plan=monitoring"
               className="block w-full text-center px-5 py-3 bg-white text-[#1C2B2A] font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
             >
               Start monitoring &rarr;

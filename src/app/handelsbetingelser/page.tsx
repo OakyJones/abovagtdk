@@ -77,10 +77,10 @@ export default function HandelsbetingelserPage() {
                     <span className="text-xs bg-teal-100 text-[#1B7A6E] font-semibold px-2 py-1 rounded-full">Engangsbetaling</span>
                   </div>
                   <p className="text-gray-700 text-sm">
-                    25% af din dokumenterede m&aring;nedlige besparelse, maks <strong>149 kr inkl. moms</strong>.
+                    25% af din dokumenterede m&aring;nedlige besparelse, maks <strong>45 kr inkl. moms</strong>.
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
-                    Eksempel: Sparer du 200 kr/md, betaler du 50 kr. Sparer du 800 kr/md, betaler du 149 kr (maks).
+                    Eksempel: Sparer du 100 kr/md, betaler du 25 kr. Sparer du 200 kr/md, betaler du 45 kr (maks).
                   </p>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-5">

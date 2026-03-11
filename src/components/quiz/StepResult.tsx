@@ -463,7 +463,7 @@ export default function StepResult({
         </p>
 
         {totalSavings > 0 && (() => {
-          const fee = Math.min(Math.round(totalSavings * 0.25), 149);
+          const fee = Math.min(Math.round(totalSavings * 0.25), 45);
           const kept = totalSavings - fee;
           return (
             <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
