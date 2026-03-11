@@ -68,6 +68,22 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+interface DiagResult {
+  timestamp?: string;
+  tableCounts?: Record<string, { count: number | null; error: string | null; sample: unknown }>;
+  recentInbound?: { id: string; from_email: string; subject: string; direction: string; received_at: string }[];
+  recentUsers?: { id: string; email: string; created_at: string }[];
+  env?: Record<string, unknown>;
+  error?: string;
+}
+
+interface SimulateResult {
+  success?: boolean;
+  error?: string;
+  id?: string;
+  message?: string;
+}
+
 export default function EmailTestPage() {
   const [to, setTo] = useState("hej@abovagt.dk");
   const [emailType, setEmailType] = useState<string>("quiz-result");
@@ -76,6 +92,11 @@ export default function EmailTestPage() {
 
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthResult, setHealthResult] = useState<HealthResult | null>(null);
+
+  const [diagLoading, setDiagLoading] = useState(false);
+  const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
+  const [simLoading, setSimLoading] = useState(false);
+  const [simResult, setSimResult] = useState<SimulateResult | null>(null);
 
   const handleSendTest = async () => {
     setSending(true);
@@ -92,6 +113,36 @@ export default function EmailTestPage() {
       setSendResult({ error: "Netværksfejl — prøv igen" });
     }
     setSending(false);
+  };
+
+  const handleDiagnostics = async () => {
+    setDiagLoading(true);
+    setDiagResult(null);
+    try {
+      const res = await fetch("/api/admin/diagnostics");
+      const data = await res.json();
+      setDiagResult(data);
+    } catch {
+      setDiagResult({ error: "Netværksfejl — prøv igen" });
+    }
+    setDiagLoading(false);
+  };
+
+  const handleSimulateInbound = async () => {
+    setSimLoading(true);
+    setSimResult(null);
+    try {
+      const res = await fetch("/api/admin/diagnostics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "simulate-inbound" }),
+      });
+      const data = await res.json();
+      setSimResult(data);
+    } catch {
+      setSimResult({ error: "Netværksfejl — prøv igen" });
+    }
+    setSimLoading(false);
   };
 
   const handleHealthCheck = async () => {
@@ -384,6 +435,207 @@ export default function EmailTestPage() {
                       </details>
                     )}
                 </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Diagnostics */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* DB Diagnostics */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-[#1C2B2A] mb-2">
+            Database diagnostik
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            K&oslash;r count-queries p&aring; alle tabeller for at tjekke RLS og data.
+          </p>
+
+          <button
+            onClick={handleDiagnostics}
+            disabled={diagLoading}
+            className={`w-full px-5 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-500 transition-all text-sm ${
+              diagLoading ? "opacity-40 cursor-not-allowed" : ""
+            }`}
+          >
+            {diagLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                K&oslash;rer...
+              </span>
+            ) : (
+              "K&oslash;r diagnostik"
+            )}
+          </button>
+
+          {diagResult && (
+            <div className="mt-4 space-y-3">
+              {diagResult.error ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-sm text-red-700">{diagResult.error}</p>
+                </div>
+              ) : (
+                <>
+                  {/* Table counts */}
+                  {diagResult.tableCounts && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h3 className="text-sm font-bold text-[#1C2B2A] mb-2">
+                        Tabel-counts (service role key)
+                      </h3>
+                      <div className="space-y-1.5">
+                        {Object.entries(diagResult.tableCounts).map(
+                          ([table, info]) => (
+                            <div
+                              key={table}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="text-sm font-mono text-gray-700">
+                                {table}
+                              </span>
+                              {info.error ? (
+                                <span className="text-xs text-red-600 font-medium">
+                                  FEJL: {info.error}
+                                </span>
+                              ) : (
+                                <span
+                                  className={`text-sm font-bold ${
+                                    info.count === 0
+                                      ? "text-gray-400"
+                                      : "text-[#1B7A6E]"
+                                  }`}
+                                >
+                                  {info.count}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recent inbound */}
+                  {diagResult.recentInbound &&
+                    diagResult.recentInbound.length > 0 && (
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <h3 className="text-sm font-bold text-[#1C2B2A] mb-2">
+                          Seneste inbound emails
+                        </h3>
+                        <div className="space-y-1.5 text-xs">
+                          {diagResult.recentInbound.map((e) => (
+                            <div
+                              key={e.id}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="text-gray-700 truncate max-w-[200px]">
+                                {e.from_email}: {e.subject}
+                              </span>
+                              <span className="text-gray-500">
+                                {e.direction || "null"}{" "}
+                                {e.received_at
+                                  ? new Date(e.received_at).toLocaleDateString(
+                                      "da-DK"
+                                    )
+                                  : "no date"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Env check */}
+                  {diagResult.env && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h3 className="text-sm font-bold text-[#1C2B2A] mb-2">
+                        Env-variabler
+                      </h3>
+                      <div className="space-y-1 text-xs text-gray-700">
+                        {Object.entries(diagResult.env).map(([k, v]) => (
+                          <div key={k} className="flex justify-between">
+                            <span className="font-mono">{k}</span>
+                            <span
+                              className={
+                                v ? "text-green-600" : "text-red-600"
+                              }
+                            >
+                              {String(v)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Simulate inbound */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-[#1C2B2A] mb-2">
+            Test inbound webhook
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Inds&aelig;t en simuleret inbound email direkte i databasen for at
+            teste om admin-indbakken viser den.
+          </p>
+
+          <button
+            onClick={handleSimulateInbound}
+            disabled={simLoading}
+            className={`w-full px-5 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-400 transition-all text-sm ${
+              simLoading ? "opacity-40 cursor-not-allowed" : ""
+            }`}
+          >
+            {simLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Simulerer...
+              </span>
+            ) : (
+              "Simuler inbound email"
+            )}
+          </button>
+
+          {simResult && (
+            <div
+              className={`mt-4 rounded-xl border p-4 ${
+                simResult.success
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200"
+              }`}
+            >
+              {simResult.success ? (
+                <div>
+                  <p className="text-sm font-semibold text-green-800">
+                    Test-email indsat!
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    ID: {simResult.id}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    G&aring; til{" "}
+                    <a
+                      href="/admin/inbox"
+                      className="underline font-medium"
+                    >
+                      Indbakke
+                    </a>{" "}
+                    for at se den.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-red-700 font-semibold">
+                    Fejl ved inds&aelig;tning
+                  </p>
+                  <p className="text-xs text-red-600 mt-1 font-mono">
+                    {simResult.error}
+                  </p>
+                </div>
               )}
             </div>
           )}

@@ -75,6 +75,8 @@ export async function POST(req: NextRequest) {
         body_text: bodyText,
         tag,
         is_read: false,
+        direction: "inbound",
+        received_at: new Date().toISOString(),
       })
       .select("id")
       .single();

@@ -3,59 +3,112 @@ import QuizChart from "./QuizChart";
 
 export const dynamic = "force-dynamic";
 
+interface QueryError {
+  message: string;
+  table: string;
+}
+
 async function getStats() {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + 1).toISOString();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
+  const errors: QueryError[] = [];
+  const supabase = getSupabaseAdmin();
+
+  // Run all queries with individual error handling
   const [
-    { count: totalQuiz },
-    { count: todayQuiz },
-    { count: weekQuiz },
-    { count: totalEmails },
-    { count: tinkConnected },
-    { data: savingsData },
-    { data: thisMonthSavings },
-    { data: recentQuiz },
-    { data: last30Quiz },
-    { data: allServices },
+    quizTotalRes,
+    quizTodayRes,
+    quizWeekRes,
+    usersTotalRes,
+    tinkRes,
+    savingsRes,
+    savingsMonthRes,
+    recentRes,
+    last30Res,
+    allSvcRes,
+    inboundRes,
+    actionsRes,
+    newsletterRes,
   ] = await Promise.all([
-    getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }),
-    getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
-    getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
-    getSupabaseAdmin().from("users").select("*", { count: "exact", head: true }),
-    getSupabaseAdmin().from("users").select("*", { count: "exact", head: true }).eq("tink_connected", true),
-    getSupabaseAdmin().from("quiz_results").select("estimated_savings"),
-    getSupabaseAdmin().from("quiz_results").select("estimated_savings").gte("created_at", monthStart),
-    getSupabaseAdmin().from("quiz_results").select("id, email, selected_services, estimated_monthly_cost, estimated_savings, created_at").order("created_at", { ascending: false }).limit(20),
-    getSupabaseAdmin().from("quiz_results").select("created_at").gte("created_at", thirtyDaysAgo),
-    getSupabaseAdmin().from("quiz_results").select("selected_services"),
+    supabase.from("quiz_results").select("*", { count: "exact", head: true }),
+    supabase.from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
+    supabase.from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("users").select("*", { count: "exact", head: true }).eq("tink_connected", true),
+    supabase.from("quiz_results").select("estimated_savings"),
+    supabase.from("quiz_results").select("estimated_savings").gte("created_at", monthStart),
+    supabase.from("quiz_results").select("id, email, selected_services, estimated_monthly_cost, estimated_savings, created_at").order("created_at", { ascending: false }).limit(20),
+    supabase.from("quiz_results").select("created_at").gte("created_at", thirtyDaysAgo),
+    supabase.from("quiz_results").select("selected_services"),
+    supabase.from("inbound_emails").select("*", { count: "exact", head: true }),
+    supabase.from("actions").select("*", { count: "exact", head: true }),
+    supabase.from("users").select("*", { count: "exact", head: true }).eq("newsletter_consent", true),
   ]);
 
+  // Log and collect errors
+  const results = [
+    { name: "quiz_results (total)", res: quizTotalRes },
+    { name: "quiz_results (today)", res: quizTodayRes },
+    { name: "quiz_results (week)", res: quizWeekRes },
+    { name: "users (total)", res: usersTotalRes },
+    { name: "users (tink)", res: tinkRes },
+    { name: "quiz_results (savings)", res: savingsRes },
+    { name: "quiz_results (savings month)", res: savingsMonthRes },
+    { name: "quiz_results (recent)", res: recentRes },
+    { name: "quiz_results (last30)", res: last30Res },
+    { name: "quiz_results (services)", res: allSvcRes },
+    { name: "inbound_emails", res: inboundRes },
+    { name: "actions", res: actionsRes },
+    { name: "users (newsletter)", res: newsletterRes },
+  ];
+
+  for (const { name, res } of results) {
+    if (res.error) {
+      console.error(`[Admin Dashboard] Query error for ${name}:`, res.error.message, res.error);
+      errors.push({ table: name, message: res.error.message });
+    }
+  }
+
+  const totalQuiz = quizTotalRes.count ?? 0;
+  const todayQuiz = quizTodayRes.count ?? 0;
+  const weekQuiz = quizWeekRes.count ?? 0;
+  const totalEmails = usersTotalRes.count ?? 0;
+  const tinkConnected = tinkRes.count ?? 0;
+  const totalInbound = inboundRes.count ?? 0;
+  const totalActions = actionsRes.count ?? 0;
+  const totalNewsletter = newsletterRes.count ?? 0;
+
+  const savingsData = savingsRes.data || [];
+  const thisMonthSavings = savingsMonthRes.data || [];
+  const recentQuiz = recentRes.data || [];
+  const last30Quiz = last30Res.data || [];
+  const allServices = allSvcRes.data || [];
+
   // Total savings (all-time)
-  const totalSavings = (savingsData || []).reduce(
-    (sum, r) => sum + (Number(r.estimated_savings) || 0),
+  const totalSavings = savingsData.reduce(
+    (sum: number, r: { estimated_savings: number }) => sum + (Number(r.estimated_savings) || 0),
     0
   );
-  const totalSavingsUsers = (savingsData || []).filter(
-    (r) => (Number(r.estimated_savings) || 0) > 0
+  const totalSavingsUsers = savingsData.filter(
+    (r: { estimated_savings: number }) => (Number(r.estimated_savings) || 0) > 0
   ).length;
 
   // This month savings
-  const quizSavingsMonth = (thisMonthSavings || []).reduce(
-    (sum, r) => sum + (Number(r.estimated_savings) || 0),
+  const quizSavingsMonth = thisMonthSavings.reduce(
+    (sum: number, r: { estimated_savings: number }) => sum + (Number(r.estimated_savings) || 0),
     0
   );
-  const quizSavingsMonthUsers = (thisMonthSavings || []).filter(
-    (r) => (Number(r.estimated_savings) || 0) > 0
+  const quizSavingsMonthUsers = thisMonthSavings.filter(
+    (r: { estimated_savings: number }) => (Number(r.estimated_savings) || 0) > 0
   ).length;
 
   // Conversion rate
-  const conversionRate = (totalQuiz || 0) > 0
-    ? Math.round(((tinkConnected || 0) / (totalQuiz || 1)) * 100)
+  const conversionRate = totalQuiz > 0
+    ? Math.round((tinkConnected / (totalQuiz || 1)) * 100)
     : 0;
 
   // Quiz per day (last 30 days)
@@ -65,17 +118,17 @@ async function getStats() {
     const key = d.toISOString().split("T")[0];
     dailyCounts[key] = 0;
   }
-  (last30Quiz || []).forEach((q) => {
+  last30Quiz.forEach((q: { created_at: string }) => {
     const key = new Date(q.created_at).toISOString().split("T")[0];
     if (key in dailyCounts) dailyCounts[key]++;
   });
 
   // Top 10 services
   const serviceTally: Record<string, number> = {};
-  (allServices || []).forEach((q) => {
-    const svcList = q.selected_services as string[];
+  allServices.forEach((q: { selected_services: string[] }) => {
+    const svcList = q.selected_services;
     if (Array.isArray(svcList)) {
-      svcList.forEach((s) => {
+      svcList.forEach((s: string) => {
         serviceTally[s] = (serviceTally[s] || 0) + 1;
       });
     }
@@ -85,10 +138,14 @@ async function getStats() {
     .slice(0, 10);
 
   return {
-    totalQuiz: totalQuiz || 0,
-    todayQuiz: todayQuiz || 0,
-    weekQuiz: weekQuiz || 0,
-    totalEmails: totalEmails || 0,
+    totalQuiz,
+    todayQuiz,
+    weekQuiz,
+    totalEmails,
+    tinkConnected,
+    totalInbound,
+    totalActions,
+    totalNewsletter,
     conversionRate,
     totalSavings,
     totalSavingsUsers,
@@ -96,7 +153,8 @@ async function getStats() {
     quizSavingsMonthUsers,
     dailyCounts,
     top10,
-    recentQuiz: recentQuiz || [],
+    recentQuiz,
+    errors,
   };
 }
 
@@ -107,8 +165,12 @@ export default async function AdminDashboard() {
     { label: "Quiz i dag", value: stats.todayQuiz, color: "text-[#1B7A6E]" },
     { label: "Quiz denne uge", value: stats.weekQuiz, color: "text-[#1B7A6E]" },
     { label: "Quiz total", value: stats.totalQuiz, color: "text-[#1C2B2A]" },
-    { label: "Emails indsamlet", value: stats.totalEmails, color: "text-blue-600" },
+    { label: "Brugere", value: stats.totalEmails, color: "text-blue-600" },
+    { label: "Newsletter", value: stats.totalNewsletter, color: "text-purple-600" },
     { label: "Konvertering → bank", value: `${stats.conversionRate}%`, color: "text-orange-600" },
+    { label: "Tink-forbindelser", value: stats.tinkConnected, color: "text-orange-600" },
+    { label: "Opsigelser/handlinger", value: stats.totalActions, color: "text-red-600" },
+    { label: "Inbound emails", value: stats.totalInbound, color: "text-indigo-600" },
     {
       label: "Gns. besparelse/quiz",
       value: `${stats.totalQuiz > 0 ? Math.round(stats.totalSavings / stats.totalQuiz).toLocaleString("da-DK") : 0} kr/md`,
@@ -119,6 +181,25 @@ export default async function AdminDashboard() {
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-900 mb-6">Dashboard</h2>
+
+      {/* Query errors */}
+      {stats.errors.length > 0 && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+          <h3 className="text-sm font-bold text-red-800 mb-2">
+            Database-fejl ({stats.errors.length})
+          </h3>
+          <p className="text-xs text-red-600 mb-2">
+            Nogle queries fejlede. Tjek RLS policies og tabel-struktur.
+          </p>
+          <div className="space-y-1">
+            {stats.errors.map((e, i) => (
+              <p key={i} className="text-xs text-red-700 font-mono">
+                {e.table}: {e.message}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Savings overview cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -161,7 +242,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {statCards.map((card) => (
           <div
             key={card.label}
@@ -180,7 +261,7 @@ export default async function AdminDashboard() {
       {/* Chart */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">
-          Quiz-gennemførelser pr. dag (sidste 30 dage)
+          Quiz-gennemf&oslash;relser pr. dag (sidste 30 dage)
         </h3>
         <QuizChart data={stats.dailyCounts} />
       </div>
@@ -226,7 +307,7 @@ export default async function AdminDashboard() {
           )}
         </div>
 
-        {/* Recent quiz placeholder - shown in table below on mobile */}
+        {/* Quick stats */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 lg:block hidden">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">
             Hurtig statistik
@@ -235,39 +316,37 @@ export default async function AdminDashboard() {
             <div className="flex justify-between">
               <span className="text-gray-500">Gns. abonnementer pr. quiz</span>
               <span className="font-medium text-gray-900">
-                {stats.totalQuiz > 0
+                {stats.recentQuiz.length > 0
                   ? Math.round(
                       stats.recentQuiz.reduce(
-                        (sum, q) =>
+                        (sum: number, q: { selected_services: string[] }) =>
                           sum +
-                          ((q.selected_services as string[])?.length || 0),
+                          (q.selected_services?.length || 0),
                         0
                       ) / stats.recentQuiz.length
                     )
-                  : 0}
+                  : "—"}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Gns. besparelse pr. quiz</span>
               <span className="font-medium text-[#1B7A6E]">
                 {stats.totalQuiz > 0
-                  ? Math.round(stats.totalSavings / stats.totalQuiz).toLocaleString("da-DK")
-                  : 0}{" "}
-                kr/md
+                  ? `${Math.round(stats.totalSavings / stats.totalQuiz).toLocaleString("da-DK")} kr/md`
+                  : "—"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Gns. månedligt forbrug</span>
+              <span className="text-gray-500">Gns. m&aring;nedligt forbrug</span>
               <span className="font-medium text-gray-900">
                 {stats.recentQuiz.length > 0
-                  ? Math.round(
+                  ? `${Math.round(
                       stats.recentQuiz.reduce(
-                        (sum, q) => sum + (Number(q.estimated_monthly_cost) || 0),
+                        (sum: number, q: { estimated_monthly_cost: number }) => sum + (Number(q.estimated_monthly_cost) || 0),
                         0
                       ) / stats.recentQuiz.length
-                    ).toLocaleString("da-DK")
-                  : 0}{" "}
-                kr/md
+                    ).toLocaleString("da-DK")} kr/md`
+                  : "—"}
               </span>
             </div>
           </div>
@@ -310,7 +389,7 @@ export default async function AdminDashboard() {
                   </td>
                 </tr>
               ) : (
-                stats.recentQuiz.map((q) => (
+                stats.recentQuiz.map((q: { id: string; email: string; created_at: string; selected_services: string[]; estimated_monthly_cost: number; estimated_savings: number }) => (
                   <tr key={q.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 text-gray-900 font-medium">
                       {q.email}
@@ -324,7 +403,7 @@ export default async function AdminDashboard() {
                       })}
                     </td>
                     <td className="px-6 py-3 text-right text-gray-900">
-                      {(q.selected_services as string[])?.length || 0}
+                      {q.selected_services?.length || 0}
                     </td>
                     <td className="px-6 py-3 text-right text-gray-900">
                       {Number(q.estimated_monthly_cost || 0).toLocaleString("da-DK")} kr/md
