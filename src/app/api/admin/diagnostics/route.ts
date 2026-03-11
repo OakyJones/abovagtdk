@@ -38,11 +38,15 @@ export async function GET() {
   }
 
   // Specific checks
-  const { data: inboundSample } = await supabase
+  const { data: inboundSample, error: inboundErr } = await supabase
     .from("inbound_emails")
     .select("id, from_email, to_email, subject, direction, is_read, received_at, tag")
     .order("received_at", { ascending: false })
-    .limit(5);
+    .limit(10);
+
+  const { count: inboundTotal, error: inboundCountErr } = await supabase
+    .from("inbound_emails")
+    .select("*", { count: "exact", head: true });
 
   const { data: recentUsers } = await supabase
     .from("users")
@@ -50,11 +54,26 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(5);
 
+  // Check email_attachments
+  const { count: attachmentCount } = await supabase
+    .from("email_attachments")
+    .select("*", { count: "exact", head: true });
+
+  // RLS check: try raw SQL to see if RLS is enabled
+  const { data: rlsCheck } = await supabase.rpc("check_rls_status").maybeSingle();
+
   return NextResponse.json({
     timestamp: new Date().toISOString(),
     tableCounts: results,
-    recentInbound: inboundSample || [],
+    inboundEmails: {
+      total: inboundTotal ?? 0,
+      countError: inboundCountErr?.message || null,
+      queryError: inboundErr?.message || null,
+      recent: inboundSample || [],
+    },
+    attachments: { count: attachmentCount ?? 0 },
     recentUsers: recentUsers || [],
+    rlsCheck: rlsCheck || "rpc not available — check manually",
     env: {
       hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,

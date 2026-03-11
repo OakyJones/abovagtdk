@@ -13,14 +13,29 @@ export async function GET() {
     .limit(200);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Admin inbox query error:", error);
+    return NextResponse.json({
+      error: error.message,
+      hint: error.hint || null,
+      details: error.details || null,
+      code: error.code || null,
+    }, { status: 500 });
   }
+
+  // Also get total count for debugging
+  const { count } = await supabase
+    .from("inbound_emails")
+    .select("*", { count: "exact", head: true });
 
   const unreadCount = (emails || []).filter(
     (e) => !e.is_read && (e.direction === "inbound" || !e.direction)
   ).length;
 
-  return NextResponse.json({ emails: emails || [], unreadCount });
+  return NextResponse.json({
+    emails: emails || [],
+    unreadCount,
+    totalCount: count ?? 0,
+  });
 }
 
 export async function PATCH(req: NextRequest) {

@@ -25,6 +25,8 @@ const tagConfig: Record<string, { label: string; color: string }> = {
 export default function InboxPage() {
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string>("all");
   const [showCompose, setShowCompose] = useState(false);
@@ -35,14 +37,18 @@ export default function InboxPage() {
   const [sendStatus, setSendStatus] = useState<string | null>(null);
 
   const fetchEmails = useCallback(async () => {
+    setFetchError(null);
     try {
       const res = await fetch("/api/admin/inbox");
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setEmails(data.emails || []);
+        setTotalCount(data.totalCount ?? null);
+      } else {
+        setFetchError(`${data.error || "Ukendt fejl"}${data.hint ? ` (hint: ${data.hint})` : ""}${data.code ? ` [${data.code}]` : ""}`);
       }
-    } catch {
-      // silently fail
+    } catch (err) {
+      setFetchError("Netværksfejl: " + (err instanceof Error ? err.message : "Ukendt"));
     } finally {
       setLoading(false);
     }
@@ -152,11 +158,32 @@ export default function InboxPage() {
 
   return (
     <div>
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <p className="text-sm font-semibold text-red-800">Fejl ved hentning af emails:</p>
+          <p className="text-sm text-red-700 mt-1">{fetchError}</p>
+        </div>
+      )}
+
+      {/* Debug info */}
+      {totalCount !== null && emails.length === 0 && totalCount > 0 && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-amber-800">
+            Der er <span className="font-bold">{totalCount}</span> emails i databasen, men ingen vises.
+            Dette kan skyldes et RLS-problem. Tjek Supabase policies.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Indbakke</h2>
           <p className="text-sm text-gray-500">
-            {emails.length} email{emails.length !== 1 ? "s" : ""}{" "}
+            {emails.length} email{emails.length !== 1 ? "s" : ""}
+            {totalCount !== null && totalCount !== emails.length && (
+              <span className="text-gray-400"> (af {totalCount} i DB)</span>
+            )}{" "}
             {unreadCount > 0 && (
               <span className="text-[#1B7A6E] font-medium">
                 ({unreadCount} ulæst{unreadCount !== 1 ? "e" : ""})
