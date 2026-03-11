@@ -26,6 +26,8 @@ export default function AdminPaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [totalInDb, setTotalInDb] = useState<number | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPayments();
@@ -48,6 +50,24 @@ export default function AdminPaymentsPage() {
       setFetchError("Netværksfejl: " + (err instanceof Error ? err.message : "Ukendt"));
     }
     setLoading(false);
+  };
+
+  const handleSyncStripe = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch("/api/admin/sync-stripe", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncResult(`Synced: ${data.synced?.length || 0}, Skipped: ${data.skipped?.length || 0}, Errors: ${data.errors?.length || 0}`);
+        fetchPayments();
+      } else {
+        setSyncResult(`Fejl: ${data.error || "Ukendt"}`);
+      }
+    } catch {
+      setSyncResult("Netværksfejl");
+    }
+    setSyncing(false);
   };
 
   const handleCapture = async (paymentIntentId: string) => {
@@ -108,13 +128,29 @@ export default function AdminPaymentsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Betalinger</h2>
-        <button
-          onClick={fetchPayments}
-          className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Opdater
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSyncStripe}
+            disabled={syncing}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {syncing ? "Syncer..." : "Sync fra Stripe"}
+          </button>
+          <button
+            onClick={fetchPayments}
+            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Opdater
+          </button>
+        </div>
       </div>
+
+      {/* Sync result */}
+      {syncResult && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-blue-800">{syncResult}</p>
+        </div>
+      )}
 
       {/* Error banner */}
       {fetchError && (
