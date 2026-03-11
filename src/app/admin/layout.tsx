@@ -12,6 +12,7 @@ const navItems = [
   { label: "Indbakke", href: "/admin/inbox", badge: true },
   { label: "Forslag", href: "/admin/suggestions" },
   { label: "Betalinger", href: "/admin/payments" },
+  { label: "Email Test", href: "/admin/email-test" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
