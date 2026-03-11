@@ -93,8 +93,9 @@ Service: ${name}${avg_price ? `, gennemsnitspris fra brugere: ${avg_price} kr/md
     return NextResponse.json({ result, source: "ai" });
   } catch (error) {
     console.error("Enrich service error:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Failed to enrich service" },
+      { error: `AI-fejl: ${message}` },
       { status: 500 }
     );
   }
