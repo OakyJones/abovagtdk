@@ -270,6 +270,7 @@ function DashboardContent() {
 
   // Called when Stripe card is confirmed (status=requires_capture)
   const onCardReserved = (consentTimestamp: string) => {
+    window.umami?.track("payment_start");
     setCardReserved(true);
     setConsentGivenAt(consentTimestamp);
     // Store PI ID and consent so it survives the Tink redirect
@@ -302,6 +303,7 @@ function DashboardContent() {
         );
         return;
       }
+      window.umami?.track("tink_start");
       window.location.href = data.url;
     } catch {
       setScanError("Kunne ikke oprette bankforbindelse");
@@ -325,6 +327,8 @@ function DashboardContent() {
       }
       setSubs(data.subscriptions || []);
       setUnknowns(data.unknownRecurring || []);
+      window.umami?.track("tink_connected");
+      window.umami?.track("scan_complete", { subs: (data.subscriptions || []).length });
       setStep("results");
     } catch {
       setScanError("Scanning fejlede — prøv igen");
@@ -431,6 +435,8 @@ function DashboardContent() {
     item.lowerTiers.length > 0 || !!item.legacyDowngrade;
 
   const setAction = (id: string, action: ActionType) => {
+    if (action === "cancel") window.umami?.track("action_cancel");
+    if (action === "downgrade") window.umami?.track("action_downgrade");
     setActions((prev) => ({ ...prev, [id]: action }));
   };
 
@@ -474,6 +480,7 @@ function DashboardContent() {
       // Clean up stored PI ID and consent
       localStorage.removeItem("abovagt_payment_intent_id");
       localStorage.removeItem("abovagt_consent_given_at");
+      window.umami?.track("payment_complete", { fee, savings: totalSavings });
       setHasPaid(true);
       setStep("emails");
     } catch {
@@ -597,6 +604,7 @@ function DashboardContent() {
         ? modal.item.price
         : getDowngradeSavingsForItem(modal.item);
 
+      window.umami?.track("email_sent", { type: modal.type, service: modal.item!.service?.name || modal.item!.name });
       setSentEmails((prev) => [
         ...prev,
         {

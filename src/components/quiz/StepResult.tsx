@@ -138,6 +138,7 @@ export default function StepResult({
       }
     });
     onSave(totalMonthly, totalSavings, userActions);
+    window.umami?.track("quiz_complete", { savings: totalSavings, monthly: totalMonthly });
     setSaved(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -487,6 +488,7 @@ export default function StepResult({
 
         <a
           href="/connect"
+          onClick={() => window.umami?.track("winback_click", { savings: totalSavings })}
           className="block w-full text-center px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
         >
           Find mine abonnementer &rarr;

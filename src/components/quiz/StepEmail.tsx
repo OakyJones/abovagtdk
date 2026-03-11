@@ -26,6 +26,7 @@ export default function StepEmail({ onNext }: Props) {
 
     setLoading(true);
     setError("");
+    window.umami?.track("quiz_email");
     onNext(email, newsletter);
   };
 

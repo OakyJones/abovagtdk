@@ -1,3 +1,5 @@
+"use client";
+
 import Inspektoeren from "./Inspektoeren";
 
 const checkIcon = (color: string) => (
@@ -98,6 +100,7 @@ export default function Hero() {
 
             <a
               href="/connect"
+              onClick={() => window.umami?.track("signup_engang")}
               className="block w-full text-center px-5 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-md shadow-teal-600/20 text-sm"
             >
               Find mine abonnementer &rarr;
@@ -131,6 +134,7 @@ export default function Hero() {
 
             <a
               href="/signup?plan=monitoring"
+              onClick={() => window.umami?.track("signup_monitoring")}
               className="block w-full text-center px-5 py-3 bg-white text-[#1C2B2A] font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
             >
               Start monitoring &rarr;

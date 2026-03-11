@@ -47,6 +47,7 @@ export default function QuizPage() {
       // Continue without user — quiz still works
     }
 
+    window.umami?.track("quiz_start");
     setStep(1);
   };
 

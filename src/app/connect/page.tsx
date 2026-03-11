@@ -66,6 +66,7 @@ function ConnectContent() {
       localStorage.setItem("abovagt_user_id", userId);
       localStorage.setItem("abovagt_user_email", email);
 
+      window.umami?.track("signup_engang");
       // Go to dashboard — card step comes first, then Tink
       window.location.href = "/dashboard";
     } catch {
