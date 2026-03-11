@@ -248,8 +248,8 @@ export default function AdminSuggestionsPage() {
           Brugerforeslåede abonnementer
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          Abonnementer brugere har tilføjet manuelt i quizzen. Brug AI til at
-          undersøge dem, eller godkend/afvis manuelt.
+          Abonnementer brugere har tilføjet manuelt i quizzen. Godkend til
+          known_services eller afvis.
         </p>
       </div>
 
@@ -347,7 +347,7 @@ export default function AdminSuggestionsPage() {
                           onClick={() => startEditing(s)}
                           className="px-4 py-2 text-sm font-medium bg-[#1B7A6E] text-white rounded-lg hover:bg-[#155F56] transition-colors"
                         >
-                          Tilføj til quiz
+                          Godkend
                         </button>
                         <button
                           onClick={() => handleDismiss(s.id)}
