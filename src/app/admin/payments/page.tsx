@@ -24,21 +24,28 @@ export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [totalInDb, setTotalInDb] = useState<number | null>(null);
 
   useEffect(() => {
     fetchPayments();
   }, []);
 
   const fetchPayments = async () => {
+    setFetchError(null);
     try {
       const res = await fetch("/api/admin/payments");
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setPayments(data.payments || []);
         setStats(data.stats || null);
+        setTotalInDb(data.totalInDb ?? null);
+      } else {
+        setFetchError(`${data.error || "Ukendt fejl"}${data.hint ? ` — hint: ${data.hint}` : ""}${data.code ? ` [${data.code}]` : ""}`);
+        setTotalInDb(data.totalInDb ?? null);
       }
-    } catch {
-      // silently fail
+    } catch (err) {
+      setFetchError("Netværksfejl: " + (err instanceof Error ? err.message : "Ukendt"));
     }
     setLoading(false);
   };
@@ -99,7 +106,48 @@ export default function AdminPaymentsPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Betalinger</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Betalinger</h2>
+        <button
+          onClick={fetchPayments}
+          className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Opdater
+        </button>
+      </div>
+
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <p className="text-sm font-semibold text-red-800">Fejl ved hentning af betalinger:</p>
+          <p className="text-sm text-red-700 mt-1">{fetchError}</p>
+          {totalInDb !== null && (
+            <p className="text-xs text-red-600 mt-1">
+              Rows i payments-tabellen: {totalInDb}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Debug info when 0 shown but data exists */}
+      {!fetchError && totalInDb !== null && payments.length === 0 && totalInDb > 0 && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-amber-800">
+            Der er <span className="font-bold">{totalInDb}</span> betalinger i databasen, men forespørgslen returnerer 0.
+            Muligt problem med kolonne-navne, foreign key join (users), eller RLS trods service_role_key.
+          </p>
+        </div>
+      )}
+
+      {/* Info when table is genuinely empty */}
+      {!fetchError && totalInDb === 0 && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-blue-800">
+            Payments-tabellen er tom (0 rows). Der er endnu ingen gennemførte betalinger.
+            Betalinger oprettes når en bruger gennemfører hele flowet: kort → bank → scan → bekræft.
+          </p>
+        </div>
+      )}
 
       {/* Stats cards */}
       {stats && (
