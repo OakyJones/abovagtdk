@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     </div>
 
     <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;">
-      <p>Halvfems Procent · CVR [pending]</p>
+      <p>Halvfems Procent · CVR 46314697</p>
     </div>
   </div>
 </body>
