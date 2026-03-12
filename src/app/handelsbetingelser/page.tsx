@@ -77,10 +77,11 @@ export default function HandelsbetingelserPage() {
                     <span className="text-xs bg-teal-100 text-[#1B7A6E] font-semibold px-2 py-1 rounded-full">Engangsbetaling</span>
                   </div>
                   <p className="text-gray-700 text-sm">
-                    25% af din dokumenterede m&aring;nedlige besparelse, maks <strong>45 kr inkl. moms</strong>.
+                    Flat engangsbetaling p&aring; <strong>35 kr inkl. moms</strong> — kun hvis vi finder abonnementer.
+                    Finder vi ingen abonnementer, betaler du ingenting.
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
-                    Eksempel: Sparer du 100 kr/md, betaler du 25 kr. Sparer du 200 kr/md, betaler du 45 kr (maks).
+                    Betalingen d&aelig;kker scanning, analyse og f&aelig;rdige opsigelsesmails.
                   </p>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
