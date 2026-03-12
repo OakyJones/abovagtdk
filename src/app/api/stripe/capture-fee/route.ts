@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calculate actual fee: 25% of savings, max 45 kr
-    const feeDKK = Math.min(Math.round(totalSavings * 0.25), 45);
+    // Flat fee: 35 kr if subscriptions found
+    const feeDKK = 35;
     const feeOere = feeDKK * 100;
 
     if (feeOere <= 0) {
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
 
       <div style="background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:20px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <span style="color:#6b7280;font-size:14px;">Pris (25% af besparelse, maks 45 kr)</span>
+          <span style="color:#6b7280;font-size:14px;">Pris (engangsbetaling)</span>
           <span style="font-weight:600;color:#111;font-size:14px;">${feeDKK} kr</span>
         </div>
         <div style="display:flex;justify-content:space-between;">

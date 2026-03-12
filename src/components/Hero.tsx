@@ -106,7 +106,7 @@ export default function Hero() {
               Find mine abonnementer &rarr;
             </a>
             <p className="mt-2.5 text-center text-[11px] text-gray-500">
-              Engangsbetaling: 25% af besparelsen &mdash; maks 45 kr
+              35 kr hvis vi finder noget &mdash; ellers gratis
             </p>
           </div>
 
