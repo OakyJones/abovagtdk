@@ -86,7 +86,7 @@ export default function Hero() {
 
             <ul className="space-y-2.5 mb-8 flex-1">
               {[
-                "Bank via Tink (kun l\u00e6seadgang)",
+                "Sikker bankforbindelse (kun l\u00e6seadgang)",
                 "AI finder abonnementer",
                 "Du v\u00e6lger hvad der skal opsiges",
                 "Du betaler f\u00f8rst n\u00e5r DU har godkendt",
@@ -149,7 +149,7 @@ export default function Hero() {
         <div className="mt-12 sm:mt-16 bg-white/80 rounded-2xl border border-gray-200 px-6 py-4 max-w-4xl mx-auto">
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
             {[
-              { icon: "\uD83D\uDD12", text: "Drevet af Visa" },
+              { icon: "\uD83D\uDD12", text: "Sikker open banking (PSD2)" },
               { icon: "\uD83D\uDC41\uFE0F", text: "Kun l\u00e6seadgang" },
               { icon: "\uD83C\uDDE9\uD83C\uDDF0", text: "Dansk virksomhed (CVR 46314697)" },
               { icon: "\uD83D\uDEE1\uFE0F", text: "GDPR-compliant" },

@@ -1,3 +1,5 @@
+// TODO: Skift tilbage til Tink når revenue tillader (bedre branding: "Drevet af Visa")
+// Pt. erstattet af /api/gocardless/scan
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { getDelegatedToken, getUserToken, getTransactions, getAccounts } from "@/lib/tink";

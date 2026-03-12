@@ -112,7 +112,7 @@ function UserDetailPanel({ userId, onClose }: { userId: string; onClose: () => v
             <p className="font-medium">{fmtDate(u.created_at)}</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-gray-500 text-xs">Tink</p>
+            <p className="text-gray-500 text-xs">Bank</p>
             <p className="font-medium">{u.tink_connected ? "Forbundet" : "Nej"}</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
@@ -379,7 +379,7 @@ export default function AdminUsersPage() {
                   Besparelse/md
                 </th>
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                  Tink
+                  Bank
                 </th>
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                   Betalt

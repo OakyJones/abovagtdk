@@ -20,7 +20,7 @@ const fullSteps = [
   {
     number: "1",
     title: "Forbind din bank",
-    description: "Sikker forbindelse via Tink. Vi kan kun læse — aldrig flytte penge.",
+    description: "Sikker forbindelse via open banking (PSD2). Vi kan kun læse — aldrig flytte penge.",
   },
   {
     number: "2",

@@ -241,7 +241,7 @@ function buildWelcomeHtml(recipientEmail: string): string {
             <td style="padding:8px 0;vertical-align:top;">
               <span style="display:inline-block;width:24px;height:24px;background:#1B7A6E;color:#fff;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:700;">1</span>
             </td>
-            <td style="padding:8px 0 8px 12px;color:#374151;font-size:14px;">Forbind din bank via Tink (kun l&aelig;seadgang)</td>
+            <td style="padding:8px 0 8px 12px;color:#374151;font-size:14px;">Forbind din bank via sikker open banking (kun l&aelig;seadgang)</td>
           </tr>
           <tr>
             <td style="padding:8px 0;vertical-align:top;">

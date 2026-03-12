@@ -168,7 +168,7 @@ export default async function AdminDashboard() {
     { label: "Brugere", value: stats.totalEmails, color: "text-blue-600" },
     { label: "Newsletter", value: stats.totalNewsletter, color: "text-purple-600" },
     { label: "Konvertering → bank", value: `${stats.conversionRate}%`, color: "text-orange-600" },
-    { label: "Tink-forbindelser", value: stats.tinkConnected, color: "text-orange-600" },
+    { label: "Bankforbindelser", value: stats.tinkConnected, color: "text-orange-600" },
     { label: "Opsigelser/handlinger", value: stats.totalActions, color: "text-red-600" },
     { label: "Inbound emails", value: stats.totalInbound, color: "text-indigo-600" },
     {
@@ -218,7 +218,7 @@ export default async function AdminDashboard() {
             0 <span className="text-lg font-semibold">kr/md</span>
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            0 brugere — Tink ikke live endnu
+            0 brugere — bank ikke live endnu
           </p>
         </div>
         <div className="bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-5">

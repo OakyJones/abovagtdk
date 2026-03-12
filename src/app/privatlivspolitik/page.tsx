@@ -53,9 +53,9 @@ export default function PrivatlivspolitikPage() {
                   <p className="text-sm text-gray-600">Dine svar i vores abonnementsquiz bruges til at estimere din besparelse.</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                  <p className="font-semibold text-[#1C2B2A] mb-1">Bankdata via Tink</p>
+                  <p className="font-semibold text-[#1C2B2A] mb-1">Bankdata via open banking</p>
                   <p className="text-sm text-gray-600">
-                    Vi henter dine transaktioner via Tink for at finde abonnementer. Vi har <strong>kun læseadgang</strong> — vi kan aldrig flytte penge eller ændre noget i din bank.
+                    Vi henter dine transaktioner via reguleret open banking (PSD2) for at finde abonnementer. Vi har <strong>kun læseadgang</strong> — vi kan aldrig flytte penge eller ændre noget i din bank.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -91,12 +91,12 @@ export default function PrivatlivspolitikPage() {
               </p>
             </section>
 
-            {/* Tink */}
+            {/* Open banking */}
             <section>
-              <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Bankdata og Tink</h2>
+              <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Bankdata og open banking</h2>
               <p className="text-gray-700 leading-relaxed">
-                Vi bruger Tink (en del af Visa) til at hente dine banktransaktioner. Tink er en autoriseret AISP (Account Information Service Provider) under
-                svensk og EU-regulering. De behandler dine bankdata under deres egen licens og privatlivspolitik.
+                Vi bruger reguleret open banking (PSD2) til at hente dine banktransaktioner via en autoriseret AISP (Account Information Service Provider) under
+                EU-regulering. Bankdata behandles under den relevante udbyder&apos;s egen licens og privatlivspolitik.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
                 Vi har udelukkende <strong>læseadgang</strong> til dine transaktioner. Vi kan aldrig initiere betalinger, overførsler eller andre ændringer i din bank.
@@ -115,8 +115,8 @@ export default function PrivatlivspolitikPage() {
                   <p className="text-xs text-gray-500">Database — Frankfurt, Tyskland</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                  <p className="text-sm font-semibold text-[#1C2B2A]">Tink (Visa)</p>
-                  <p className="text-xs text-gray-500">Bankdata — Stockholm, Sverige</p>
+                  <p className="text-sm font-semibold text-[#1C2B2A]">GoCardless (open banking)</p>
+                  <p className="text-xs text-gray-500">Bankdata — EU</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                   <p className="text-sm font-semibold text-[#1C2B2A]">Resend</p>
@@ -159,7 +159,7 @@ export default function PrivatlivspolitikPage() {
                 Vi bruger <strong>ikke</strong> cookies til tracking eller markedsf&oslash;ring. Vores analytics (Umami) er helt cookiefri og anonymiseret.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
-                Stripe og Tink kan s&aelig;tte teknisk n&oslash;dvendige cookies i forbindelse med betaling og bankforbindelse. Disse er p&aring;kr&aelig;vede for at servicen fungerer og kr&aelig;ver ikke samtykke.
+                Stripe kan s&aelig;tte teknisk n&oslash;dvendige cookies i forbindelse med betaling. Disse er p&aring;kr&aelig;vede for at servicen fungerer og kr&aelig;ver ikke samtykke.
               </p>
             </section>
 

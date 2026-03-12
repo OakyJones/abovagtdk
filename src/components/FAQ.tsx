@@ -11,12 +11,12 @@ const faqs = [
   {
     question: "Hvad er forskellen på quiz og fuld service?",
     answer:
-      "Quizzen giver dig et estimat baseret på dine svar. Fuld service forbinder til din bank via Tink, finder alle dine faktiske abonnementer automatisk, og genererer færdige opsigelsesmails. Du betaler 35 kr hvis vi finder abonnementer — ellers er det gratis. Ingen løbende udgifter.",
+      "Quizzen giver dig et estimat baseret på dine svar. Fuld service forbinder til din bank via sikker open banking (PSD2), finder alle dine faktiske abonnementer automatisk, og genererer færdige opsigelsesmails. Du betaler 35 kr hvis vi finder abonnementer — ellers er det gratis. Ingen løbende udgifter.",
   },
   {
     question: "Er det sikkert at forbinde min bank?",
     answer:
-      "Ja. Vi bruger Tink, som er ejet af Visa og reguleret under PSD2 af Finanstilsynet. Vi har kun læseadgang til dine transaktioner — vi kan aldrig flytte penge eller foretage betalinger. Det er den samme teknologi som bruges af Nordens største banker.",
+      "Ja. Vi bruger reguleret open banking (PSD2) til at forbinde din bank. Vi har kun læseadgang til dine transaktioner — vi kan aldrig flytte penge eller foretage betalinger. Du logger ind via din banks egen loginside (fx MitID).",
   },
   {
     question: "Opsiger I abonnementer på mine vegne?",
@@ -36,7 +36,7 @@ const faqs = [
   {
     question: "Kan I se min saldo?",
     answer:
-      "Nej. Vi bruger en AISP-licens (Account Information Service Provider) via Tink/Visa. Det betyder vi kun har adgang til dine transaktioner — aldrig din saldo, kontonummer eller andre følsomme oplysninger.",
+      "Nej. Vi har kun AISP-adgang (Account Information Service Provider) via reguleret open banking. Det betyder vi kun har adgang til dine transaktioner — aldrig din saldo, kontonummer eller andre følsomme oplysninger.",
   },
   {
     question: "Kan I flytte mine penge?",
@@ -44,9 +44,9 @@ const faqs = [
       "Nej, aldrig. Vi har kun læseadgang (AISP) — ikke betalingsadgang (PISP). Det er teknisk umuligt for os at flytte penge, foretage betalinger eller ændre noget i din bank. Vi kan udelukkende læse dine transaktioner.",
   },
   {
-    question: "Hvem er Tink?",
+    question: "Hvad er open banking?",
     answer:
-      "Tink er en Open Banking-platform ejet af Visa. De forbinder din bank sikkert via PSD2-regulering og er godkendt af Finanstilsynet. Tink bruges af banker i hele Europa, bl.a. BNP Paribas, ABN AMRO og PayPal.",
+      "Open banking er EU-reguleret teknologi (PSD2) der giver dig mulighed for sikkert at dele dine transaktionsdata med tjenester som AboVagt. Du logger ind via din banks egen loginside (fx MitID), og vi får kun læseadgang. Det er den samme regulering som bruges af banker og fintech-tjenester i hele Europa.",
   },
   {
     question: "Hvad sker der med mine data?",

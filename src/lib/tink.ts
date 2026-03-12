@@ -1,4 +1,5 @@
-// Tink API client
+// TODO: Skift tilbage til Tink når revenue tillader (bedre branding: "Drevet af Visa")
+// Tink API client — pt. erstattet af GoCardless (gratis open banking)
 // Docs: https://docs.tink.com
 
 const TINK_BASE_URL = "https://api.tink.com";

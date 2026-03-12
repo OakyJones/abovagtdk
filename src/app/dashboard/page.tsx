@@ -121,7 +121,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const connected = searchParams.get("connected") === "true";
   const credentialsId = searchParams.get("credentialsId");
-  const tinkCode = searchParams.get("code");
+  const bankCode = searchParams.get("code");
   const error = searchParams.get("error");
 
   const [step, setStep] = useState<Step>(connected ? "scanning" : "card");
@@ -186,7 +186,7 @@ function DashboardContent() {
     }
     if (storedName) setUserName(storedName);
 
-    // Restore paymentIntentId and consent if returning from Tink redirect
+    // Restore paymentIntentId and consent if returning from bank redirect
     const storedPiId = localStorage.getItem("abovagt_payment_intent_id");
     if (storedPiId) {
       setPaymentIntentId(storedPiId);
@@ -219,7 +219,7 @@ function DashboardContent() {
     }
   }, [userId]);
 
-  // If returning from Tink with card already reserved, go straight to scanning
+  // If returning from bank with card already reserved, go straight to scanning
   useEffect(() => {
     if (connected && userId && cardReserved && step === "card") {
       setStep("scanning");
@@ -274,7 +274,7 @@ function DashboardContent() {
     window.umami?.track("payment_start");
     setCardReserved(true);
     setConsentGivenAt(consentTimestamp);
-    // Store PI ID and consent so it survives the Tink redirect
+    // Store PI ID and consent so it survives the bank redirect
     if (paymentIntentId) {
       localStorage.setItem("abovagt_payment_intent_id", paymentIntentId);
     }
@@ -283,28 +283,50 @@ function DashboardContent() {
     setStep("connect");
   };
 
-  // ---- Connect step: Tink bank ----
+  // ---- Connect step: GoCardless bank ----
+  const [banks, setBanks] = useState<{ id: string; name: string; logo: string }[]>([]);
+  const [banksLoading, setBanksLoading] = useState(false);
+  const [selectedBank, setSelectedBank] = useState<string | null>(null);
+  const [bankSearch, setBankSearch] = useState("");
+
+  // Fetch Danish banks when connect step is shown
+  useEffect(() => {
+    if (step === "connect" && banks.length === 0) {
+      setBanksLoading(true);
+      fetch("/api/gocardless/institutions")
+        .then((res) => res.json())
+        .then((data) => setBanks(data.institutions || []))
+        .catch(() => setScanError("Kunne ikke hente banker"))
+        .finally(() => setBanksLoading(false));
+    }
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const filteredBanks = banks.filter((b) =>
+    b.name.toLowerCase().includes(bankSearch.toLowerCase())
+  );
+
   const handleConnect = async () => {
-    if (!userId) {
+    if (!userId || !selectedBank) {
+      if (!selectedBank) {
+        setScanError("Vælg din bank først");
+        return;
+      }
       window.location.href = "/connect";
       return;
     }
+    setScanError(null);
     try {
-      const res = await fetch("/api/tink/link", {
+      const res = await fetch("/api/gocardless/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId, institutionId: selectedBank }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setScanError(
-          res.status === 503
-            ? "Tink bankforbindelse er ikke aktiveret endnu. Vi arbejder på det!"
-            : data.error || "Kunne ikke oprette bankforbindelse"
-        );
+        setScanError(data.error || "Kunne ikke oprette bankforbindelse");
         return;
       }
-      window.umami?.track("tink_start");
+      window.umami?.track("bank_connect_start");
       window.location.href = data.url;
     } catch {
       setScanError("Kunne ikke oprette bankforbindelse");
@@ -315,10 +337,10 @@ function DashboardContent() {
     setStep("scanning");
     setScanError(null);
     try {
-      const res = await fetch("/api/tink/scan", {
+      const res = await fetch("/api/gocardless/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, credentialsId, code: tinkCode }),
+        body: JSON.stringify({ userId }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -329,7 +351,7 @@ function DashboardContent() {
       setSubs(data.subscriptions || []);
       setUnknowns(data.unknownRecurring || []);
       setTotalMonthlySpend(data.totalMonthlySpend || 0);
-      window.umami?.track("tink_connected");
+      window.umami?.track("bank_connected");
       window.umami?.track("scan_complete", { subs: (data.subscriptions || []).length });
       setStep("results");
     } catch {
@@ -743,34 +765,89 @@ function DashboardContent() {
 
         {/* ============ STEP 2: Connect bank ============ */}
         {step === "connect" && (
-          <div className="max-w-md mx-auto text-center">
-            <Inspektoeren
-              pose="searching"
-              size={120}
-              speechBubble="Kort registreret! Nu forbinder vi din bank."
-              className="mb-6"
-            />
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A] mb-3">
-              Forbind din bank
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Vi forbinder sikkert via Tink. Vi kan kun l&aelig;se dine transaktioner
-              &mdash; aldrig flytte penge.
-            </p>
+          <div className="max-w-md mx-auto">
+            <div className="text-center">
+              <Inspektoeren
+                pose="searching"
+                size={120}
+                speechBubble="Kort registreret! Nu forbinder vi din bank."
+                className="mb-6"
+              />
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1C2B2A] mb-3">
+                V&aelig;lg din bank
+              </h1>
+              <p className="text-gray-600 mb-6">
+                Sikker open banking forbindelse (PSD2). Vi kan kun l&aelig;se dine transaktioner
+                &mdash; aldrig flytte penge.
+              </p>
+            </div>
+
             {scanError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-6">
                 <p className="text-sm text-red-700">{scanError}</p>
               </div>
             )}
+
+            {/* Bank search */}
+            <input
+              type="text"
+              placeholder="S&oslash;g efter din bank..."
+              value={bankSearch}
+              onChange={(e) => setBankSearch(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B7A6E]/30 focus:border-[#1B7A6E] mb-4"
+            />
+
+            {/* Bank list */}
+            <div className="bg-white rounded-xl border border-gray-200 max-h-64 overflow-y-auto mb-6">
+              {banksLoading ? (
+                <div className="p-6 text-center text-gray-400 text-sm">Henter banker...</div>
+              ) : filteredBanks.length === 0 ? (
+                <div className="p-6 text-center text-gray-400 text-sm">Ingen banker fundet</div>
+              ) : (
+                filteredBanks.map((bank) => (
+                  <button
+                    key={bank.id}
+                    onClick={() => setSelectedBank(bank.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left border-b border-gray-50 last:border-0 transition-colors ${
+                      selectedBank === bank.id
+                        ? "bg-teal-50 border-l-2 border-l-[#1B7A6E]"
+                        : "hover:bg-gray-50"
+                    }`}
+                  >
+                    {bank.logo && (
+                      <img
+                        src={bank.logo}
+                        alt=""
+                        className="w-8 h-8 rounded object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
+                    <span className={`text-sm font-medium ${selectedBank === bank.id ? "text-[#1B7A6E]" : "text-gray-900"}`}>
+                      {bank.name}
+                    </span>
+                    {selectedBank === bank.id && (
+                      <svg className="w-5 h-5 text-[#1B7A6E] ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+
             <button
               onClick={handleConnect}
-              className="w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
+              disabled={!selectedBank}
+              className={`w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg ${
+                !selectedBank ? "opacity-40 cursor-not-allowed" : ""
+              }`}
             >
               Forbind min bank
             </button>
+
             <div className="mt-8 space-y-3">
               {[
-                "Sikker forbindelse via Tink (reguleret af Finanstilsynet)",
+                "Sikker open banking forbindelse (PSD2-reguleret)",
                 "Kun l\u00e6seadgang \u2014 vi kan aldrig flytte penge",
                 "Dine data slettes n\u00e5r du vil",
               ].map((item) => (
