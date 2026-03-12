@@ -634,7 +634,6 @@ function DashboardContent() {
               <span className="text-black">Abo</span>
               <span className="text-[#1B7A6E]">Vagt</span>
             </a>
-            <span className="text-sm text-gray-500">Mit dashboard</span>
           </div>
         </div>
       </header>
