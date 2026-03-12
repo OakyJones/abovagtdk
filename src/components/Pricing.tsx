@@ -25,12 +25,12 @@ export default function Pricing() {
               </p>
               <div className="mt-4 flex items-baseline justify-center gap-1">
                 <span className="text-5xl sm:text-6xl font-bold text-gray-900">
-                  35
+                  25%
                 </span>
-                <span className="text-gray-500">kr</span>
+                <span className="text-gray-500">af besparelsen</span>
               </div>
               <p className="mt-2 text-gray-500">
-                Flat engangsbetaling — kun hvis vi finder noget.
+                En engangsbetaling — maks 45 kr, kun når du faktisk sparer.
               </p>
             </div>
 
@@ -40,7 +40,7 @@ export default function Pricing() {
                 "Automatisk scanning via bankforbindelse",
                 "AI-analyse af alle abonnementer",
                 "Færdige opsigelsesmails",
-                "35 kr flat — kun hvis vi finder abonnementer",
+                "En engangsbetaling — maks 45 kr, kun ved reel besparelse",
                 "Ingen binding eller skjulte gebyrer",
               ].map((feature) => (
                 <div key={feature} className="flex items-start gap-3">
@@ -63,7 +63,7 @@ export default function Pricing() {
             </div>
 
             <p className="text-center text-sm text-gray-500">
-              Finder vi abonnementer betaler du 35 kr. Finder vi intet betaler du 0 kr.
+              Eksempel: Sparer du 100 kr/md → du betaler 25 kr. Sparer du 200 kr/md → du betaler 45 kr (maks).
             </p>
           </div>
 

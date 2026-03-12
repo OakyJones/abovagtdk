@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-const MAX_FEE_DKK = 35;
+const MAX_FEE_DKK = 45;
 const MAX_FEE_OERE = MAX_FEE_DKK * 100;
 
 export async function POST(req: NextRequest) {
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         .eq("id", userId);
     }
 
-    // Reserve 35 kr — captured if scanning finds subscriptions, otherwise cancelled
+    // Always reserve max 45 kr — actual amount captured later after user confirms
     const paymentIntent = await stripe.paymentIntents.create({
       amount: MAX_FEE_OERE,
       currency: "dkk",

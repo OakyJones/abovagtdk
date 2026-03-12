@@ -203,7 +203,7 @@ function buildWinbackDay3Html(recipientEmail: string): string {
       </div>
 
       <p style="color:#9ca3af;font-size:13px;text-align:center;margin:16px 0 0;">
-        35 kr hvis vi finder abonnementer &mdash; ellers gratis
+        Engangsbetaling: 25% af besparelsen &mdash; maks 45 kr
       </p>
     </div>
 
