@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     const transactions = await getTransactions(userToken, threeMonthsAgo);
 
     // Scan for subscriptions
-    const { subscriptions, unknownRecurring } = scanTransactions(transactions);
+    const { subscriptions, unknownRecurring, totalMonthlySpend } = scanTransactions(transactions);
 
     // Save found subscriptions
     for (const sub of subscriptions) {
@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
       subscriptions,
       unknownRecurring,
       transactionsScanned: transactions.length,
+      totalMonthlySpend,
     });
   } catch (error) {
     console.error("Tink scan error:", error);

@@ -127,6 +127,7 @@ function DashboardContent() {
   const [step, setStep] = useState<Step>(connected ? "scanning" : "card");
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [unknowns, setUnknowns] = useState<Subscription[]>([]);
+  const [totalMonthlySpend, setTotalMonthlySpend] = useState(0);
   const [scanError, setScanError] = useState<string | null>(error || null);
   const [actions, setActions] = useState<Record<string, ActionType>>({});
   const [downgradeTargets, setDowngradeTargets] = useState<Record<string, string>>({});
@@ -327,6 +328,7 @@ function DashboardContent() {
       }
       setSubs(data.subscriptions || []);
       setUnknowns(data.unknownRecurring || []);
+      setTotalMonthlySpend(data.totalMonthlySpend || 0);
       window.umami?.track("tink_connected");
       window.umami?.track("scan_complete", { subs: (data.subscriptions || []).length });
       setStep("results");
@@ -404,8 +406,9 @@ function DashboardContent() {
     }
   }, [allItems]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const totalMonthly = allItems.reduce((sum, item) => sum + item.price, 0);
-  const totalSubs = allItems.length;
+  const knownItems = allItems.filter(i => i.isKnown);
+  const totalMonthly = knownItems.reduce((sum, item) => sum + item.price, 0);
+  const totalSubs = knownItems.length;
 
   // Items marked for action
   const cancelledItems = allItems.filter((item) => actions[item.id] === "cancel");
@@ -822,29 +825,41 @@ function DashboardContent() {
             </div>
 
             {/* Overview cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">M&aring;nedligt forbrug</p>
-                <p className="text-3xl font-bold text-[#1C2B2A]">{totalMonthly.toLocaleString("da-DK")} kr/md</p>
-              </div>
-              <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">&Aring;rligt forbrug</p>
-                <p className="text-3xl font-bold text-[#1C2B2A]">{(totalMonthly * 12).toLocaleString("da-DK")} kr/&aring;r</p>
-              </div>
-              <div className={`rounded-2xl border-2 p-5 text-center transition-all ${totalSavings > 0 ? "bg-teal-50 border-[#1B7A6E]" : "bg-white border-gray-200"}`}>
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Din besparelse</p>
-                <p className={`text-3xl font-bold ${totalSavings > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"}`}>
-                  {totalSavings.toLocaleString("da-DK")} kr/md
-                </p>
-              </div>
-            </div>
+            {(() => {
+              const subscriptionSpend = totalMonthly;
+              const otherSpend = Math.max(0, totalMonthlySpend - subscriptionSpend);
+              const subscriptionPct = totalMonthlySpend > 0 ? Math.round((subscriptionSpend / totalMonthlySpend) * 100) : 0;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                  <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Abonnementer fundet</p>
+                    <p className="text-2xl font-bold text-[#1C2B2A]">{totalSubs}</p>
+                    <p className="text-sm text-gray-500 mt-1">for {subscriptionSpend.toLocaleString("da-DK")} kr/md</p>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">&Oslash;vrigt forbrug</p>
+                    <p className="text-2xl font-bold text-[#1C2B2A]">{otherSpend.toLocaleString("da-DK")} kr/md</p>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Abonnementer i % af forbrug</p>
+                    <p className="text-4xl font-bold text-[#1C2B2A]">{subscriptionPct}%</p>
+                  </div>
+                  <div className={`rounded-2xl border-2 p-5 text-center transition-all ${totalSavings > 0 ? "bg-teal-50 border-[#1B7A6E]" : "bg-white border-gray-200"}`}>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Mulig besparelse</p>
+                    <p className={`text-2xl font-bold ${totalSavings > 0 ? "text-[#1B7A6E]" : "text-[#1C2B2A]"}`}>
+                      {totalSavings.toLocaleString("da-DK")} kr/md
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Subscription list — select keep/downgrade/cancel */}
             {allItems.length > 0 && (
               <div className="mb-8">
-                <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">Dine abonnementer</h2>
+                <h2 className="text-lg font-bold text-[#1C2B2A] mb-4">Dine abonnementer ({allItems.filter(i => i.isKnown).length})</h2>
                 <div className="space-y-3">
-                  {allItems.map((item) => {
+                  {allItems.filter(i => i.isKnown).map((item) => {
                     const action = actions[item.id] || "keep";
                     const canDowngrade = hasDowngrade(item);
 
@@ -991,6 +1006,30 @@ function DashboardContent() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Ikke-abonnementer (sorteret fra) */}
+            {allItems.filter(i => !i.isKnown).length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-lg font-bold text-gray-400 mb-3">Ikke-abonnementer (sorteret fra)</h2>
+                <p className="text-xs text-gray-400 mb-3">Disse tilbagevendende betalinger er ikke identificeret som abonnementer</p>
+                <div className="space-y-2">
+                  {allItems.filter(i => !i.isKnown).map((item) => (
+                    <div key={item.id} className="bg-gray-50 rounded-xl border border-gray-100 px-5 py-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg text-gray-400">{item.icon}</span>
+                          <div>
+                            <p className="font-medium text-gray-400">{item.name}</p>
+                            <p className="text-xs text-gray-300">{item.transactionCount} transaktioner fundet</p>
+                          </div>
+                        </div>
+                        <p className="font-medium text-gray-400">{item.price} kr/md</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

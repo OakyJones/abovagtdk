@@ -127,6 +127,7 @@ function hasSubscriptionKeyword(desc: string): boolean {
 export function scanTransactions(transactions: TinkTransaction[]): {
   subscriptions: DetectedSubscription[];
   unknownRecurring: DetectedSubscription[];
+  totalMonthlySpend: number;
 } {
   const groups = groupTransactions(transactions);
   const subscriptions: DetectedSubscription[] = [];
@@ -168,5 +169,29 @@ export function scanTransactions(transactions: TinkTransaction[]): {
   subscriptions.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
   unknownRecurring.sort((a, b) => b.monthlyAmount - a.monthlyAmount);
 
-  return { subscriptions, unknownRecurring };
+  // Calculate total monthly spend from all outgoing transactions
+  let totalSpend = 0;
+  const allDates: string[] = [];
+  for (const tx of transactions) {
+    const rawVal = parseInt(tx.amount.value.unscaledValue);
+    if (rawVal > 0) continue; // skip incoming
+    const amount = parseTinkAmount(tx.amount);
+    if (amount < 1) continue;
+    totalSpend += amount;
+    if (tx.dates.booked) allDates.push(tx.dates.booked);
+  }
+
+  // Estimate months spanned
+  let months = 3; // default to 3 months
+  if (allDates.length >= 2) {
+    const sorted = allDates.sort();
+    const first = new Date(sorted[0]);
+    const last = new Date(sorted[sorted.length - 1]);
+    const daySpan = (last.getTime() - first.getTime()) / (1000 * 60 * 60 * 24);
+    months = Math.max(1, Math.round(daySpan / 30));
+  }
+
+  const totalMonthlySpend = Math.round(totalSpend / months);
+
+  return { subscriptions, unknownRecurring, totalMonthlySpend };
 }
