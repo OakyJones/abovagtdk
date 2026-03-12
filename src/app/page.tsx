@@ -5,6 +5,7 @@ import HowItWorks from "@/components/HowItWorks";
 import Security from "@/components/Security";
 import Pricing from "@/components/Pricing";
 import FAQ from "@/components/FAQ";
+import SupportedBanks from "@/components/SupportedBanks";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
       <Security />
       <Pricing />
       <FAQ />
+      <SupportedBanks />
       <Footer />
     </main>
   );

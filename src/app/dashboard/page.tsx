@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import Inspektoeren from "@/components/Inspektoeren";
+import SupportedBanks from "@/components/SupportedBanks";
 import { services, Service, ServiceTier, getCancellationDate, CancellationPeriod } from "@/lib/services";
 import { generateCancelEmail, generateDowngradeEmail, calculateSavingsFromDate } from "@/lib/cancel-templates";
 
@@ -762,9 +763,11 @@ function DashboardContent() {
                 <p className="text-sm text-red-700">{scanError}</p>
               </div>
             )}
+            <SupportedBanks compact />
+
             <button
               onClick={handleConnect}
-              className="w-full px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
+              className="w-full mt-6 px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
             >
               Forbind min bank
             </button>

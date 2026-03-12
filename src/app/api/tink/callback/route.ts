@@ -33,6 +33,11 @@ export async function GET(req: NextRequest) {
           tink_credentials_id: credentialsId,
         })
         .eq("id", userId);
+
+      // Track bank connection for monthly quota monitoring
+      await supabase
+        .from("bank_connections")
+        .insert({ user_id: userId, provider: "tink" });
     } catch (e) {
       console.error("Failed to save Tink data:", e);
       // Continue anyway — we pass credentialsId via URL

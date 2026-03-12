@@ -22,6 +22,7 @@ async function getStats() {
     { data: recentQuiz },
     { data: last30Quiz },
     { data: allServices },
+    { count: bankConnectionsThisMonth },
   ] = await Promise.all([
     getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }),
     getSupabaseAdmin().from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
@@ -33,6 +34,7 @@ async function getStats() {
     getSupabaseAdmin().from("quiz_results").select("id, email, selected_services, estimated_monthly_cost, estimated_savings, created_at").order("created_at", { ascending: false }).limit(20),
     getSupabaseAdmin().from("quiz_results").select("created_at").gte("created_at", thirtyDaysAgo),
     getSupabaseAdmin().from("quiz_results").select("selected_services"),
+    getSupabaseAdmin().from("bank_connections").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
   ]);
 
   // Total savings (all-time)
@@ -97,6 +99,7 @@ async function getStats() {
     dailyCounts,
     top10,
     recentQuiz: recentQuiz || [],
+    bankConnectionsThisMonth: bankConnectionsThisMonth || 0,
   };
 }
 
@@ -175,6 +178,51 @@ export default async function AdminDashboard() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* GoCardless / Bank connection quota */}
+      <div className={`rounded-2xl border-2 p-5 mb-8 ${
+        stats.bankConnectionsThisMonth >= 40
+          ? "bg-red-50 border-red-300"
+          : "bg-white border-gray-200"
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+              Bankforbindelser denne måned
+            </p>
+            <p className={`text-3xl font-bold ${
+              stats.bankConnectionsThisMonth >= 40 ? "text-red-600" : "text-[#1B7A6E]"
+            }`}>
+              {stats.bankConnectionsThisMonth}
+              <span className="text-lg font-semibold text-gray-400"> / 50</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  stats.bankConnectionsThisMonth >= 40
+                    ? "bg-red-500"
+                    : stats.bankConnectionsThisMonth >= 25
+                    ? "bg-yellow-500"
+                    : "bg-[#1B7A6E]"
+                }`}
+                style={{ width: `${Math.min((stats.bankConnectionsThisMonth / 50) * 100, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              {50 - stats.bankConnectionsThisMonth} tilbage
+            </p>
+          </div>
+        </div>
+        {stats.bankConnectionsThisMonth >= 40 && (
+          <div className="mt-3 bg-red-100 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-700 font-medium">
+              Advarsel: {stats.bankConnectionsThisMonth}/50 connections brugt — tæt på grænsen!
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Chart */}
