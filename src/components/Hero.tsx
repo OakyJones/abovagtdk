@@ -88,8 +88,8 @@ export default function Hero() {
               {[
                 "Bank via Tink (kun l\u00e6seadgang)",
                 "AI finder abonnementer",
-                "F\u00e6rdige opsigelsesmails",
-                "Betal kun n\u00e5r du sparer",
+                "Du v\u00e6lger hvad der skal opsiges",
+                "Du betaler f\u00f8rst n\u00e5r DU har godkendt",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
                   {checkIcon("text-[#1B7A6E]")}
@@ -106,7 +106,7 @@ export default function Hero() {
               Find mine abonnementer &rarr;
             </a>
             <p className="mt-2.5 text-center text-[11px] text-gray-500">
-              35 kr hvis vi finder noget &mdash; ellers gratis
+              35 kr efter du har godkendt dine opsigelser &mdash; ellers gratis
             </p>
           </div>
 

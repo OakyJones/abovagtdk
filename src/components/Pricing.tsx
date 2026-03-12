@@ -39,8 +39,8 @@ export default function Pricing() {
                 "Quizzen er og bliver 100% gratis",
                 "Automatisk scanning via bankforbindelse",
                 "AI-analyse af alle abonnementer",
-                "Færdige opsigelsesmails",
-                "35 kr flat — kun hvis vi finder abonnementer",
+                "Du vælger hvad der skal opsiges",
+                "35 kr efter du har godkendt — ellers gratis",
                 "Ingen binding eller skjulte gebyrer",
               ].map((feature) => (
                 <div key={feature} className="flex items-start gap-3">
@@ -63,7 +63,7 @@ export default function Pricing() {
             </div>
 
             <p className="text-center text-sm text-gray-500">
-              Finder vi abonnementer betaler du 35 kr. Finder vi intet betaler du 0 kr.
+              Vi scanner &rarr; du v&aelig;lger &rarr; du godkender &rarr; f&oslash;rst da tr&aelig;kker vi 35 kr
             </p>
           </div>
 
