@@ -13,6 +13,9 @@ interface UserRow {
   savings_md: number;
   tink_connected: boolean;
   has_paid: boolean;
+  newsletter_consent: boolean | null;
+  contact_status: string | null;
+  monitoring_active: boolean;
 }
 
 interface UserDetail {
@@ -119,6 +122,54 @@ function UserDetailPanel({ userId, onClose }: { userId: string; onClose: () => v
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-gray-500 text-xs">Signup Path</p>
             <p className="font-medium">{(u.signup_path as string) || "—"}</p>
+          </div>
+        </div>
+
+        {/* Email & Monitoring status */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-3">
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-gray-500 text-xs">Newsletter consent</p>
+            <p className="font-medium">
+              {u.newsletter_consent === true ? (
+                <span className="text-green-600">Ja</span>
+              ) : u.newsletter_consent === false ? (
+                <span className="text-red-600">Nej</span>
+              ) : (
+                <span className="text-gray-400">Ikke sat</span>
+              )}
+            </p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-gray-500 text-xs">Contact status</p>
+            <p className="font-medium">
+              {(u.contact_status as string) === "active" ? (
+                <span className="text-green-600">Active</span>
+              ) : (u.contact_status as string) === "unsubscribed" ? (
+                <span className="text-red-600">Unsubscribed</span>
+              ) : (u.contact_status as string) === "bounced" ? (
+                <span className="text-red-600">Bounced</span>
+              ) : (
+                <span className="text-gray-400">{(u.contact_status as string) || "—"}</span>
+              )}
+            </p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-gray-500 text-xs">Consent ændret</p>
+            <p className="font-medium">{fmtDate(u.newsletter_consent_updated_at)}</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <p className="text-gray-500 text-xs">Monitoring</p>
+            <p className="font-medium">
+              {(u.signup_path as string) === "monitoring" ? (
+                (u.contact_status as string) === "unsubscribed" ? (
+                  <span className="text-red-600">Afmeldt</span>
+                ) : (
+                  <span className="text-green-600">Aktiv</span>
+                )
+              ) : (
+                <span className="text-gray-400">—</span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -333,18 +384,24 @@ export default function AdminUsersPage() {
                 <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                   Betalt
                 </th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                  Email opt-in
+                </th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                  Mon. aktiv
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan={10} className="px-6 py-8 text-center text-gray-400">
                     Henter...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan={10} className="px-6 py-8 text-center text-gray-400">
                     {search ? "Ingen brugere fundet" : "Ingen brugere endnu"}
                   </td>
                 </tr>
@@ -397,6 +454,24 @@ export default function AdminUsersPage() {
                         <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">Ja</span>
                       ) : (
                         <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-500">Nej</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {user.newsletter_consent === true ? (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">Ja</span>
+                      ) : user.newsletter_consent === false ? (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-600">Nej</span>
+                      ) : (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-500">&mdash;</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {user.monitoring_active ? (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">Aktiv</span>
+                      ) : user.track === "Monitoring" ? (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-600">Afmeldt</span>
+                      ) : (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-500">&mdash;</span>
                       )}
                     </td>
                   </tr>

@@ -171,6 +171,9 @@ export async function GET(req: NextRequest) {
         savings_md: actionSavings,
         tink_connected: hasBank || user.tink_connected,
         has_paid: payStatus === "captured",
+        newsletter_consent: user.newsletter_consent ?? null,
+        contact_status: user.contact_status || null,
+        monitoring_active: (user.signup_path as string) === "monitoring" && payStatus === "captured" && user.contact_status !== "unsubscribed",
       };
     });
 
