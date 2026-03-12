@@ -1,3 +1,6 @@
+// TODO: Skift til live Stripe credentials ved lancering
+// Test kort: 4242 4242 4242 4242, 12/26, 123
+
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
