@@ -14,11 +14,11 @@ export default function Home() {
       <Header />
       <Hero />
       <Stats />
+      <SupportedBanks />
       <HowItWorks />
       <Security />
       <Pricing />
       <FAQ />
-      <SupportedBanks />
       <Footer />
     </main>
   );
