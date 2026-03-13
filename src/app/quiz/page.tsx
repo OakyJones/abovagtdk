@@ -4,13 +4,17 @@ import { useState, useCallback, useEffect } from "react";
 import StepEmail from "@/components/quiz/StepEmail";
 import StepCategories from "@/components/quiz/StepCategories";
 import StepSelect from "@/components/quiz/StepSelect";
+import StepActions from "@/components/quiz/StepActions";
 import StepResult from "@/components/quiz/StepResult";
+import { services, getEffectivePrice, getTierDowngrade } from "@/lib/services";
 import { supabase } from "@/lib/supabase";
+import type { UserActions } from "@/components/quiz/StepActions";
 
-const stepLabels = ["", "Kategorier", "Abonnementer", "Resultat"];
+const stepLabels = ["", "Kategorier", "Abonnementer", "Gennemgå", "Resultat"];
 
 export default function QuizPage() {
-  const [step, setStep] = useState(0); // 0=email, 1=categories, 2=services, 3=result
+  // 0=email, 1=categories, 2=services, 3=actions, 4=result
+  const [step, setStep] = useState(0);
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
@@ -19,6 +23,11 @@ export default function QuizPage() {
   const [customServices, setCustomServices] = useState<
     { name: string; price: number }[]
   >([]);
+  const [userActions, setUserActions] = useState<UserActions>({
+    actions: {},
+    downgradeTargets: {},
+    totalSavings: 0,
+  });
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -54,7 +63,7 @@ export default function QuizPage() {
   };
 
   const saveResults = useCallback(
-    async (monthlyCost: number) => {
+    async (monthlyCost: number, monthlySavings: number, actions: UserActions) => {
       if (saved) return;
 
       const allServices = [
@@ -62,8 +71,18 @@ export default function QuizPage() {
         ...customServices.map((c) => c.name),
       ];
 
+      // Build user_actions for DB
+      const dbActions: Record<string, { action: string; downgradeToTier?: string }> = {};
+      allServices.forEach((id) => {
+        const action = actions.actions[id] || "keep";
+        dbActions[id] = { action };
+        if (action === "downgrade" && actions.downgradeTargets[id]) {
+          dbActions[id].downgradeToTier = actions.downgradeTargets[id];
+        }
+      });
+
       try {
-        const quizInsert = await supabase
+        let quizInsert = await supabase
           .from("quiz_results")
           .insert({
             user_id: userId,
@@ -71,11 +90,29 @@ export default function QuizPage() {
             selected_services: allServices,
             selected_plans: selectedPlans,
             estimated_monthly_cost: monthlyCost,
-            estimated_savings: 0,
+            estimated_savings: monthlySavings,
             converted_to_scan: false,
+            user_actions: dbActions,
           })
           .select("id")
           .single();
+
+        // Fallback without user_actions if column doesn't exist
+        if (quizInsert.error) {
+          quizInsert = await supabase
+            .from("quiz_results")
+            .insert({
+              user_id: userId,
+              email,
+              selected_services: allServices,
+              selected_plans: selectedPlans,
+              estimated_monthly_cost: monthlyCost,
+              estimated_savings: monthlySavings,
+              converted_to_scan: false,
+            })
+            .select("id")
+            .single();
+        }
 
         const quizResult = quizInsert.data;
 
@@ -87,6 +124,37 @@ export default function QuizPage() {
         }
 
         if (quizResult) {
+          // Build wasted services (cancelled ones)
+          const cancelledIds = allServices.filter((id) => actions.actions[id] === "cancel");
+          const wastedDetails = cancelledIds.map((id) => {
+            const svc = services.find((s) => s.id === id);
+            return {
+              name: svc?.name || id,
+              price: svc
+                ? getEffectivePrice(svc, selectedPlans)
+                : customServices.find((c) => c.name === id)?.price || 0,
+              frequency: "Opsagt via quiz",
+            };
+          });
+
+          // Build downgrade suggestions
+          const downgradeSuggestions = services
+            .filter(
+              (s) =>
+                selectedServices.includes(s.id) &&
+                actions.actions[s.id] === "downgrade" &&
+                getTierDowngrade(s, selectedPlans)
+            )
+            .map((s) => {
+              const dg = getTierDowngrade(s, selectedPlans)!;
+              return {
+                name: s.name,
+                fromLabel: dg.fromLabel,
+                toLabel: dg.toLabel,
+                savingsPerMonth: dg.savingsPerMonth,
+              };
+            });
+
           await fetch("/api/quiz-result-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -97,9 +165,9 @@ export default function QuizPage() {
               totalServices: allServices.length,
               totalMonthly: monthlyCost,
               totalYearly: monthlyCost * 12,
-              yearlySavings: 0,
-              wastedServices: [],
-              downgradeSuggestions: [],
+              yearlySavings: monthlySavings * 12,
+              wastedServices: wastedDetails,
+              downgradeSuggestions,
             }),
           });
         }
@@ -140,7 +208,7 @@ export default function QuizPage() {
           }
         }
 
-        if (typeof umami !== 'undefined') umami.track('quiz_complete', { total_md: monthlyCost, services: allServices.length });
+        if (typeof umami !== 'undefined') umami.track('quiz_complete', { total_md: monthlySavings, services: allServices.length });
         setSaved(true);
       } catch {
         // Silently fail
@@ -148,6 +216,10 @@ export default function QuizPage() {
     },
     [saved, selectedServices, selectedPlans, customServices, email, userId]
   );
+
+  // Map internal steps (0-4) to display steps (0-4, where 0 is email/hidden)
+  const displayStep = step;
+  const totalDisplaySteps = 4;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50/30 to-white">
@@ -159,9 +231,9 @@ export default function QuizPage() {
               <span className="text-black">Abo</span>
               <span className="text-[#1B7A6E]">Vagt</span>
             </a>
-            {step > 0 && (
+            {displayStep > 0 && (
               <span className="text-sm text-gray-500">
-                Trin {step} af 3
+                Trin {displayStep} af {totalDisplaySteps}
               </span>
             )}
           </div>
@@ -169,20 +241,20 @@ export default function QuizPage() {
       </header>
 
       {/* Progress bar */}
-      {step > 0 && (
+      {displayStep > 0 && (
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between mb-2">
-              {[1, 2, 3].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex items-center gap-1.5">
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      step >= s
+                      displayStep >= s
                         ? "bg-[#1B7A6E] text-white"
                         : "bg-gray-200 text-gray-500"
                     }`}
                   >
-                    {step > s ? (
+                    {displayStep > s ? (
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>
@@ -191,7 +263,7 @@ export default function QuizPage() {
                     )}
                   </div>
                   <span className={`text-xs font-medium hidden sm:inline ${
-                    step >= s ? "text-[#1B7A6E]" : "text-gray-400"
+                    displayStep >= s ? "text-[#1B7A6E]" : "text-gray-400"
                   }`}>
                     {stepLabels[s]}
                   </span>
@@ -201,7 +273,7 @@ export default function QuizPage() {
             <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
               <div
                 className="bg-[#1B7A6E] h-full rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${(step / 3) * 100}%` }}
+                style={{ width: `${(displayStep / totalDisplaySteps) * 100}%` }}
               />
             </div>
           </div>
@@ -235,11 +307,24 @@ export default function QuizPage() {
           />
         )}
         {step === 3 && (
-          <StepResult
+          <StepActions
             selectedServices={selectedServices}
             selectedPlans={selectedPlans}
             customServices={customServices}
             onBack={() => setStep(2)}
+            onNext={(actions) => {
+              setUserActions(actions);
+              setStep(4);
+            }}
+          />
+        )}
+        {step === 4 && (
+          <StepResult
+            selectedServices={selectedServices}
+            selectedPlans={selectedPlans}
+            customServices={customServices}
+            userActions={userActions}
+            onBack={() => setStep(3)}
             onSave={saveResults}
           />
         )}
