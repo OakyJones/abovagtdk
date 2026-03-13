@@ -125,12 +125,11 @@ export const services: Service[] = [
     ],
   },
   {
-    id: "viaplay", name: "Viaplay", category: "streaming", monthlyPrice: 99, cancellation: "løbende", icon: "📺",
+    id: "viaplay", name: "Viaplay", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "📺",
     tiers: [
-      { id: "viaplay-reklamer", label: "Film & Serier m. reklamer", price: 99 },
-      { id: "viaplay-standard", label: "Film & Serier", price: 149, isDefault: true },
+      { id: "viaplay-basis", label: "Basis", price: 79 },
+      { id: "viaplay-standard", label: "Standard", price: 139, isDefault: true },
       { id: "viaplay-total", label: "Total", price: 449 },
-      { id: "viaplay-premium", label: "Premium", price: 499 },
     ],
   },
   {
@@ -148,7 +147,13 @@ export const services: Service[] = [
       { id: "max-premium", label: "Premium", price: 149 },
     ],
   },
-  { id: "tv2-play", name: "TV2 Play", category: "streaming", monthlyPrice: 69, cancellation: "løbende", icon: "📡" },
+  {
+    id: "tv2-play", name: "TV2 Play", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "📡",
+    tiers: [
+      { id: "tv2-standard", label: "Standard", price: 79, isDefault: true },
+      { id: "tv2-plus", label: "Plus", price: 149 },
+    ],
+  },
   { id: "amazon-prime-video", name: "Amazon Prime Video", category: "streaming", monthlyPrice: 59, cancellation: "løbende", icon: "▶️" },
   { id: "apple-tv", name: "Apple TV+", category: "streaming", monthlyPrice: 79, cancellation: "løbende", icon: "🍎" },
   { id: "skyshowtime", name: "SkyShowtime", category: "streaming", monthlyPrice: 99, cancellation: "løbende", icon: "🌤️" },
@@ -187,10 +192,9 @@ export const services: Service[] = [
     ],
   },
   {
-    id: "youtube-premium", name: "YouTube Premium", category: "music", monthlyPrice: 109, cancellation: "løbende", icon: "🔴",
+    id: "youtube-premium", name: "YouTube Premium", category: "music", monthlyPrice: 139, cancellation: "løbende", icon: "🔴",
     tiers: [
-      { id: "yt-music", label: "Music", price: 109 },
-      { id: "yt-premium", label: "Premium", price: 139, isDefault: true },
+      { id: "yt-individual", label: "Individual", price: 139, isDefault: true },
       { id: "yt-family", label: "Family", price: 179 },
     ],
   },
@@ -199,6 +203,13 @@ export const services: Service[] = [
     tiers: [
       { id: "tidal-individual", label: "Individual", price: 109, isDefault: true },
       { id: "tidal-family", label: "Family", price: 169 },
+    ],
+  },
+  {
+    id: "deezer", name: "Deezer", category: "music", monthlyPrice: 119, cancellation: "løbende", icon: "🎵",
+    tiers: [
+      { id: "deezer-premium", label: "Premium", price: 119, isDefault: true },
+      { id: "deezer-family", label: "Family", price: 179 },
     ],
   },
   { id: "mofibo", name: "Mofibo", category: "music", monthlyPrice: 149, cancellation: "løbende", icon: "📖" },
@@ -232,14 +243,27 @@ export const services: Service[] = [
   },
 
   // SOFTWARE & CLOUD
-  { id: "microsoft365", name: "Microsoft 365", category: "software", monthlyPrice: 89, cancellation: "løbende", icon: "💼" },
-  { id: "adobe", name: "Adobe Creative Cloud", category: "software", monthlyPrice: 189, cancellation: "12 md binding", icon: "🎨" },
+  {
+    id: "microsoft365", name: "Microsoft 365", category: "software", monthlyPrice: 85, cancellation: "løbende", icon: "💼",
+    tiers: [
+      { id: "m365-personal", label: "Personal", price: 85, isDefault: true },
+      { id: "m365-family", label: "Family", price: 115 },
+    ],
+  },
+  {
+    id: "adobe", name: "Adobe Creative Cloud", category: "software", monthlyPrice: 109, cancellation: "12 md binding", icon: "🎨",
+    tiers: [
+      { id: "adobe-foto", label: "Fotografi", price: 109 },
+      { id: "adobe-enkelt", label: "Enkeltapp", price: 169, isDefault: true },
+      { id: "adobe-alle", label: "Alle apps", price: 459 },
+    ],
+  },
   {
     id: "icloud", name: "iCloud+", category: "software", monthlyPrice: 9, cancellation: "løbende", icon: "☁️",
     tiers: [
       { id: "icloud-50", label: "50 GB", price: 9, isDefault: true },
       { id: "icloud-200", label: "200 GB", price: 29 },
-      { id: "icloud-2tb", label: "2 TB", price: 79 },
+      { id: "icloud-2tb", label: "2 TB", price: 89 },
     ],
   },
   {
@@ -247,14 +271,19 @@ export const services: Service[] = [
     tiers: [
       { id: "google-100", label: "100 GB", price: 20, isDefault: true },
       { id: "google-200", label: "200 GB", price: 30 },
-      { id: "google-2tb", label: "2 TB", price: 70 },
-      { id: "google-5tb", label: "5 TB", price: 139 },
+      { id: "google-2tb", label: "2 TB", price: 100 },
     ],
   },
   { id: "dropbox", name: "Dropbox", category: "software", monthlyPrice: 99, cancellation: "løbende", icon: "📦", downgrade: { fromLabel: "Plus", toLabel: "Basic (gratis)", savingsPerMonth: 99 } },
   { id: "1password", name: "1Password", category: "software", monthlyPrice: 29, cancellation: "løbende", icon: "🔐" },
   { id: "nordvpn", name: "NordVPN", category: "software", monthlyPrice: 49, cancellation: "løbende", icon: "🛡️" },
-  { id: "chatgpt-plus", name: "ChatGPT Plus", category: "software", monthlyPrice: 149, cancellation: "løbende", icon: "🤖" },
+  {
+    id: "chatgpt-plus", name: "ChatGPT", category: "software", monthlyPrice: 149, cancellation: "løbende", icon: "🤖",
+    tiers: [
+      { id: "chatgpt-plus", label: "Plus", price: 149, isDefault: true },
+      { id: "chatgpt-pro", label: "Pro", price: 1500 },
+    ],
+  },
   { id: "canva-pro", name: "Canva Pro", category: "software", monthlyPrice: 99, cancellation: "løbende", icon: "🖌️" },
   {
     id: "claude-ai", name: "Claude", category: "software", monthlyPrice: 149, cancellation: "løbende", icon: "🤖",
@@ -327,16 +356,16 @@ export const services: Service[] = [
     id: "ps-plus", name: "PlayStation Plus", category: "gaming", monthlyPrice: 59, cancellation: "løbende", icon: "🎮",
     tiers: [
       { id: "ps-essential", label: "Essential", price: 59, isDefault: true },
-      { id: "ps-extra", label: "Extra", price: 99 },
-      { id: "ps-premium", label: "Premium", price: 119 },
+      { id: "ps-extra", label: "Extra", price: 109 },
+      { id: "ps-premium", label: "Premium", price: 135 },
     ],
   },
   {
     id: "xbox-game-pass", name: "Xbox Game Pass", category: "gaming", monthlyPrice: 59, cancellation: "løbende", icon: "🟢",
     tiers: [
       { id: "xbox-core", label: "Core", price: 59 },
-      { id: "xbox-standard", label: "Standard", price: 79, isDefault: true },
-      { id: "xbox-ultimate", label: "Ultimate", price: 119 },
+      { id: "xbox-standard", label: "Standard", price: 109, isDefault: true },
+      { id: "xbox-ultimate", label: "Ultimate", price: 149 },
     ],
   },
   { id: "nintendo-online", name: "Nintendo Switch Online", category: "gaming", monthlyPrice: 29, cancellation: "løbende", icon: "🕹️" },
@@ -422,10 +451,58 @@ export const services: Service[] = [
   { id: "acast-plus", name: "Acast+", category: "news", monthlyPrice: 39, cancellation: "løbende", icon: "🎙️" },
 
   // MOBIL & INTERNET
-  { id: "telmore", name: "Telmore", category: "telecom", monthlyPrice: 149, priceNote: "149-349 kr/md", cancellation: "løbende", icon: "📱" },
-  { id: "yousee", name: "YouSee", category: "telecom", monthlyPrice: 199, priceNote: "199-399 kr/md", cancellation: "1 md opsigelse", icon: "📶" },
-  { id: "oister", name: "Oister", category: "telecom", monthlyPrice: 99, priceNote: "99-299 kr/md", cancellation: "løbende", icon: "📲" },
-  { id: "cbb-mobil", name: "CBB Mobil", category: "telecom", monthlyPrice: 79, priceNote: "79-199 kr/md", cancellation: "løbende", icon: "☎️" },
+  {
+    id: "telmore", name: "Telmore", category: "telecom", monthlyPrice: 99, cancellation: "løbende", icon: "📱",
+    tiers: [
+      { id: "telmore-lille", label: "Lille", price: 99 },
+      { id: "telmore-mellem", label: "Mellem", price: 149, isDefault: true },
+      { id: "telmore-stor", label: "Stor", price: 199 },
+      { id: "telmore-fri", label: "Fri data", price: 299 },
+    ],
+  },
+  {
+    id: "yousee", name: "YouSee", category: "telecom", monthlyPrice: 99, cancellation: "1 md opsigelse", icon: "📶",
+    tiers: [
+      { id: "yousee-lille", label: "Lille", price: 99 },
+      { id: "yousee-mellem", label: "Mellem", price: 149, isDefault: true },
+      { id: "yousee-stor", label: "Stor", price: 199 },
+      { id: "yousee-fri", label: "Fri data", price: 299 },
+    ],
+  },
+  {
+    id: "telia", name: "Telia", category: "telecom", monthlyPrice: 99, cancellation: "1 md opsigelse", icon: "📡",
+    tiers: [
+      { id: "telia-lille", label: "Lille", price: 99 },
+      { id: "telia-mellem", label: "Mellem", price: 179, isDefault: true },
+      { id: "telia-stor", label: "Stor", price: 249 },
+      { id: "telia-fri", label: "Fri data", price: 349 },
+    ],
+  },
+  {
+    id: "tre", name: "3/Tre", category: "telecom", monthlyPrice: 99, cancellation: "løbende", icon: "3️⃣",
+    tiers: [
+      { id: "tre-lille", label: "Lille", price: 99 },
+      { id: "tre-mellem", label: "Mellem", price: 149, isDefault: true },
+      { id: "tre-stor", label: "Stor", price: 199 },
+      { id: "tre-fri", label: "Fri data", price: 299 },
+    ],
+  },
+  {
+    id: "oister", name: "Oister", category: "telecom", monthlyPrice: 79, cancellation: "løbende", icon: "📲",
+    tiers: [
+      { id: "oister-15gb", label: "15GB", price: 79 },
+      { id: "oister-40gb", label: "40GB", price: 139, isDefault: true },
+      { id: "oister-fri", label: "Fri data", price: 239 },
+    ],
+  },
+  {
+    id: "cbb-mobil", name: "CBB Mobil", category: "telecom", monthlyPrice: 79, cancellation: "løbende", icon: "☎️",
+    tiers: [
+      { id: "cbb-10gb", label: "10GB", price: 79 },
+      { id: "cbb-40gb", label: "40GB", price: 129, isDefault: true },
+      { id: "cbb-fri", label: "Fri data", price: 199 },
+    ],
+  },
   {
     id: "greenspeak", name: "Greenspeak", category: "telecom", monthlyPrice: 99, cancellation: "løbende", icon: "🌱",
     tiers: [
@@ -434,7 +511,14 @@ export const services: Service[] = [
       { id: "gs-fri", label: "Fri data", price: 199 },
     ],
   },
-  { id: "lebara", name: "Lebara", category: "telecom", monthlyPrice: 49, priceNote: "49-149 kr/md", cancellation: "løbende", icon: "🔵" },
+  {
+    id: "lebara", name: "Lebara", category: "telecom", monthlyPrice: 49, priceNote: "49-149 kr/md", cancellation: "løbende", icon: "🔵",
+    tiers: [
+      { id: "lebara-5gb", label: "5 GB", price: 49 },
+      { id: "lebara-40gb", label: "40 GB", price: 99 },
+      { id: "lebara-100gb", label: "100 GB", price: 149 },
+    ],
+  },
   {
     id: "duka", name: "Duka", category: "telecom", monthlyPrice: 59, cancellation: "løbende", icon: "📱",
     tiers: [
@@ -568,7 +652,14 @@ export const services: Service[] = [
   { id: "myway", name: "myway", category: "electronics", monthlyPrice: 199, priceNote: "Varierer", cancellation: "løbende", icon: "📱" },
 
   // DATING
-  { id: "tinder", name: "Tinder", category: "dating", monthlyPrice: 89, cancellation: "løbende", icon: "🔥" },
+  {
+    id: "tinder", name: "Tinder", category: "dating", monthlyPrice: 79, cancellation: "løbende", icon: "🔥",
+    tiers: [
+      { id: "tinder-plus", label: "Plus", price: 79 },
+      { id: "tinder-gold", label: "Gold", price: 129, isDefault: true },
+      { id: "tinder-platinum", label: "Platinum", price: 199 },
+    ],
+  },
   { id: "bumble", name: "Bumble", category: "dating", monthlyPrice: 199, cancellation: "løbende", icon: "🐝" },
   { id: "hinge", name: "Hinge", category: "dating", monthlyPrice: 149, cancellation: "løbende", icon: "💜" },
 
