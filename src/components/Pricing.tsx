@@ -1,11 +1,8 @@
 "use client";
 
-const isPreview = process.env.NEXT_PUBLIC_LAUNCH_MODE !== "live";
-
 function ComingSoonBadge() {
-  if (!isPreview) return null;
   return (
-    <div className="absolute -top-2 -right-2 z-10 pointer-events-none">
+    <div className="absolute -top-3 -right-3 z-10 pointer-events-none">
       <div className="bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1.5 rounded-lg shadow-md -rotate-12 whitespace-nowrap">
         Kommer snart 🚀
       </div>
