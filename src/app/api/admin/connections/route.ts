@@ -9,13 +9,16 @@ export async function GET() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-  const { count } = await supabase
+  const { count, error } = await supabase
     .from("bank_connections")
     .select("*", { count: "exact", head: true })
     .gte("created_at", monthStart);
 
+  // Gracefully handle missing table (migration 013 may not have been run)
+  const connectionsThisMonth = error ? 0 : (count || 0);
+
   return NextResponse.json({
-    connectionsThisMonth: count || 0,
+    connectionsThisMonth,
     limit: 50,
   });
 }

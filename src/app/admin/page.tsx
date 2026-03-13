@@ -51,7 +51,7 @@ async function getStats() {
     supabase.from("bank_connections").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
   ]);
 
-  // Log and collect errors
+  // Log and collect errors (skip bank_connections — table may not exist yet)
   const results = [
     { name: "quiz_results (total)", res: quizTotalRes },
     { name: "quiz_results (today)", res: quizTodayRes },
@@ -66,7 +66,6 @@ async function getStats() {
     { name: "inbound_emails", res: inboundRes },
     { name: "actions", res: actionsRes },
     { name: "users (newsletter)", res: newsletterRes },
-    { name: "bank_connections", res: bankConnectionsRes },
   ];
 
   for (const { name, res } of results) {
