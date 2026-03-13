@@ -115,6 +115,14 @@ export default function DashboardPage() {
   );
 }
 
+/** Fires dashboard_complete event once */
+function DashboardComplete({ cancelled, saved }: { cancelled: number; saved: number }) {
+  useEffect(() => {
+    window.umami?.track("dashboard_complete", { cancelled, saved });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 // New flow steps: card → connect → scanning → results → confirm → emails
 type Step = "card" | "connect" | "scanning" | "results" | "confirm" | "emails";
 
@@ -130,6 +138,11 @@ function DashboardContent() {
   const [unknowns, setUnknowns] = useState<Subscription[]>([]);
   const [totalMonthlySpend, setTotalMonthlySpend] = useState(0);
   const [scanError, setScanError] = useState<string | null>(error || null);
+
+  // Track bank callback error from URL param
+  useEffect(() => {
+    if (error) window.umami?.track("bank_callback_error", { error });
+  }, [error]);
   const [actions, setActions] = useState<Record<string, ActionType>>({});
   const [downgradeTargets, setDowngradeTargets] = useState<Record<string, string>>({});
 
@@ -247,8 +260,10 @@ function DashboardContent() {
   useEffect(() => {
     if (typeof umami !== 'undefined') {
       if (step === "card") umami.track('payment_page_view');
+      if (step === "connect") umami.track('bank_page_view');
+      if (step === "results") umami.track('dashboard_view', { subscriptions: allItems.length });
     }
-  }, [step]);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- Card step: create PaymentIntent for 35 kr reservation ----
   const createReservation = async () => {
@@ -338,7 +353,7 @@ function DashboardContent() {
         setScanError(data.error || "Kunne ikke oprette bankforbindelse");
         return;
       }
-      window.umami?.track("bank_connect_start");
+      window.umami?.track("bank_redirect");
       window.location.href = data.url;
     } catch {
       setScanError("Kunne ikke oprette bankforbindelse");
@@ -348,6 +363,7 @@ function DashboardContent() {
   const runScan = async () => {
     setStep("scanning");
     setScanError(null);
+    window.umami?.track("scan_start");
     try {
       const res = await fetch("/api/gocardless/scan", {
         method: "POST",
@@ -363,8 +379,8 @@ function DashboardContent() {
       setSubs(data.subscriptions || []);
       setUnknowns(data.unknownRecurring || []);
       setTotalMonthlySpend(data.totalMonthlySpend || 0);
-      window.umami?.track("bank_connected");
-      window.umami?.track("scan_complete", { subs: (data.subscriptions || []).length });
+      window.umami?.track("bank_callback_success");
+      window.umami?.track("scan_complete", { found: (data.subscriptions || []).length, amount: data.totalMonthlySpend || 0 });
       setStep("results");
     } catch {
       setScanError("Scanning fejlede — prøv igen");
@@ -602,6 +618,7 @@ function DashboardContent() {
       });
     }
     setSendError(null);
+    window.umami?.track("email_preview", { service: item.service?.name || item.name });
   };
 
   // Send email (requires payment — server enforces this too)
@@ -823,7 +840,10 @@ function DashboardContent() {
                 filteredBanks.map((bank) => (
                   <button
                     key={bank.id}
-                    onClick={() => setSelectedBank(bank.id)}
+                    onClick={() => {
+                      setSelectedBank(bank.id);
+                      window.umami?.track("bank_select", { bank: bank.name });
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left border-b border-gray-50 last:border-0 transition-colors ${
                       selectedBank === bank.id
                         ? "bg-teal-50 border-l-2 border-l-[#1B7A6E]"
@@ -1459,6 +1479,9 @@ function DashboardContent() {
 
             {/* Summary after all sent */}
             {sentEmails.length === actionItems.length && actionItems.length > 0 && (
+              <DashboardComplete cancelled={cancelledItems.length} saved={totalSavings} />
+            )}
+            {sentEmails.length === actionItems.length && actionItems.length > 0 && (
               <div className="bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-6 mb-6 text-center">
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Du sparer nu</p>
                 <p className="text-4xl font-bold text-[#1B7A6E]">{totalSavings.toLocaleString("da-DK")} kr/md</p>
@@ -1653,6 +1676,7 @@ function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) =>
 
     if (result.error) {
       setError(result.error.message || "Betaling fejlede");
+      window.umami?.track("payment_error", { error: result.error.message || "Ukendt fejl" });
       setProcessing(false);
     } else if (result.paymentIntent?.status === "requires_capture") {
       onSuccess(consentGivenAt);

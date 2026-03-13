@@ -67,6 +67,7 @@ function ConnectContent() {
       localStorage.setItem("abovagt_user_email", email);
 
       window.umami?.track("signup_engang");
+      window.umami?.track("payment_email_entered");
       // Go to dashboard — card step comes first, then bank connect
       window.location.href = "/dashboard";
     } catch {
