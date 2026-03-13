@@ -5,9 +5,10 @@ import Inspektoeren from "@/components/Inspektoeren";
 
 interface Props {
   onNext: (email: string, newsletterConsent: boolean) => void;
+  onBack?: () => void;
 }
 
-export default function StepEmail({ onNext }: Props) {
+export default function StepEmail({ onNext, onBack }: Props) {
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [newsletter, setNewsletter] = useState(true);
@@ -39,7 +40,7 @@ export default function StepEmail({ onNext }: Props) {
       <div className="text-center mb-8">
         <Inspektoeren pose="waving" size={100} className="mb-4" />
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-          Indtast din email for at gemme dit resultat
+          Indtast din email for at se dit resultat
         </h1>
         <p className="mt-3 text-gray-600">
           Dit resultat sendes til din inbox. 100% gratis, ingen spam.
@@ -93,13 +94,25 @@ export default function StepEmail({ onNext }: Props) {
           disabled={!email || !consent || loading}
           className="w-full px-6 py-3.5 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-teal-600/20"
         >
-          {loading ? "Vent..." : "Start quizzen →"}
+          {loading ? "Vent..." : "Fortsæt →"}
         </button>
       </form>
 
       <p className="mt-6 text-center text-xs text-gray-400">
         Du kan altid afmelde dig. Vi deler aldrig din email med andre.
       </p>
+
+      {onBack && (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-gray-500 hover:text-[#1C2B2A] text-sm transition-colors"
+          >
+            ← Tilbage
+          </button>
+        </div>
+      )}
     </div>
   );
 }

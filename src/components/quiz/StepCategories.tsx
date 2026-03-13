@@ -34,7 +34,7 @@ export default function StepCategories({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-lg mx-auto mb-8">
         {quizPages.map((page) => {
           const selected = selectedPages.includes(page.id);
           return (
@@ -77,7 +77,7 @@ export default function StepCategories({
             disabled={selectedPages.length === 0}
             className="px-8 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-teal-600/20"
           >
-            Vælg abonnementer →
+            Næste →
           </button>
         </div>
       </div>

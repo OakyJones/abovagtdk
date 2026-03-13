@@ -108,6 +108,18 @@ export default function StepSelect({
         </p>
       </div>
 
+      {/* Live counter */}
+      {totalSelected > 0 && (
+        <div className="sticky top-14 z-40 bg-[#1B7A6E] text-white rounded-2xl p-3 mb-6 text-center">
+          <p className="text-sm font-semibold">
+            Du har valgt {totalSelected} abonnement{totalSelected !== 1 ? "er" : ""}
+            <span className="opacity-70 ml-2">
+              ~{monthlyTotal.toLocaleString("da-DK")} kr/md
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* All sections in one scrollable view */}
       <div className="mb-6 space-y-6">
         {groupedSections.map((group) => (
@@ -309,7 +321,7 @@ export default function StepSelect({
             disabled={totalSelected === 0}
             className="px-8 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-teal-600/20"
           >
-            Se dit resultat →
+            Se hvad du kan spare →
           </button>
         </div>
       </div>
