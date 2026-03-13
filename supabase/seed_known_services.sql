@@ -211,7 +211,9 @@ insert into known_services (name, category, current_price, cancellation_period_d
 
 -- APP STORE & IN-APP
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
-  ('Apple One', 'appstore', 169, 0, 0, now()),
+  ('Apple One Individual', 'appstore', 169, 0, 0, now()),
+  ('Apple One Family', 'appstore', 249, 0, 0, now()),
+  ('Apple One Premium', 'appstore', 299, 0, 0, now()),
   ('Google Play Pass', 'appstore', 39, 0, 0, now()),
   ('Apple Arcade', 'appstore', 69, 0, 0, now());
 
