@@ -59,8 +59,10 @@ const SUBSCRIPTION_KEYWORDS = [
   "grover", "myway",
   // Velgørenhed
   "røde kors", "roede kors", "unicef", "amnesty", "kraeftens",
+  // Dagligvarelevering
+  "nemlig", "wolt", "too good to go", "toogoodtogo",
   // Parkering
-  "easypark", "parkpark",
+  "easypark", "parkpark", "apcoa",
   // Kaffe
   "nespresso", "simplecoffee", "bki",
   // Tandlæge & sundhed

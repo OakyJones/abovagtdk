@@ -253,6 +253,9 @@ export const services: Service[] = [
   { id: "retnemt", name: "RetNemt", category: "food", monthlyPrice: 1728, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🍱" },
   { id: "aarstiderne", name: "Aarstiderne", category: "food", monthlyPrice: 1728, priceNote: "399 kr/uge", cancellation: "løbende", icon: "🌿" },
   { id: "greenmeal", name: "GreenMeal", category: "food", monthlyPrice: 1511, priceNote: "349 kr/uge", cancellation: "løbende", icon: "🥬" },
+  { id: "nemlig-plus", name: "Nemlig.com Plus", category: "food", monthlyPrice: 49, cancellation: "løbende", icon: "🛒" },
+  { id: "wolt-plus", name: "Wolt+", category: "food", monthlyPrice: 49, cancellation: "løbende", icon: "🛵" },
+  { id: "toogoodtogo", name: "Too Good To Go", category: "food", monthlyPrice: 0, priceNote: "Gratis (hyppige køb)", cancellation: "løbende", icon: "🥡" },
 
   // AVISER & MAGASINER
   { id: "politiken", name: "Politiken", category: "news", monthlyPrice: 199, cancellation: "1 md opsigelse", icon: "📰" },
@@ -369,6 +372,7 @@ export const services: Service[] = [
   // PARKERING
   { id: "easypark", name: "EasyPark", category: "transport", monthlyPrice: 49, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
   { id: "parkpark", name: "ParkPark", category: "transport", monthlyPrice: 39, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
+  { id: "apcoa-flow", name: "Apcoa Flow", category: "transport", monthlyPrice: 0, priceNote: "Gratis (transaktionsgebyr)", cancellation: "løbende", icon: "🅿️" },
 
   // TANDLÆGE & SUNDHED
   { id: "tandlaege-abo", name: "Tandlæge-abonnement", category: "dental", monthlyPrice: 149, priceNote: "99-249 kr/md", cancellation: "1 md opsigelse", icon: "🦷" },
