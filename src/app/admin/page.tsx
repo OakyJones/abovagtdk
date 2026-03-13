@@ -218,12 +218,12 @@ export default async function AdminDashboard() {
           </p>
         </div>
         <div className="bg-white rounded-2xl border-2 border-gray-200 p-5">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Besparelse via bank denne md</p>
-          <p className="text-3xl font-bold text-gray-300">
-            0 <span className="text-lg font-semibold">kr/md</span>
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Bankforbindelser denne md</p>
+          <p className="text-3xl font-bold text-[#1B7A6E]">
+            {stats.bankConnectionsThisMonth} <span className="text-lg font-semibold">/ 50</span>
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            0 brugere — bank ikke live endnu
+            GoCardless open banking (PSD2)
           </p>
         </div>
         <div className="bg-teal-50 rounded-2xl border-2 border-[#1B7A6E] p-5">

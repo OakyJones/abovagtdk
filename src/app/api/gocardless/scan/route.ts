@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
         user_id: userId,
         tink_credential_id: user.gocardless_requisition_id,
         bank_name: bankName,
+        provider: "gocardless",
         connected_at: new Date().toISOString(),
       })
       .select("id")
