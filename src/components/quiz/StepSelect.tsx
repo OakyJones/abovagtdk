@@ -45,7 +45,11 @@ export default function StepSelect({
   setCustomServices,
   onNext,
 }: Props) {
-  const [activeCategory, setActiveCategory] = useState("streaming");
+  const [activeCategory, setActiveCategoryState] = useState("streaming");
+  const setActiveCategory = (cat: string) => {
+    setActiveCategoryState(cat);
+    if (typeof umami !== 'undefined') umami.track('quiz_step', { category: cat });
+  };
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState("");
   const [tierPickerFor, setTierPickerFor] = useState<string | null>(null);

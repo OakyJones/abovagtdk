@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import StepEmail from "@/components/quiz/StepEmail";
 import StepSelect from "@/components/quiz/StepSelect";
 import StepUsage from "@/components/quiz/StepUsage";
@@ -24,8 +24,13 @@ export default function QuizPage() {
   >({});
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    if (typeof umami !== 'undefined') umami.track('quiz_start');
+  }, []);
+
   const handleEmailSubmit = async (userEmail: string, newsletterConsent: boolean) => {
     setEmail(userEmail);
+    if (typeof umami !== 'undefined') umami.track('quiz_email_entered');
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -206,6 +211,7 @@ export default function QuizPage() {
           }
         }
 
+        if (typeof umami !== 'undefined') umami.track('quiz_complete', { total_md: monthlySavings, services: allServices.length });
         setSaved(true);
       } catch {
         // Silently fail

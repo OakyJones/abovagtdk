@@ -475,7 +475,7 @@ export default function StepResult({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Du betaler</span>
-                  <span className="text-sm font-bold text-[#1C2B2A]">{fee.toLocaleString("da-DK")} kr (en gang)</span>
+                  <span className="text-sm font-bold text-[#1C2B2A]">maks 45 kr (en gang)</span>
                 </div>
                 <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
                   <span className="text-sm font-semibold text-[#1B7A6E]">Du kan spare</span>
