@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || "");
+  return _resend;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,7 +67,7 @@ export async function POST(req: NextRequest) {
     // Otherwise send to the user as confirmation
     const recipientEmail = toEmail || userEmail;
 
-    await resend.emails.send({
+    await getResend().emails.send({
       from: `AboVagt <noreply@abovagt.dk>`,
       to: recipientEmail,
       replyTo: userEmail,

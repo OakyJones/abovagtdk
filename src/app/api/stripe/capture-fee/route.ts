@@ -3,7 +3,11 @@ import { getStripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || "");
+  return _resend;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -121,7 +125,7 @@ export async function POST(req: NextRequest) {
         day: "numeric",
       });
 
-      await resend.emails.send({
+      await getResend().emails.send({
         from: "AboVagt <noreply@abovagt.dk>",
         to: user.email,
         subject: `Ordrebekræftelse ${orderNumber} — AboVagt`,
