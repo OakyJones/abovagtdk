@@ -26,8 +26,13 @@ const SUBSCRIPTION_KEYWORDS = [
   "netflix", "spotify", "viaplay", "disney", "hbo", "max",
   "youtube", "apple", "google", "microsoft", "adobe",
   "tidal", "mofibo", "audible", "podimo", "nextory",
+  "patreon", "twitch",
   // Fitness & software
   "fitness", "sats", "icloud", "dropbox", "nordvpn",
+  "myfitnesspal", "noom",
+  // Software (nye)
+  "claude", "anthropic", "copilot", "midjourney", "cursor",
+  "figma", "slack", "zoom", "notion", "linear", "superhuman",
   // Gaming
   "playstation", "xbox", "nintendo", "ea play",
   // Dating
@@ -35,9 +40,12 @@ const SUBSCRIPTION_KEYWORDS = [
   // Food & news
   "hellofresh", "goodiebox", "aarstiderne",
   "politiken", "berlingske", "jyllands", "zetland",
+  "frihedsbrevet", "weekendavisen", "third ear", "r8dio",
+  "kontoret", "kristeligt", "ingeniøren", "ingenioeren", "altinget", "acast",
   "headspace", "calm", "strava",
   // Bredbånd & TV
-  "norlys", "stofa", "waoo", "yousee", "fastspeed", "hiper",
+  "norlys", "stofa", "waoo", "yousee", "fastspeed", "hiper", "kviknet",
+  "duka", "callme", "greenspeak",
   "allente", "boxer",
   // Alarm & sikkerhed
   "verisure", "sector alarm", "ajax alarm",
@@ -55,12 +63,13 @@ const SUBSCRIPTION_KEYWORDS = [
   "happy helper", "hilfr", "cliive",
   // Personlig pleje & mode
   "estrid", "dollar shave", "stitch fix", "miinto", "zalando",
+  "glossybox", "justfab",
   // Elektronik-leje
   "grover", "myway",
   // Velgørenhed
   "røde kors", "roede kors", "unicef", "amnesty", "kraeftens",
   // Dagligvarelevering
-  "nemlig", "wolt", "too good to go", "toogoodtogo",
+  "nemlig", "wolt", "too good to go", "toogoodtogo", "eatgrim",
   // Parkering
   "easypark", "parkpark", "apcoa",
   // Kaffe
