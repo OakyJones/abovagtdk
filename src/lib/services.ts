@@ -34,6 +34,21 @@ export const categoryLabels: Record<string, string> = {
   food: "Madlevering & bokse",
   news: "Aviser & magasiner",
   telecom: "Mobil & internet",
+  broadband: "Bredbånd & Internet",
+  tv: "TV-pakker",
+  alarm: "Alarm & Sikkerhed",
+  union: "Fagforening & A-kasse",
+  health: "Sygeforsikring",
+  energy: "El & Energi",
+  contacts: "Kontaktlinser",
+  vitamins: "Vitamin & Kosttilskud",
+  transport: "Transport",
+  storage: "Opbevaring",
+  pets: "Kæledyr",
+  cleaning: "Rengøring",
+  grooming: "Personlig pleje",
+  fashion: "Tøj & Mode",
+  electronics: "Elektronik-leje",
   dating: "Dating",
   misc: "Diverse",
 };
@@ -47,6 +62,21 @@ export const categoryOrder = [
   "food",
   "news",
   "telecom",
+  "broadband",
+  "tv",
+  "alarm",
+  "union",
+  "health",
+  "energy",
+  "contacts",
+  "vitamins",
+  "transport",
+  "storage",
+  "pets",
+  "cleaning",
+  "grooming",
+  "fashion",
+  "electronics",
   "dating",
   "misc",
 ];
@@ -207,6 +237,98 @@ export const services: Service[] = [
   { id: "cbb-mobil", name: "CBB Mobil", category: "telecom", monthlyPrice: 79, priceNote: "79-199 kr/md", cancellation: "løbende", icon: "☎️" },
   { id: "greenspeak", name: "Greenspeak", category: "telecom", monthlyPrice: 99, priceNote: "99-199 kr/md", cancellation: "løbende", icon: "🌱" },
   { id: "lebara", name: "Lebara", category: "telecom", monthlyPrice: 49, priceNote: "49-149 kr/md", cancellation: "løbende", icon: "🔵" },
+
+  // BREDBÅND & INTERNET
+  { id: "norlys-bredbaand", name: "Norlys Bredbånd", category: "broadband", monthlyPrice: 299, priceNote: "299-449 kr/md", cancellation: "1 md opsigelse", icon: "🌐" },
+  { id: "stofa-bredbaand", name: "Stofa Bredbånd", category: "broadband", monthlyPrice: 249, priceNote: "249-399 kr/md", cancellation: "1 md opsigelse", icon: "📡" },
+  { id: "waoo", name: "Waoo", category: "broadband", monthlyPrice: 249, priceNote: "249-449 kr/md", cancellation: "1 md opsigelse", icon: "🔗" },
+  { id: "yousee-bredbaand", name: "YouSee Bredbånd", category: "broadband", monthlyPrice: 299, priceNote: "299-499 kr/md", cancellation: "1 md opsigelse", icon: "📶" },
+  { id: "fastspeed", name: "Fastspeed", category: "broadband", monthlyPrice: 249, priceNote: "249-399 kr/md", cancellation: "1 md opsigelse", icon: "⚡" },
+  { id: "hiper", name: "Hiper", category: "broadband", monthlyPrice: 199, priceNote: "199-349 kr/md", cancellation: "løbende", icon: "🚀" },
+
+  // TV-PAKKER
+  { id: "yousee-tv", name: "YouSee TV", category: "tv", monthlyPrice: 199, priceNote: "199-549 kr/md", cancellation: "1 md opsigelse", icon: "📺" },
+  { id: "allente", name: "Allente", category: "tv", monthlyPrice: 199, priceNote: "199-599 kr/md", cancellation: "1 md opsigelse", icon: "📡" },
+  { id: "boxer", name: "Boxer", category: "tv", monthlyPrice: 199, priceNote: "199-399 kr/md", cancellation: "1 md opsigelse", icon: "📦" },
+  { id: "waoo-tv", name: "Waoo TV", category: "tv", monthlyPrice: 199, priceNote: "199-499 kr/md", cancellation: "1 md opsigelse", icon: "🖥️" },
+  { id: "stofa-tv", name: "Stofa TV", category: "tv", monthlyPrice: 179, priceNote: "179-499 kr/md", cancellation: "1 md opsigelse", icon: "📡" },
+
+  // ALARM & SIKKERHED
+  { id: "verisure", name: "Verisure", category: "alarm", monthlyPrice: 399, cancellation: "12 md binding", icon: "🔒" },
+  { id: "sector-alarm", name: "Sector Alarm", category: "alarm", monthlyPrice: 349, cancellation: "12 md binding", icon: "🛡️" },
+  { id: "ajax-alarm", name: "AJAX Alarm", category: "alarm", monthlyPrice: 199, cancellation: "1 md opsigelse", icon: "🔔" },
+  { id: "norlys-alarm", name: "Norlys Alarm", category: "alarm", monthlyPrice: 299, cancellation: "12 md binding", icon: "🏠" },
+
+  // FAGFORENING & A-KASSE
+  { id: "hk", name: "HK Danmark", category: "union", monthlyPrice: 499, cancellation: "1 md opsigelse", icon: "🤝" },
+  { id: "3f", name: "3F", category: "union", monthlyPrice: 549, cancellation: "1 md opsigelse", icon: "👷" },
+  { id: "krifa", name: "Krifa", category: "union", monthlyPrice: 399, cancellation: "1 md opsigelse", icon: "🤲" },
+  { id: "det-faglige-hus", name: "Det Faglige Hus", category: "union", monthlyPrice: 299, cancellation: "1 md opsigelse", icon: "🏢" },
+  { id: "ase", name: "ASE", category: "union", monthlyPrice: 299, cancellation: "1 md opsigelse", icon: "💼" },
+  { id: "lederne", name: "Lederne", category: "union", monthlyPrice: 599, cancellation: "1 md opsigelse", icon: "👔" },
+
+  // SYGEFORSIKRING
+  {
+    id: "sygeforsikring-dk", name: "Sygeforsikringen \"danmark\"", category: "health", monthlyPrice: 95, cancellation: "1 md opsigelse", icon: "🏥",
+    tiers: [
+      { id: "dk-gruppe1", label: "Gruppe 1", price: 95, isDefault: true },
+      { id: "dk-gruppe2", label: "Gruppe 2", price: 185 },
+      { id: "dk-gruppe5", label: "Gruppe 5", price: 280 },
+    ],
+  },
+
+  // EL & ENERGI
+  { id: "norlys-el", name: "Norlys El", category: "energy", monthlyPrice: 99, priceNote: "Fastpris-abo", cancellation: "løbende", icon: "⚡" },
+  { id: "oersted", name: "Ørsted", category: "energy", monthlyPrice: 99, priceNote: "Fastpris-abo", cancellation: "løbende", icon: "🔌" },
+  { id: "ewii", name: "Ewii", category: "energy", monthlyPrice: 79, priceNote: "Fastpris-abo", cancellation: "løbende", icon: "💡" },
+  { id: "clever", name: "Clever elbil-abo", category: "energy", monthlyPrice: 249, cancellation: "løbende", icon: "🔋" },
+
+  // KONTAKTLINSER
+  { id: "lensway", name: "Lensway", category: "contacts", monthlyPrice: 199, cancellation: "løbende", icon: "👁️" },
+  { id: "synoptik-abo", name: "Synoptik Linseabo", category: "contacts", monthlyPrice: 249, cancellation: "1 md opsigelse", icon: "👓" },
+  { id: "louis-nielsen-abo", name: "Louis Nielsen Linseabo", category: "contacts", monthlyPrice: 229, cancellation: "1 md opsigelse", icon: "🔍" },
+
+  // VITAMIN & KOSTTILSKUD
+  { id: "puori", name: "Puori", category: "vitamins", monthlyPrice: 199, cancellation: "løbende", icon: "💊" },
+  { id: "bodylab", name: "Bodylab", category: "vitamins", monthlyPrice: 149, cancellation: "løbende", icon: "🥛" },
+  { id: "sats-nutrition", name: "SATS Nutrition", category: "vitamins", monthlyPrice: 179, cancellation: "løbende", icon: "🏋️" },
+  { id: "vitaepro", name: "Vitaepro", category: "vitamins", monthlyPrice: 299, cancellation: "løbende", icon: "🌿" },
+
+  // TRANSPORT
+  { id: "rejsekort-pendler", name: "Rejsekort Pendler", category: "transport", monthlyPrice: 500, priceNote: "Varierer", cancellation: "løbende", icon: "🚆" },
+  { id: "dsb-orange", name: "DSB Orange", category: "transport", monthlyPrice: 199, priceNote: "Pendlerkort", cancellation: "1 md opsigelse", icon: "🚂" },
+  { id: "donkey-republic", name: "Donkey Republic", category: "transport", monthlyPrice: 89, cancellation: "løbende", icon: "🚲" },
+  { id: "lime", name: "Lime", category: "transport", monthlyPrice: 79, cancellation: "løbende", icon: "🛴" },
+
+  // OPBEVARING
+  { id: "city-self-storage", name: "City Self Storage", category: "storage", monthlyPrice: 499, priceNote: "499-1499 kr/md", cancellation: "1 md opsigelse", icon: "📦" },
+  { id: "pelican", name: "Pelican Self Storage", category: "storage", monthlyPrice: 449, priceNote: "449-1299 kr/md", cancellation: "1 md opsigelse", icon: "🏗️" },
+  { id: "shurgard", name: "Shurgard", category: "storage", monthlyPrice: 399, priceNote: "399-1199 kr/md", cancellation: "1 md opsigelse", icon: "🏪" },
+
+  // KÆLEDYR
+  { id: "buddy", name: "Buddy", category: "pets", monthlyPrice: 299, cancellation: "løbende", icon: "🐕" },
+  { id: "petlux", name: "Petlux", category: "pets", monthlyPrice: 249, cancellation: "løbende", icon: "🐾" },
+  { id: "animail", name: "Animail", category: "pets", monthlyPrice: 199, cancellation: "løbende", icon: "🐱" },
+  { id: "dyreforsikring", name: "Dyreforsikring", category: "pets", monthlyPrice: 199, priceNote: "149-399 kr/md", cancellation: "1 md opsigelse", icon: "🐶" },
+
+  // RENGØRING
+  { id: "happy-helper", name: "Happy Helper", category: "cleaning", monthlyPrice: 799, priceNote: "Varierer", cancellation: "løbende", icon: "🧹" },
+  { id: "hilfr", name: "Hilfr", category: "cleaning", monthlyPrice: 699, priceNote: "Varierer", cancellation: "løbende", icon: "🧽" },
+  { id: "cliive", name: "Cliive", category: "cleaning", monthlyPrice: 749, priceNote: "Varierer", cancellation: "løbende", icon: "✨" },
+
+  // PERSONLIG PLEJE
+  { id: "estrid", name: "Estrid", category: "grooming", monthlyPrice: 59, cancellation: "løbende", icon: "🪒" },
+  { id: "dollar-shave-club", name: "Dollar Shave Club", category: "grooming", monthlyPrice: 69, cancellation: "løbende", icon: "💈" },
+  { id: "goodiebox-beauty", name: "Goodiebox", category: "grooming", monthlyPrice: 249, cancellation: "løbende", icon: "🎁" },
+
+  // TØJ & MODE
+  { id: "stitch-fix", name: "Stitch Fix", category: "fashion", monthlyPrice: 149, cancellation: "løbende", icon: "👗" },
+  { id: "miinto-plus", name: "Miinto+", category: "fashion", monthlyPrice: 49, cancellation: "løbende", icon: "👠" },
+  { id: "zalando-plus", name: "Zalando Plus", category: "fashion", monthlyPrice: 49, cancellation: "løbende", icon: "👟" },
+
+  // ELEKTRONIK-LEJE
+  { id: "grover", name: "Grover", category: "electronics", monthlyPrice: 299, priceNote: "Varierer", cancellation: "løbende", icon: "💻" },
+  { id: "myway", name: "myway", category: "electronics", monthlyPrice: 199, priceNote: "Varierer", cancellation: "løbende", icon: "📱" },
 
   // DATING
   { id: "tinder", name: "Tinder", category: "dating", monthlyPrice: 89, cancellation: "løbende", icon: "🔥" },

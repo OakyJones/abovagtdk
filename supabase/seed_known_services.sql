@@ -90,6 +90,106 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('Greenspeak', 'telecom', 99, 0, 0, now()),
   ('Lebara', 'telecom', 49, 0, 0, now());
 
+-- BREDBÅND & INTERNET
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Norlys Bredbånd', 'broadband', 299, 30, 0, now()),
+  ('Stofa Bredbånd', 'broadband', 249, 30, 0, now()),
+  ('Waoo', 'broadband', 249, 30, 0, now()),
+  ('YouSee Bredbånd', 'broadband', 299, 30, 0, now()),
+  ('Fastspeed', 'broadband', 249, 30, 0, now()),
+  ('Hiper', 'broadband', 199, 0, 0, now());
+
+-- TV-PAKKER
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('YouSee TV', 'tv', 199, 30, 0, now()),
+  ('Allente', 'tv', 199, 30, 0, now()),
+  ('Boxer', 'tv', 199, 30, 0, now()),
+  ('Waoo TV', 'tv', 199, 30, 0, now()),
+  ('Stofa TV', 'tv', 179, 30, 0, now());
+
+-- ALARM & SIKKERHED
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Verisure', 'alarm', 399, 0, 12, now()),
+  ('Sector Alarm', 'alarm', 349, 0, 12, now()),
+  ('AJAX Alarm', 'alarm', 199, 30, 0, now()),
+  ('Norlys Alarm', 'alarm', 299, 0, 12, now());
+
+-- FAGFORENING & A-KASSE
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('HK Danmark', 'union', 499, 30, 0, now()),
+  ('3F', 'union', 549, 30, 0, now()),
+  ('Krifa', 'union', 399, 30, 0, now()),
+  ('Det Faglige Hus', 'union', 299, 30, 0, now()),
+  ('ASE', 'union', 299, 30, 0, now()),
+  ('Lederne', 'union', 599, 30, 0, now());
+
+-- SYGEFORSIKRING
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Sygeforsikringen "danmark"', 'health', 95, 30, 0, now());
+
+-- EL & ENERGI
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Norlys El', 'energy', 99, 0, 0, now()),
+  ('Ørsted', 'energy', 99, 0, 0, now()),
+  ('Ewii', 'energy', 79, 0, 0, now()),
+  ('Clever elbil-abo', 'energy', 249, 0, 0, now());
+
+-- KONTAKTLINSER
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Lensway', 'contacts', 199, 0, 0, now()),
+  ('Synoptik Linseabo', 'contacts', 249, 30, 0, now()),
+  ('Louis Nielsen Linseabo', 'contacts', 229, 30, 0, now());
+
+-- VITAMIN & KOSTTILSKUD
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Puori', 'vitamins', 199, 0, 0, now()),
+  ('Bodylab', 'vitamins', 149, 0, 0, now()),
+  ('SATS Nutrition', 'vitamins', 179, 0, 0, now()),
+  ('Vitaepro', 'vitamins', 299, 0, 0, now());
+
+-- TRANSPORT
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Rejsekort Pendler', 'transport', 500, 0, 0, now()),
+  ('DSB Orange', 'transport', 199, 30, 0, now()),
+  ('Donkey Republic', 'transport', 89, 0, 0, now()),
+  ('Lime', 'transport', 79, 0, 0, now());
+
+-- OPBEVARING
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('City Self Storage', 'storage', 499, 30, 0, now()),
+  ('Pelican Self Storage', 'storage', 449, 30, 0, now()),
+  ('Shurgard', 'storage', 399, 30, 0, now());
+
+-- KÆLEDYR
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Buddy', 'pets', 299, 0, 0, now()),
+  ('Petlux', 'pets', 249, 0, 0, now()),
+  ('Animail', 'pets', 199, 0, 0, now()),
+  ('Dyreforsikring', 'pets', 199, 30, 0, now());
+
+-- RENGØRING
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Happy Helper', 'cleaning', 799, 0, 0, now()),
+  ('Hilfr', 'cleaning', 699, 0, 0, now()),
+  ('Cliive', 'cleaning', 749, 0, 0, now());
+
+-- PERSONLIG PLEJE
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Estrid', 'grooming', 59, 0, 0, now()),
+  ('Dollar Shave Club', 'grooming', 69, 0, 0, now()),
+  ('Goodiebox', 'grooming', 249, 0, 0, now());
+
+-- TØJ & MODE
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Stitch Fix', 'fashion', 149, 0, 0, now()),
+  ('Miinto+', 'fashion', 49, 0, 0, now()),
+  ('Zalando Plus', 'fashion', 49, 0, 0, now());
+
+-- ELEKTRONIK-LEJE
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Grover', 'electronics', 299, 0, 0, now()),
+  ('myway', 'electronics', 199, 0, 0, now());
+
 -- DATING
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
   ('Tinder', 'dating', 89, 0, 0, now()),

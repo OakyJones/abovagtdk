@@ -20,16 +20,49 @@ interface TransactionGroup {
 
 // Common subscription-related keywords in transaction descriptions
 const SUBSCRIPTION_KEYWORDS = [
+  // Generic
   "abo", "subscription", "premium", "plus", "monthly", "recurring",
+  // Streaming & music
   "netflix", "spotify", "viaplay", "disney", "hbo", "max",
   "youtube", "apple", "google", "microsoft", "adobe",
-  "fitness", "sats", "icloud", "dropbox", "nordvpn",
   "tidal", "mofibo", "audible", "podimo", "nextory",
+  // Fitness & software
+  "fitness", "sats", "icloud", "dropbox", "nordvpn",
+  // Gaming
   "playstation", "xbox", "nintendo", "ea play",
+  // Dating
   "tinder", "bumble", "hinge",
+  // Food & news
   "hellofresh", "goodiebox", "aarstiderne",
   "politiken", "berlingske", "jyllands", "zetland",
   "headspace", "calm", "strava",
+  // Bredbånd & TV
+  "norlys", "stofa", "waoo", "yousee", "fastspeed", "hiper",
+  "allente", "boxer",
+  // Alarm & sikkerhed
+  "verisure", "sector alarm", "ajax alarm",
+  // Fagforening & a-kasse
+  "hk danmark", "3f ", "krifa", "faglige hus", "ase ", "lederne",
+  // Sygeforsikring
+  "sygeforsikring", "danmark gruppe",
+  // El & energi
+  "oersted", "ørsted", "ewii", "clever",
+  // Kontaktlinser
+  "lensway", "synoptik", "louis nielsen",
+  // Vitamin & kosttilskud
+  "puori", "bodylab", "vitaepro",
+  // Transport
+  "rejsekort", "dsb", "donkey republic", "lime ",
+  // Opbevaring
+  "self storage", "pelican", "shurgard",
+  // Kæledyr
+  "buddy", "petlux", "animail", "dyreforsikring",
+  // Rengøring
+  "happy helper", "hilfr", "cliive",
+  // Personlig pleje & mode
+  "estrid", "dollar shave", "stitch fix", "miinto", "zalando",
+  // Elektronik-leje
+  "grover", "myway",
 ];
 
 /** Normalize a transaction description for matching */
