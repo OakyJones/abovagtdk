@@ -123,10 +123,26 @@ export async function POST(req: NextRequest) {
         Beløbet er reserveret på dit kort og trækkes først når din besparelse er bekræftet.
         Hvis opsigelsen ikke gennemføres, refunderer vi automatisk.
       </p>
+
+      <div style="border-top:1px solid #e5e7eb;padding-top:20px;margin-top:20px;">
+        <h2 style="font-size:15px;color:#111;margin:0 0 8px;">Fortrydelsesret</h2>
+        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">
+          Du har givet samtykke til at ydelsen startede med det samme.
+          Din fortrydelsesret er bortfaldet ved levering af ydelsen, jf. forbrugeraftalelovens &sect; 18, stk. 2.
+        </p>
+      </div>
+
+      <div style="border-top:1px solid #e5e7eb;padding-top:20px;margin-top:20px;">
+        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">
+          Se vores fulde <a href="https://abovagt.dk/handelsbetingelser" style="color:#1B7A6E;">handelsbetingelser</a>
+          og <a href="https://abovagt.dk/privatlivspolitik" style="color:#1B7A6E;">privatlivspolitik</a>.
+        </p>
+      </div>
     </div>
 
-    <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;">
-      <p>Halvfems Procent · CVR [pending]</p>
+    <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;line-height:1.8;">
+      <p style="margin:0;">Halvfems Procent &middot; CVR 46314697</p>
+      <p style="margin:0;">Kontakt: <a href="mailto:hej@abovagt.dk" style="color:#1B7A6E;">hej@abovagt.dk</a></p>
     </div>
   </div>
 </body>

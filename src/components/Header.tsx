@@ -23,6 +23,7 @@ export default function Header() {
             </a>
             <a
               href="#sikkerhed"
+              onClick={() => { if (typeof umami !== 'undefined') umami.track('click_sikkerhed'); }}
               className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
               Sikkerhed
@@ -89,7 +90,7 @@ export default function Header() {
             <a
               href="#sikkerhed"
               className="text-sm text-gray-600 hover:text-gray-900"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => { if (typeof umami !== 'undefined') umami.track('click_sikkerhed'); setMenuOpen(false); }}
             >
               Sikkerhed
             </a>

@@ -33,6 +33,7 @@ async function getStats() {
     inboundRes,
     actionsRes,
     newsletterRes,
+    bankConnectionsRes,
   ] = await Promise.all([
     supabase.from("quiz_results").select("*", { count: "exact", head: true }),
     supabase.from("quiz_results").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
@@ -47,6 +48,7 @@ async function getStats() {
     supabase.from("inbound_emails").select("*", { count: "exact", head: true }),
     supabase.from("actions").select("*", { count: "exact", head: true }),
     supabase.from("users").select("*", { count: "exact", head: true }).eq("newsletter_consent", true),
+    supabase.from("bank_connections").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
   ]);
 
   // Log and collect errors
@@ -64,6 +66,7 @@ async function getStats() {
     { name: "inbound_emails", res: inboundRes },
     { name: "actions", res: actionsRes },
     { name: "users (newsletter)", res: newsletterRes },
+    { name: "bank_connections", res: bankConnectionsRes },
   ];
 
   for (const { name, res } of results) {
@@ -81,6 +84,7 @@ async function getStats() {
   const totalInbound = inboundRes.count ?? 0;
   const totalActions = actionsRes.count ?? 0;
   const totalNewsletter = newsletterRes.count ?? 0;
+  const bankConnectionsThisMonth = bankConnectionsRes.count ?? 0;
 
   const savingsData = savingsRes.data || [];
   const thisMonthSavings = savingsMonthRes.data || [];
@@ -155,6 +159,7 @@ async function getStats() {
     top10,
     recentQuiz,
     errors,
+    bankConnectionsThisMonth,
   };
 }
 
@@ -256,6 +261,51 @@ export default async function AdminDashboard() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* GoCardless / Bank connection quota */}
+      <div className={`rounded-2xl border-2 p-5 mb-8 ${
+        stats.bankConnectionsThisMonth >= 40
+          ? "bg-red-50 border-red-300"
+          : "bg-white border-gray-200"
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+              Bankforbindelser denne måned
+            </p>
+            <p className={`text-3xl font-bold ${
+              stats.bankConnectionsThisMonth >= 40 ? "text-red-600" : "text-[#1B7A6E]"
+            }`}>
+              {stats.bankConnectionsThisMonth}
+              <span className="text-lg font-semibold text-gray-400"> / 50</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  stats.bankConnectionsThisMonth >= 40
+                    ? "bg-red-500"
+                    : stats.bankConnectionsThisMonth >= 25
+                    ? "bg-yellow-500"
+                    : "bg-[#1B7A6E]"
+                }`}
+                style={{ width: `${Math.min((stats.bankConnectionsThisMonth / 50) * 100, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              {50 - stats.bankConnectionsThisMonth} tilbage
+            </p>
+          </div>
+        </div>
+        {stats.bankConnectionsThisMonth >= 40 && (
+          <div className="mt-3 bg-red-100 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-700 font-medium">
+              Advarsel: {stats.bankConnectionsThisMonth}/50 connections brugt — tæt på grænsen!
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Chart */}

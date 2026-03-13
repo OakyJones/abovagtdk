@@ -1,3 +1,18 @@
+"use client";
+
+const isPreview = process.env.NEXT_PUBLIC_LAUNCH_MODE !== "live";
+
+function ComingSoonBadge() {
+  if (!isPreview) return null;
+  return (
+    <div className="absolute -top-2 -right-2 z-10 pointer-events-none">
+      <div className="bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1.5 rounded-lg shadow-md -rotate-12 whitespace-nowrap">
+        Kommer snart 🚀
+      </div>
+    </div>
+  );
+}
+
 export default function Pricing() {
   return (
     <section id="pris" className="bg-gray-50 py-16 sm:py-24">
@@ -14,7 +29,8 @@ export default function Pricing() {
 
         <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           {/* Engangsbetaling */}
-          <div className="relative bg-white rounded-2xl border-2 border-[#1B7A6E] p-8 shadow-lg flex flex-col">
+          <div className="relative bg-white rounded-2xl border-2 border-[#1B7A6E] p-8 shadow-lg flex flex-col overflow-visible">
+            <ComingSoonBadge />
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
               Ingen risiko
             </div>
@@ -68,7 +84,8 @@ export default function Pricing() {
           </div>
 
           {/* Monitoring */}
-          <div className="relative bg-white rounded-2xl border border-gray-200 p-8 shadow-sm flex flex-col">
+          <div className="relative bg-white rounded-2xl border border-gray-200 p-8 shadow-sm flex flex-col overflow-visible">
+            <ComingSoonBadge />
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gray-700 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide">
               L&oslash;bende kontrol
             </div>
@@ -117,6 +134,7 @@ export default function Pricing() {
 
             <a
               href="/connect"
+              onClick={() => { if (typeof umami !== 'undefined') { umami.track('signup_monitoring'); umami.track('monitoring_signup'); } }}
               className="block w-full text-center px-5 py-3 bg-white text-[#1B7A6E] font-semibold rounded-xl border border-[#1B7A6E] hover:bg-teal-50 transition-colors text-sm mb-3"
             >
               Start monitoring &rarr;
