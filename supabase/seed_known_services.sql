@@ -18,14 +18,16 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('C More', 'streaming', 99, 0, 0, now()),
   ('Discovery+', 'streaming', 49, 0, 0, now()),
   ('DAZN', 'streaming', 79, 0, 0, now()),
-  ('Hayu', 'streaming', 49, 0, 0, now());
+  ('Hayu', 'streaming', 49, 0, 0, now()),
+  ('Patreon', 'streaming', 50, 0, 0, now()),
+  ('Twitch', 'streaming', 39, 0, 0, now());
 
 -- MUSIK & LYDBØGER
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
-  ('Spotify', 'music', 99, 0, 0, now()),
-  ('Apple Music', 'music', 99, 0, 0, now()),
-  ('YouTube Premium', 'music', 79, 0, 0, now()),
-  ('Tidal', 'music', 99, 0, 0, now()),
+  ('Spotify', 'music', 119, 0, 0, now()),
+  ('Apple Music', 'music', 109, 0, 0, now()),
+  ('YouTube Premium', 'music', 139, 0, 0, now()),
+  ('Tidal', 'music', 109, 0, 0, now()),
   ('Mofibo', 'music', 149, 0, 0, now()),
   ('Audible', 'music', 149, 0, 0, now()),
   ('Nextory', 'music', 149, 0, 0, now()),
@@ -40,7 +42,9 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('Loop Fitness', 'fitness', 199, 30, 0, now()),
   ('DGI Fitness', 'fitness', 179, 30, 0, now()),
   ('Repeat', 'fitness', 149, 0, 0, now()),
-  ('Fitnessdk', 'fitness', 249, 30, 0, now());
+  ('Fitnessdk', 'fitness', 249, 30, 0, now()),
+  ('MyFitnessPal', 'fitness', 79, 0, 0, now()),
+  ('Noom', 'fitness', 149, 0, 0, now());
 
 -- SOFTWARE & CLOUD
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
@@ -52,7 +56,17 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('1Password', 'software', 29, 0, 0, now()),
   ('NordVPN', 'software', 49, 0, 0, now()),
   ('ChatGPT Plus', 'software', 149, 0, 0, now()),
-  ('Canva Pro', 'software', 99, 0, 0, now());
+  ('Canva Pro', 'software', 99, 0, 0, now()),
+  ('Claude', 'software', 149, 0, 0, now()),
+  ('GitHub Copilot', 'software', 75, 0, 0, now()),
+  ('Midjourney', 'software', 220, 0, 0, now()),
+  ('Cursor', 'software', 150, 0, 0, now()),
+  ('Figma', 'software', 100, 0, 0, now()),
+  ('Slack', 'software', 60, 0, 0, now()),
+  ('Zoom', 'software', 100, 0, 0, now()),
+  ('Notion', 'software', 60, 0, 0, now()),
+  ('Linear', 'software', 60, 0, 0, now()),
+  ('Superhuman', 'software', 200, 0, 0, now());
 
 -- GAMING
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
@@ -72,7 +86,8 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('GreenMeal', 'food', 1396, 0, 0, now()),
   ('Nemlig.com Plus', 'food', 49, 0, 0, now()),
   ('Wolt+', 'food', 49, 0, 0, now()),
-  ('Too Good To Go', 'food', 0, 0, 0, now());
+  ('Too Good To Go', 'food', 0, 0, 0, now()),
+  ('EatGrim', 'food', 99, 0, 0, now());
 
 -- AVISER & MAGASINER
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
@@ -82,7 +97,16 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('Ekstra Bladet+', 'news', 79, 0, 0, now()),
   ('BT+', 'news', 59, 0, 0, now()),
   ('Zetland', 'news', 129, 0, 0, now()),
-  ('The New York Times', 'news', 49, 0, 0, now());
+  ('The New York Times', 'news', 49, 0, 0, now()),
+  ('Frihedsbrevet', 'news', 99, 0, 0, now()),
+  ('Weekendavisen', 'news', 99, 30, 0, now()),
+  ('Third Ear', 'news', 79, 0, 0, now()),
+  ('r8Dio', 'news', 49, 0, 0, now()),
+  ('Kontoret', 'news', 49, 0, 0, now()),
+  ('Kristeligt Dagblad', 'news', 99, 30, 0, now()),
+  ('Ingeniøren', 'news', 99, 0, 0, now()),
+  ('Altinget', 'news', 149, 0, 0, now()),
+  ('Acast+', 'news', 39, 0, 0, now());
 
 -- MOBIL & INTERNET
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
@@ -91,7 +115,10 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('Oister', 'telecom', 99, 0, 0, now()),
   ('CBB Mobil', 'telecom', 79, 0, 0, now()),
   ('Greenspeak', 'telecom', 99, 0, 0, now()),
-  ('Lebara', 'telecom', 49, 0, 0, now());
+  ('Lebara', 'telecom', 49, 0, 0, now()),
+  ('Duka', 'telecom', 99, 0, 0, now()),
+  ('Waoo Mobil', 'telecom', 119, 30, 0, now()),
+  ('Callme', 'telecom', 129, 0, 0, now());
 
 -- BREDBÅND & INTERNET
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
@@ -100,7 +127,8 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('Waoo', 'broadband', 249, 30, 0, now()),
   ('YouSee Bredbånd', 'broadband', 299, 30, 0, now()),
   ('Fastspeed', 'broadband', 249, 30, 0, now()),
-  ('Hiper', 'broadband', 199, 0, 0, now());
+  ('Hiper', 'broadband', 199, 0, 0, now()),
+  ('Kviknet', 'broadband', 249, 0, 0, now());
 
 -- TV-PAKKER
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
@@ -160,13 +188,15 @@ insert into known_services (name, category, current_price, cancellation_period_d
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
   ('Estrid', 'grooming', 59, 0, 0, now()),
   ('Dollar Shave Club', 'grooming', 69, 0, 0, now()),
-  ('Goodiebox', 'grooming', 249, 0, 0, now());
+  ('Goodiebox', 'grooming', 249, 0, 0, now()),
+  ('Glossybox', 'grooming', 149, 0, 0, now());
 
 -- TØJ & MODE
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
   ('Stitch Fix', 'fashion', 149, 0, 0, now()),
   ('Miinto+', 'fashion', 49, 0, 0, now()),
-  ('Zalando Plus', 'fashion', 49, 0, 0, now());
+  ('Zalando Plus', 'fashion', 49, 0, 0, now()),
+  ('JustFab', 'fashion', 299, 0, 0, now());
 
 -- ELEKTRONIK-LEJE
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
