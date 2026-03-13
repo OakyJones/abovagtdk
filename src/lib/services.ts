@@ -37,9 +37,6 @@ export const categoryLabels: Record<string, string> = {
   broadband: "Bredbånd & Internet",
   tv: "TV-pakker",
   alarm: "Alarm & Sikkerhed",
-  union: "Fagforening & A-kasse",
-  health: "Sygeforsikring",
-  energy: "El & Energi",
   contacts: "Kontaktlinser",
   vitamins: "Vitamin & Kosttilskud",
   transport: "Transport",
@@ -54,7 +51,6 @@ export const categoryLabels: Record<string, string> = {
   clubs: "Foreninger & Klubber",
   charity: "Velgørenhed & Donationer",
   coffee: "Kaffe & Drikkevarer",
-  car: "Bil & Vejhjælp",
   dental: "Tandlæge & Sundhed",
   magazines: "Magasiner",
   garden: "Haveservice",
@@ -75,9 +71,6 @@ export const categoryOrder = [
   "broadband",
   "tv",
   "alarm",
-  "union",
-  "health",
-  "energy",
   "contacts",
   "vitamins",
   "transport",
@@ -92,7 +85,6 @@ export const categoryOrder = [
   "clubs",
   "charity",
   "coffee",
-  "car",
   "dental",
   "magazines",
   "garden",
@@ -113,13 +105,13 @@ export const quizPages: QuizPage[] = [
   { id: "entertainment", label: "Underholdning", icon: "🎬", categories: ["streaming", "music", "gaming"] },
   { id: "mobile-internet", label: "Mobil & Internet", icon: "📱", categories: ["telecom", "broadband", "tv"] },
   { id: "health-fitness", label: "Fitness & Sundhed", icon: "💪", categories: ["fitness", "contacts", "dental", "vitamins"] },
-  { id: "food-drink", label: "Mad & Drikke", icon: "🍽", categories: ["food", "coffee"] },
+  { id: "food-boxes", label: "Mad & Bokse", icon: "🍽", categories: ["food", "coffee"] },
   { id: "software-apps", label: "Software & Apps", icon: "💻", categories: ["software", "appstore", "electronics", "digistorage"] },
   { id: "media", label: "Medier", icon: "📰", categories: ["news", "magazines"] },
-  { id: "home", label: "Hjem", icon: "🏠", categories: ["alarm", "energy", "cleaning", "garden", "storage", "laundry"] },
-  { id: "transport-car", label: "Transport & Bil", icon: "🚗", categories: ["transport", "car"] },
-  { id: "insurance-union", label: "Forsikring & Fagforening", icon: "🛡️", categories: ["health", "union"] },
-  { id: "personal", label: "Personligt", icon: "💜", categories: ["dating", "grooming", "fashion", "pets", "charity", "clubs"] },
+  { id: "home", label: "Hjem", icon: "🏠", categories: ["alarm", "cleaning", "garden", "storage", "laundry"] },
+  { id: "transport", label: "Transport", icon: "🚗", categories: ["transport"] },
+  { id: "shopping", label: "Shopping", icon: "🛍️", categories: ["grooming", "fashion", "pets", "electronics"] },
+  { id: "other", label: "Andet", icon: "📦", categories: ["dating", "charity", "clubs", "misc"] },
 ];
 
 export const services: Service[] = [
@@ -300,30 +292,6 @@ export const services: Service[] = [
   { id: "ajax-alarm", name: "AJAX Alarm", category: "alarm", monthlyPrice: 199, cancellation: "1 md opsigelse", icon: "🔔" },
   { id: "norlys-alarm", name: "Norlys Alarm", category: "alarm", monthlyPrice: 299, cancellation: "12 md binding", icon: "🏠" },
 
-  // FAGFORENING & A-KASSE
-  { id: "hk", name: "HK Danmark", category: "union", monthlyPrice: 499, cancellation: "1 md opsigelse", icon: "🤝" },
-  { id: "3f", name: "3F", category: "union", monthlyPrice: 549, cancellation: "1 md opsigelse", icon: "👷" },
-  { id: "krifa", name: "Krifa", category: "union", monthlyPrice: 399, cancellation: "1 md opsigelse", icon: "🤲" },
-  { id: "det-faglige-hus", name: "Det Faglige Hus", category: "union", monthlyPrice: 299, cancellation: "1 md opsigelse", icon: "🏢" },
-  { id: "ase", name: "ASE", category: "union", monthlyPrice: 299, cancellation: "1 md opsigelse", icon: "💼" },
-  { id: "lederne", name: "Lederne", category: "union", monthlyPrice: 599, cancellation: "1 md opsigelse", icon: "👔" },
-
-  // SYGEFORSIKRING
-  {
-    id: "sygeforsikring-dk", name: "Sygeforsikringen \"danmark\"", category: "health", monthlyPrice: 95, cancellation: "1 md opsigelse", icon: "🏥",
-    tiers: [
-      { id: "dk-gruppe1", label: "Gruppe 1", price: 95, isDefault: true },
-      { id: "dk-gruppe2", label: "Gruppe 2", price: 185 },
-      { id: "dk-gruppe5", label: "Gruppe 5", price: 280 },
-    ],
-  },
-
-  // EL & ENERGI
-  { id: "norlys-el", name: "Norlys El", category: "energy", monthlyPrice: 99, priceNote: "Fastpris-abo", cancellation: "løbende", icon: "⚡" },
-  { id: "oersted", name: "Ørsted", category: "energy", monthlyPrice: 99, priceNote: "Fastpris-abo", cancellation: "løbende", icon: "🔌" },
-  { id: "ewii", name: "Ewii", category: "energy", monthlyPrice: 79, priceNote: "Fastpris-abo", cancellation: "løbende", icon: "💡" },
-  { id: "clever", name: "Clever elbil-abo", category: "energy", monthlyPrice: 249, cancellation: "løbende", icon: "🔋" },
-
   // KONTAKTLINSER
   { id: "lensway", name: "Lensway", category: "contacts", monthlyPrice: 199, cancellation: "løbende", icon: "👁️" },
   { id: "synoptik-abo", name: "Synoptik Linseabo", category: "contacts", monthlyPrice: 249, cancellation: "1 md opsigelse", icon: "👓" },
@@ -398,11 +366,9 @@ export const services: Service[] = [
   { id: "simplecoffee", name: "SimpleCoffee", category: "coffee", monthlyPrice: 199, cancellation: "løbende", icon: "☕" },
   { id: "bki", name: "BKI abonnement", category: "coffee", monthlyPrice: 149, cancellation: "løbende", icon: "☕" },
 
-  // BIL & VEJHJÆLP
-  { id: "fdm", name: "FDM Vejhjælp", category: "car", monthlyPrice: 99, cancellation: "12 md binding", icon: "🚗" },
-  { id: "easypark", name: "EasyPark", category: "car", monthlyPrice: 49, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
-  { id: "parkpark", name: "ParkPark", category: "car", monthlyPrice: 39, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
-  { id: "spirii", name: "Spirii Go", category: "car", monthlyPrice: 79, cancellation: "løbende", icon: "🔌" },
+  // PARKERING
+  { id: "easypark", name: "EasyPark", category: "transport", monthlyPrice: 49, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
+  { id: "parkpark", name: "ParkPark", category: "transport", monthlyPrice: 39, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
 
   // TANDLÆGE & SUNDHED
   { id: "tandlaege-abo", name: "Tandlæge-abonnement", category: "dental", monthlyPrice: 149, priceNote: "99-249 kr/md", cancellation: "1 md opsigelse", icon: "🦷" },
