@@ -27,3 +27,4 @@ AboVagt (abovagt.dk) — Danish subscription management service built with Next.
 - Claude Code environment restricts pushes to `claude/*` branches only (proxy limitation)
 - Always push to `claude/*` branches — GitHub Actions handles the rest
 - The user prefers minimal manual steps; automate everything possible
+- Always commit and push changes when done — don't wait for the user to ask
