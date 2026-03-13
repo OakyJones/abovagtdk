@@ -2,26 +2,23 @@
 
 import { useState, useCallback, useEffect } from "react";
 import StepEmail from "@/components/quiz/StepEmail";
+import StepCategories from "@/components/quiz/StepCategories";
 import StepSelect from "@/components/quiz/StepSelect";
-import StepUsage from "@/components/quiz/StepUsage";
 import StepResult from "@/components/quiz/StepResult";
-import { UsageFrequency, services, getEffectivePrice, getTierDowngrade } from "@/lib/services";
-import { supabase } from "@/lib/supabase"; // used for quiz_results (non-RLS table)
+import { supabase } from "@/lib/supabase";
 
-const stepLabels = ["", "Vælg abonnementer", "Hvor tit bruger du dem?", "Resultat"];
+const stepLabels = ["", "Kategorier", "Abonnementer", "Resultat"];
 
 export default function QuizPage() {
-  const [step, setStep] = useState(0); // 0=email, 1=select, 2=usage, 3=result
+  const [step, setStep] = useState(0); // 0=email, 1=categories, 2=services, 3=result
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedPages, setSelectedPages] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedPlans, setSelectedPlans] = useState<Record<string, string>>({});
   const [customServices, setCustomServices] = useState<
     { name: string; price: number }[]
   >([]);
-  const [usageFrequency, setUsageFrequency] = useState<
-    Record<string, UsageFrequency>
-  >({});
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -57,11 +54,7 @@ export default function QuizPage() {
   };
 
   const saveResults = useCallback(
-    async (
-      monthlyCost: number,
-      monthlySavings: number,
-      userActions: Record<string, { action: string; downgradeToTier?: string }>
-    ) => {
+    async (monthlyCost: number) => {
       if (saved) return;
 
       const allServices = [
@@ -70,39 +63,19 @@ export default function QuizPage() {
       ];
 
       try {
-        // Try with user_actions, fall back without if column doesn't exist yet
-        let quizInsert = await supabase
+        const quizInsert = await supabase
           .from("quiz_results")
           .insert({
             user_id: userId,
             email,
             selected_services: allServices,
             selected_plans: selectedPlans,
-            usage_frequency: usageFrequency,
             estimated_monthly_cost: monthlyCost,
-            estimated_savings: monthlySavings,
+            estimated_savings: 0,
             converted_to_scan: false,
-            user_actions: userActions,
           })
           .select("id")
           .single();
-
-        if (quizInsert.error) {
-          quizInsert = await supabase
-            .from("quiz_results")
-            .insert({
-              user_id: userId,
-              email,
-              selected_services: allServices,
-              selected_plans: selectedPlans,
-              usage_frequency: usageFrequency,
-              estimated_monthly_cost: monthlyCost,
-              estimated_savings: monthlySavings,
-              converted_to_scan: false,
-            })
-            .select("id")
-            .single();
-        }
 
         const quizResult = quizInsert.data;
 
@@ -114,48 +87,6 @@ export default function QuizPage() {
         }
 
         if (quizResult) {
-          const frequencyLabelMap: Record<string, string> = {
-            daily: "Dagligt",
-            weekly: "Ugentligt",
-            rarely: "Sjældent",
-            never: "Aldrig",
-          };
-
-          const wastedNames = allServices.filter(
-            (id) =>
-              usageFrequency[id] === "rarely" ||
-              usageFrequency[id] === "never"
-          );
-          const wastedDetails = wastedNames.map((id) => {
-            const svc = services.find((s) => s.id === id);
-            return {
-              name: svc?.name || id,
-              price: svc
-                ? getEffectivePrice(svc, selectedPlans)
-                : customServices.find((c) => c.name === id)?.price || 0,
-              frequency: frequencyLabelMap[usageFrequency[id]] || "Ukendt",
-            };
-          });
-
-          // Downgrade suggestions: services used daily/weekly with downgrade options
-          const downgradeSuggestions = services
-            .filter(
-              (s) =>
-                selectedServices.includes(s.id) &&
-                getTierDowngrade(s, selectedPlans) &&
-                (usageFrequency[s.id] === "daily" ||
-                  usageFrequency[s.id] === "weekly")
-            )
-            .map((s) => {
-              const dg = getTierDowngrade(s, selectedPlans)!;
-              return {
-                name: s.name,
-                fromLabel: dg.fromLabel,
-                toLabel: dg.toLabel,
-                savingsPerMonth: dg.savingsPerMonth,
-              };
-            });
-
           await fetch("/api/quiz-result-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -166,9 +97,9 @@ export default function QuizPage() {
               totalServices: allServices.length,
               totalMonthly: monthlyCost,
               totalYearly: monthlyCost * 12,
-              yearlySavings: monthlySavings * 12,
-              wastedServices: wastedDetails,
-              downgradeSuggestions,
+              yearlySavings: 0,
+              wastedServices: [],
+              downgradeSuggestions: [],
             }),
           });
         }
@@ -177,7 +108,6 @@ export default function QuizPage() {
         if (customServices.length > 0) {
           for (const cs of customServices) {
             try {
-              // Check if already exists
               const { data: existing } = await supabase
                 .from("unknown_services")
                 .select("id, observation_count, observed_price")
@@ -185,7 +115,6 @@ export default function QuizPage() {
                 .maybeSingle();
 
               if (existing) {
-                // Update: increment count, running average price
                 const newCount = existing.observation_count + 1;
                 const avgPrice = existing.observed_price
                   ? (existing.observed_price * existing.observation_count + cs.price) / newCount
@@ -211,13 +140,13 @@ export default function QuizPage() {
           }
         }
 
-        if (typeof umami !== 'undefined') umami.track('quiz_complete', { total_md: monthlySavings, services: allServices.length });
+        if (typeof umami !== 'undefined') umami.track('quiz_complete', { total_md: monthlyCost, services: allServices.length });
         setSaved(true);
       } catch {
         // Silently fail
       }
     },
-    [saved, selectedServices, selectedPlans, customServices, usageFrequency, email, userId]
+    [saved, selectedServices, selectedPlans, customServices, email, userId]
   );
 
   return (
@@ -239,7 +168,7 @@ export default function QuizPage() {
         </div>
       </header>
 
-      {/* Progress bar with step labels */}
+      {/* Progress bar */}
       {step > 0 && (
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -283,33 +212,24 @@ export default function QuizPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {step === 0 && <StepEmail onNext={handleEmailSubmit} />}
         {step === 1 && (
+          <StepCategories
+            selectedPages={selectedPages}
+            setSelectedPages={setSelectedPages}
+            onNext={() => {
+              window.umami?.track("quiz_categories_selected", { count: selectedPages.length });
+              setStep(2);
+            }}
+          />
+        )}
+        {step === 2 && (
           <StepSelect
+            selectedPages={selectedPages}
             selectedServices={selectedServices}
             setSelectedServices={setSelectedServices}
             selectedPlans={selectedPlans}
             setSelectedPlans={setSelectedPlans}
             customServices={customServices}
             setCustomServices={setCustomServices}
-            onNext={() => {
-              const freq: Record<string, UsageFrequency> = {};
-              selectedServices.forEach((id) => {
-                freq[id] = usageFrequency[id] || "weekly";
-              });
-              customServices.forEach((c) => {
-                freq[c.name] = usageFrequency[c.name] || "weekly";
-              });
-              setUsageFrequency(freq);
-              setStep(2);
-            }}
-          />
-        )}
-        {step === 2 && (
-          <StepUsage
-            selectedServices={selectedServices}
-            selectedPlans={selectedPlans}
-            customServices={customServices}
-            usageFrequency={usageFrequency}
-            setUsageFrequency={setUsageFrequency}
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
           />
@@ -319,7 +239,6 @@ export default function QuizPage() {
             selectedServices={selectedServices}
             selectedPlans={selectedPlans}
             customServices={customServices}
-            usageFrequency={usageFrequency}
             onBack={() => setStep(2)}
             onSave={saveResults}
           />
