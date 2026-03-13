@@ -31,7 +31,8 @@ AboVagt (abovagt.dk) — Danish subscription management service built with Next.
 ## Supabase
 - **URL**: `https://ranlmeiwrqpfynyyuaiu.supabase.co`
 - Credentials are in `.env.local` (not committed to git)
-- **Note**: The Claude Code sandbox proxy blocks `supabase.co` — database migrations must be run by the user via Supabase SQL Editor, or via a Next.js API route if possible.
+- **Note**: The Claude Code sandbox proxy blocks `supabase.co`, `abovagt.dk`, and `vercel.app` — no external API calls to these services are possible.
+- **Database migrations**: Always provide ready-to-copy SQL that the user pastes into Supabase SQL Editor (Dashboard → SQL Editor → New Query → Run). Keep SQL concise and idempotent (`IF NOT EXISTS`, etc.).
 
 ## Git
 - Claude Code environment restricts pushes to `claude/*` branches only (proxy limitation)
