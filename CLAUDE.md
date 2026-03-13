@@ -23,8 +23,16 @@ AboVagt (abovagt.dk) — Danish subscription management service built with Next.
 - Danish language throughout UI
 - **Lazy-init external SDKs**: Never instantiate `new Resend()`, `new Stripe()`, etc. at module top-level in API routes — use lazy getters to avoid build-time crashes when env vars are missing
 
+## Working principles
+- **Do as much as possible yourself** — never ask the user to do something you can do. Only involve the user when absolutely necessary (e.g., network-restricted operations like Supabase SQL that require dashboard access).
+- **Always commit and push when done** — don't wait for the user to ask.
+- **Automate everything** — the user prefers minimal manual steps.
+
+## Supabase
+- **URL**: `https://ranlmeiwrqpfynyyuaiu.supabase.co`
+- Credentials are in `.env.local` (not committed to git)
+- **Note**: The Claude Code sandbox proxy blocks `supabase.co` — database migrations must be run by the user via Supabase SQL Editor, or via a Next.js API route if possible.
+
 ## Git
 - Claude Code environment restricts pushes to `claude/*` branches only (proxy limitation)
 - Always push to `claude/*` branches — GitHub Actions handles the rest
-- The user prefers minimal manual steps; automate everything possible
-- Always commit and push changes when done — don't wait for the user to ask
