@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || "");
+  return _resend;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const hasWaste = wastedServices.length > 0;
 
-    await resend.emails.send({
+    await getResend().emails.send({
       from: "AboVagt <noreply@abovagt.dk>",
       to: email,
       subject: hasWaste

@@ -4,7 +4,11 @@ import { generateCancelEmail, generateDowngradeEmail } from "@/lib/cancel-templa
 
 export const dynamic = "force-dynamic";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "");
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || "");
+  return _resend;
+}
 
 type EmailType =
   | "quiz-result"
@@ -336,7 +340,7 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const { data, error: sendError } = await resend.emails.send({
+    const { data, error: sendError } = await getResend().emails.send({
       from: "AboVagt <tjek@abovagt.dk>",
       to,
       subject,
