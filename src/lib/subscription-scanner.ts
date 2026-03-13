@@ -41,12 +41,6 @@ const SUBSCRIPTION_KEYWORDS = [
   "allente", "boxer",
   // Alarm & sikkerhed
   "verisure", "sector alarm", "ajax alarm",
-  // Fagforening & a-kasse
-  "hk danmark", "3f ", "krifa", "faglige hus", "ase ", "lederne",
-  // Sygeforsikring
-  "sygeforsikring", "danmark gruppe",
-  // El & energi
-  "oersted", "ørsted", "ewii", "clever",
   // Kontaktlinser
   "lensway", "synoptik", "louis nielsen",
   // Vitamin & kosttilskud
@@ -65,8 +59,8 @@ const SUBSCRIPTION_KEYWORDS = [
   "grover", "myway",
   // Velgørenhed
   "røde kors", "roede kors", "unicef", "amnesty", "kraeftens",
-  // Bil & vejhjælp
-  "fdm", "easypark", "parkpark", "spirii",
+  // Parkering
+  "easypark", "parkpark",
   // Kaffe
   "nespresso", "simplecoffee", "bki",
   // Tandlæge & sundhed

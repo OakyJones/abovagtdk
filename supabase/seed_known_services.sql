@@ -114,26 +114,6 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('AJAX Alarm', 'alarm', 199, 30, 0, now()),
   ('Norlys Alarm', 'alarm', 299, 0, 12, now());
 
--- FAGFORENING & A-KASSE
-insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
-  ('HK Danmark', 'union', 499, 30, 0, now()),
-  ('3F', 'union', 549, 30, 0, now()),
-  ('Krifa', 'union', 399, 30, 0, now()),
-  ('Det Faglige Hus', 'union', 299, 30, 0, now()),
-  ('ASE', 'union', 299, 30, 0, now()),
-  ('Lederne', 'union', 599, 30, 0, now());
-
--- SYGEFORSIKRING
-insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
-  ('Sygeforsikringen "danmark"', 'health', 95, 30, 0, now());
-
--- EL & ENERGI
-insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
-  ('Norlys El', 'energy', 99, 0, 0, now()),
-  ('Ørsted', 'energy', 99, 0, 0, now()),
-  ('Ewii', 'energy', 79, 0, 0, now()),
-  ('Clever elbil-abo', 'energy', 249, 0, 0, now());
-
 -- KONTAKTLINSER
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
   ('Lensway', 'contacts', 199, 0, 0, now()),
@@ -222,12 +202,10 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('SimpleCoffee', 'coffee', 199, 0, 0, now()),
   ('BKI abonnement', 'coffee', 149, 0, 0, now());
 
--- BIL & VEJHJÆLP
+-- PARKERING
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
-  ('FDM Vejhjælp', 'car', 99, 0, 12, now()),
-  ('EasyPark', 'car', 49, 0, 0, now()),
-  ('ParkPark', 'car', 39, 0, 0, now()),
-  ('Spirii Go', 'car', 79, 0, 0, now());
+  ('EasyPark', 'transport', 49, 0, 0, now()),
+  ('ParkPark', 'transport', 39, 0, 0, now());
 
 -- TANDLÆGE & SUNDHED
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
