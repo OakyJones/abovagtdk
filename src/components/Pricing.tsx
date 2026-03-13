@@ -119,7 +119,7 @@ export default function Pricing() {
 
             <a
               href="/connect"
-              onClick={() => { if (typeof umami !== 'undefined') umami.track('signup_monitoring'); }}
+              onClick={() => { if (typeof umami !== 'undefined') { umami.track('signup_monitoring'); umami.track('monitoring_signup'); } }}
               className="block w-full text-center px-5 py-3 bg-white text-[#1B7A6E] font-semibold rounded-xl border border-[#1B7A6E] hover:bg-teal-50 transition-colors text-sm mb-3"
             >
               Start monitoring &rarr;

@@ -1,4 +1,11 @@
+"use client";
+
+import { useEffect } from "react";
 import Inspektoeren from "./Inspektoeren";
+
+const track = (event: string, data?: Record<string, string | number>) => {
+  if (typeof umami !== 'undefined') umami.track(event, data);
+};
 
 const checkIcon = (color: string) => (
   <svg
@@ -23,6 +30,10 @@ const shieldIcon = (
 );
 
 export default function Hero() {
+  useEffect(() => {
+    track('page_view_home');
+  }, []);
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-teal-50/50 to-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28">
@@ -61,6 +72,7 @@ export default function Hero() {
 
             <a
               href="/quiz"
+              onClick={() => track('click_quiz')}
               className="block w-full text-center px-5 py-3 bg-white text-[#1C2B2A] font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
             >
               Tag den gratis quiz &rarr;
@@ -98,6 +110,7 @@ export default function Hero() {
 
             <a
               href="/connect"
+              onClick={() => track('click_engang')}
               className="block w-full text-center px-5 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-md shadow-teal-600/20 text-sm"
             >
               Find mine abonnementer &rarr;
@@ -131,6 +144,7 @@ export default function Hero() {
 
             <a
               href="/connect"
+              onClick={() => track('click_monitoring')}
               className="block w-full text-center px-5 py-3 bg-white text-[#1C2B2A] font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
             >
               Start monitoring &rarr;

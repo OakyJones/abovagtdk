@@ -58,7 +58,10 @@ function FAQItem({
     <div className="border-b border-gray-200">
       <button
         className="w-full py-5 flex items-center justify-between text-left"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open && typeof umami !== 'undefined') umami.track('click_faq', { question });
+          setOpen(!open);
+        }}
         aria-expanded={open}
       >
         <span className="text-lg font-medium text-gray-900">{question}</span>

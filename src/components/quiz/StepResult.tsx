@@ -487,6 +487,7 @@ export default function StepResult({
 
         <a
           href="/connect"
+          onClick={() => { if (typeof umami !== 'undefined') umami.track('quiz_result_cta_click'); }}
           className="block w-full text-center px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
         >
           Find mine abonnementer &rarr;

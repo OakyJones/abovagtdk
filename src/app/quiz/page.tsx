@@ -30,7 +30,7 @@ export default function QuizPage() {
 
   const handleEmailSubmit = async (userEmail: string, newsletterConsent: boolean) => {
     setEmail(userEmail);
-    if (typeof umami !== 'undefined') umami.track('quiz_email');
+    if (typeof umami !== 'undefined') umami.track('quiz_email_entered');
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -210,7 +210,7 @@ export default function QuizPage() {
           }
         }
 
-        if (typeof umami !== 'undefined') umami.track('quiz_complete', { total: monthlySavings });
+        if (typeof umami !== 'undefined') umami.track('quiz_complete', { total_md: monthlySavings, services: allServices.length });
         setSaved(true);
       } catch {
         // Silently fail

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Inspektoeren from "@/components/Inspektoeren";
 
 interface Props {
@@ -13,6 +13,10 @@ export default function StepEmail({ onNext }: Props) {
   const [newsletter, setNewsletter] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (typeof umami !== 'undefined') umami.track('quiz_email_shown');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

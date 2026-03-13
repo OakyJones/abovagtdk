@@ -222,7 +222,7 @@ function DashboardContent() {
   // If returning from Tink with card already reserved, go straight to scanning
   useEffect(() => {
     if (connected && userId && cardReserved && step === "card") {
-      if (typeof umami !== 'undefined') umami.track('tink_connected');
+      if (typeof umami !== 'undefined') umami.track('bank_connected');
       setStep("scanning");
     }
   }, [connected, userId, cardReserved, step]);
@@ -241,6 +241,13 @@ function DashboardContent() {
       localStorage.setItem("abovagt_user_name", derived);
     }
   }, [userEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Track step views for drop-off analysis
+  useEffect(() => {
+    if (typeof umami !== 'undefined') {
+      if (step === "card") umami.track('payment_page_view');
+    }
+  }, [step]);
 
   // ---- Card step: create PaymentIntent for 149 kr reservation ----
   const createReservation = async () => {
@@ -263,6 +270,7 @@ function DashboardContent() {
         return;
       }
 
+      if (typeof umami !== 'undefined') umami.track('payment_card_started');
       setClientSecret(data.clientSecret);
       setPaymentIntentId(data.paymentIntentId);
     } catch {
@@ -273,6 +281,7 @@ function DashboardContent() {
 
   // Called when Stripe card is confirmed (status=requires_capture)
   const onCardReserved = (consentTimestamp: string) => {
+    if (typeof umami !== 'undefined') umami.track('payment_success');
     setCardReserved(true);
     setConsentGivenAt(consentTimestamp);
     // Store PI ID and consent so it survives the Tink redirect
@@ -290,7 +299,7 @@ function DashboardContent() {
       window.location.href = "/connect";
       return;
     }
-    if (typeof umami !== 'undefined') umami.track('tink_start');
+    if (typeof umami !== 'undefined') umami.track('bank_start');
     try {
       const res = await fetch("/api/tink/link", {
         method: "POST",
@@ -1514,6 +1523,7 @@ function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) =>
     e.preventDefault();
     if (!canSubmit || !elements) return;
 
+    if (typeof umami !== 'undefined') umami.track('payment_submit');
     setProcessing(true);
     setError(null);
 
@@ -1545,7 +1555,7 @@ function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) =>
           <input
             type="checkbox"
             checked={acceptTerms}
-            onChange={(e) => setAcceptTerms(e.target.checked)}
+            onChange={(e) => { setAcceptTerms(e.target.checked); if (e.target.checked && typeof umami !== 'undefined') umami.track('payment_checkbox_terms'); }}
             className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
           />
           <span className="text-sm text-gray-600 leading-relaxed">
@@ -1560,7 +1570,7 @@ function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) =>
           <input
             type="checkbox"
             checked={acceptWaiver}
-            onChange={(e) => setAcceptWaiver(e.target.checked)}
+            onChange={(e) => { setAcceptWaiver(e.target.checked); if (e.target.checked && typeof umami !== 'undefined') umami.track('payment_checkbox_consent'); }}
             className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
           />
           <span className="text-sm text-gray-600 leading-relaxed">
