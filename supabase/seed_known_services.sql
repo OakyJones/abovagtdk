@@ -69,7 +69,10 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('SimpleCook', 'food', 1396, 0, 0, now()),
   ('RetNemt', 'food', 1596, 0, 0, now()),
   ('Aarstiderne', 'food', 1596, 0, 0, now()),
-  ('GreenMeal', 'food', 1396, 0, 0, now());
+  ('GreenMeal', 'food', 1396, 0, 0, now()),
+  ('Nemlig.com Plus', 'food', 49, 0, 0, now()),
+  ('Wolt+', 'food', 49, 0, 0, now()),
+  ('Too Good To Go', 'food', 0, 0, 0, now());
 
 -- AVISER & MAGASINER
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
@@ -205,7 +208,8 @@ insert into known_services (name, category, current_price, cancellation_period_d
 -- PARKERING
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
   ('EasyPark', 'transport', 49, 0, 0, now()),
-  ('ParkPark', 'transport', 39, 0, 0, now());
+  ('ParkPark', 'transport', 39, 0, 0, now()),
+  ('Apcoa Flow', 'transport', 0, 0, 0, now());
 
 -- TANDLÆGE & SUNDHED
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
