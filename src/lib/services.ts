@@ -573,7 +573,14 @@ export const services: Service[] = [
   { id: "hinge", name: "Hinge", category: "dating", monthlyPrice: 149, cancellation: "løbende", icon: "💜" },
 
   // APP STORE & IN-APP
-  { id: "apple-one", name: "Apple One", category: "appstore", monthlyPrice: 169, priceNote: "169-329 kr/md", cancellation: "løbende", icon: "🍎" },
+  {
+    id: "apple-one", name: "Apple One", category: "appstore", monthlyPrice: 169, cancellation: "løbende", icon: "🍎",
+    tiers: [
+      { id: "a1-individual", label: "Individual", price: 169, isDefault: true },
+      { id: "a1-family", label: "Family", price: 249 },
+      { id: "a1-premium", label: "Premium", price: 299 },
+    ],
+  },
   { id: "google-play-pass", name: "Google Play Pass", category: "appstore", monthlyPrice: 39, cancellation: "løbende", icon: "▶️" },
   { id: "apple-arcade", name: "Apple Arcade", category: "appstore", monthlyPrice: 69, cancellation: "løbende", icon: "🕹️" },
 

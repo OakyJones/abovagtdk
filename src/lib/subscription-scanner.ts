@@ -9,7 +9,28 @@ export interface DetectedSubscription {
   lastSeen: string;
   matchedBy: "known_service" | "recurring_pattern";
   icon?: string;
+  /** When true, transaction is ambiguous (e.g. APPLE.COM/BILL) and user should pick which service */
+  ambiguous?: boolean;
+  /** Possible service matches for ambiguous transactions */
+  possibleServices?: { id: string; name: string; icon: string }[];
 }
+
+/** Ambiguous merchant patterns that map to multiple possible services */
+const AMBIGUOUS_MERCHANTS: {
+  pattern: string;
+  services: { id: string; name: string; icon: string }[];
+}[] = [
+  {
+    pattern: "apple com bill",
+    services: [
+      { id: "apple-one", name: "Apple One", icon: "🍎" },
+      { id: "apple-music", name: "Apple Music", icon: "🎶" },
+      { id: "apple-tv", name: "Apple TV+", icon: "🍎" },
+      { id: "icloud", name: "iCloud+", icon: "☁️" },
+      { id: "apple-arcade", name: "Apple Arcade", icon: "🕹️" },
+    ],
+  },
+];
 
 interface TransactionGroup {
   name: string;
@@ -24,7 +45,7 @@ const SUBSCRIPTION_KEYWORDS = [
   "abo", "subscription", "premium", "plus", "monthly", "recurring",
   // Streaming & music
   "netflix", "spotify", "viaplay", "disney", "hbo", "max",
-  "youtube", "apple", "google", "microsoft", "adobe",
+  "youtube", "apple", "apple com bill", "google", "microsoft", "adobe",
   "tidal", "mofibo", "audible", "podimo", "nextory",
   "patreon", "twitch",
   // Fitness & software
@@ -95,6 +116,15 @@ function normalize(desc: string): string {
     .replace(/[^a-zæøå0-9\s]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** Check if a transaction matches an ambiguous merchant pattern */
+function matchAmbiguousMerchant(desc: string): typeof AMBIGUOUS_MERCHANTS[number] | null {
+  const norm = normalize(desc);
+  for (const merchant of AMBIGUOUS_MERCHANTS) {
+    if (norm.includes(merchant.pattern)) return merchant;
+  }
+  return null;
 }
 
 /** Try to match a transaction description to a known service */
@@ -202,22 +232,37 @@ export function scanTransactions(transactions: TinkTransaction[]): {
     const sortedDates = [...group.dates].sort();
     const lastDate = sortedDates[sortedDates.length - 1];
 
-    const matchedService = matchKnownService(group.name);
+    // Check for ambiguous merchants first (e.g. APPLE.COM/BILL)
+    const ambiguousMerchant = matchAmbiguousMerchant(group.name);
+    const matchedService = ambiguousMerchant ? null : matchKnownService(group.name);
 
-    const detected: DetectedSubscription = {
-      serviceName: matchedService?.name || group.name,
-      knownServiceId: matchedService?.id,
-      monthlyAmount: avgAmount,
-      transactionCount: group.amounts.length,
-      lastSeen: lastDate,
-      matchedBy: matchedService ? "known_service" : "recurring_pattern",
-      icon: matchedService?.icon,
-    };
+    if (ambiguousMerchant) {
+      subscriptions.push({
+        serviceName: group.name,
+        monthlyAmount: avgAmount,
+        transactionCount: group.amounts.length,
+        lastSeen: lastDate,
+        matchedBy: "known_service",
+        icon: "🍎",
+        ambiguous: true,
+        possibleServices: ambiguousMerchant.services,
+      });
+    } else {
+      const detected: DetectedSubscription = {
+        serviceName: matchedService?.name || group.name,
+        knownServiceId: matchedService?.id,
+        monthlyAmount: avgAmount,
+        transactionCount: group.amounts.length,
+        lastSeen: lastDate,
+        matchedBy: matchedService ? "known_service" : "recurring_pattern",
+        icon: matchedService?.icon,
+      };
 
-    if (matchedService) {
-      subscriptions.push(detected);
-    } else if (isRec) {
-      unknownRecurring.push(detected);
+      if (matchedService) {
+        subscriptions.push(detected);
+      } else if (isRec) {
+        unknownRecurring.push(detected);
+      }
     }
   }
 
