@@ -50,6 +50,16 @@ export const categoryLabels: Record<string, string> = {
   fashion: "Tøj & Mode",
   electronics: "Elektronik-leje",
   dating: "Dating",
+  appstore: "App Store & In-App",
+  clubs: "Foreninger & Klubber",
+  charity: "Velgørenhed & Donationer",
+  coffee: "Kaffe & Drikkevarer",
+  car: "Bil & Vejhjælp",
+  dental: "Tandlæge & Sundhed",
+  magazines: "Magasiner",
+  garden: "Haveservice",
+  laundry: "Vaskeri",
+  digistorage: "Digital storage",
   misc: "Diverse",
 };
 
@@ -78,7 +88,38 @@ export const categoryOrder = [
   "fashion",
   "electronics",
   "dating",
+  "appstore",
+  "clubs",
+  "charity",
+  "coffee",
+  "car",
+  "dental",
+  "magazines",
+  "garden",
+  "laundry",
+  "digistorage",
   "misc",
+];
+
+/** Quiz pages group multiple categories into browsable sections */
+export interface QuizPage {
+  id: string;
+  label: string;
+  icon: string;
+  categories: string[];
+}
+
+export const quizPages: QuizPage[] = [
+  { id: "entertainment", label: "Underholdning", icon: "🎬", categories: ["streaming", "music", "gaming"] },
+  { id: "mobile-internet", label: "Mobil & Internet", icon: "📱", categories: ["telecom", "broadband", "tv"] },
+  { id: "health-fitness", label: "Fitness & Sundhed", icon: "💪", categories: ["fitness", "contacts", "dental", "vitamins"] },
+  { id: "food-drink", label: "Mad & Drikke", icon: "🍽", categories: ["food", "coffee"] },
+  { id: "software-apps", label: "Software & Apps", icon: "💻", categories: ["software", "appstore", "electronics", "digistorage"] },
+  { id: "media", label: "Medier", icon: "📰", categories: ["news", "magazines"] },
+  { id: "home", label: "Hjem", icon: "🏠", categories: ["alarm", "energy", "cleaning", "garden", "storage", "laundry"] },
+  { id: "transport-car", label: "Transport & Bil", icon: "🚗", categories: ["transport", "car"] },
+  { id: "insurance-union", label: "Forsikring & Fagforening", icon: "🛡️", categories: ["health", "union"] },
+  { id: "personal", label: "Personligt", icon: "💜", categories: ["dating", "grooming", "fashion", "pets", "charity", "clubs"] },
 ];
 
 export const services: Service[] = [
@@ -334,6 +375,58 @@ export const services: Service[] = [
   { id: "tinder", name: "Tinder", category: "dating", monthlyPrice: 89, cancellation: "løbende", icon: "🔥" },
   { id: "bumble", name: "Bumble", category: "dating", monthlyPrice: 199, cancellation: "løbende", icon: "🐝" },
   { id: "hinge", name: "Hinge", category: "dating", monthlyPrice: 149, cancellation: "løbende", icon: "💜" },
+
+  // APP STORE & IN-APP
+  { id: "apple-one", name: "Apple One", category: "appstore", monthlyPrice: 169, priceNote: "169-329 kr/md", cancellation: "løbende", icon: "🍎" },
+  { id: "google-play-pass", name: "Google Play Pass", category: "appstore", monthlyPrice: 39, cancellation: "løbende", icon: "▶️" },
+  { id: "apple-arcade", name: "Apple Arcade", category: "appstore", monthlyPrice: 69, cancellation: "løbende", icon: "🕹️" },
+
+  // FORENINGER & KLUBBER
+  { id: "golfklub", name: "Golfklub", category: "clubs", monthlyPrice: 500, priceNote: "Varierer", cancellation: "12 md binding", icon: "⛳" },
+  { id: "sportsklub", name: "Sportsklub", category: "clubs", monthlyPrice: 200, priceNote: "Varierer", cancellation: "12 md binding", icon: "⚽" },
+  { id: "spejder", name: "Spejder", category: "clubs", monthlyPrice: 100, priceNote: "Varierer", cancellation: "løbende", icon: "🏕️" },
+  { id: "hobbyforening", name: "Hobbyforening", category: "clubs", monthlyPrice: 150, priceNote: "Varierer", cancellation: "løbende", icon: "🎨" },
+
+  // VELGØRENHED & DONATIONER
+  { id: "roede-kors", name: "Røde Kors", category: "charity", monthlyPrice: 100, cancellation: "løbende", icon: "❤️" },
+  { id: "unicef", name: "UNICEF", category: "charity", monthlyPrice: 150, cancellation: "løbende", icon: "🌍" },
+  { id: "amnesty", name: "Amnesty International", category: "charity", monthlyPrice: 75, cancellation: "løbende", icon: "🕊️" },
+  { id: "kraeftens-bekaempelse", name: "Kræftens Bekæmpelse", category: "charity", monthlyPrice: 100, cancellation: "løbende", icon: "🎗️" },
+
+  // KAFFE & DRIKKEVARER
+  { id: "nespresso", name: "Nespresso abonnement", category: "coffee", monthlyPrice: 249, cancellation: "løbende", icon: "☕" },
+  { id: "simplecoffee", name: "SimpleCoffee", category: "coffee", monthlyPrice: 199, cancellation: "løbende", icon: "☕" },
+  { id: "bki", name: "BKI abonnement", category: "coffee", monthlyPrice: 149, cancellation: "løbende", icon: "☕" },
+
+  // BIL & VEJHJÆLP
+  { id: "fdm", name: "FDM Vejhjælp", category: "car", monthlyPrice: 99, cancellation: "12 md binding", icon: "🚗" },
+  { id: "easypark", name: "EasyPark", category: "car", monthlyPrice: 49, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
+  { id: "parkpark", name: "ParkPark", category: "car", monthlyPrice: 39, priceNote: "Varierer", cancellation: "løbende", icon: "🅿️" },
+  { id: "spirii", name: "Spirii Go", category: "car", monthlyPrice: 79, cancellation: "løbende", icon: "🔌" },
+
+  // TANDLÆGE & SUNDHED
+  { id: "tandlaege-abo", name: "Tandlæge-abonnement", category: "dental", monthlyPrice: 149, priceNote: "99-249 kr/md", cancellation: "1 md opsigelse", icon: "🦷" },
+  { id: "kiropraktor", name: "Kiropraktor-abonnement", category: "dental", monthlyPrice: 299, priceNote: "Varierer", cancellation: "1 md opsigelse", icon: "🩺" },
+  { id: "mindler", name: "Mindler", category: "dental", monthlyPrice: 499, cancellation: "løbende", icon: "🧠" },
+
+  // MAGASINER
+  { id: "euroman", name: "Euroman", category: "magazines", monthlyPrice: 89, cancellation: "løbende", icon: "📖" },
+  { id: "femina", name: "Femina", category: "magazines", monthlyPrice: 69, cancellation: "løbende", icon: "📖" },
+  { id: "illustreret-videnskab", name: "Illustreret Videnskab", category: "magazines", monthlyPrice: 79, cancellation: "løbende", icon: "🔬" },
+  { id: "samvirke", name: "Samvirke", category: "magazines", monthlyPrice: 49, cancellation: "løbende", icon: "📖" },
+
+  // HAVESERVICE
+  { id: "greenmow", name: "GreenMow", category: "garden", monthlyPrice: 399, priceNote: "Varierer", cancellation: "løbende", icon: "🌱" },
+  { id: "plaeneklip", name: "Plæneklip-abonnement", category: "garden", monthlyPrice: 499, priceNote: "Varierer", cancellation: "løbende", icon: "🏡" },
+  { id: "have-abo", name: "Haveservice-abonnement", category: "garden", monthlyPrice: 599, priceNote: "Varierer", cancellation: "1 md opsigelse", icon: "🌿" },
+
+  // VASKERI
+  { id: "washa", name: "Washa", category: "laundry", monthlyPrice: 299, priceNote: "Varierer", cancellation: "løbende", icon: "👔" },
+  { id: "renseri-abo", name: "Renseri-abonnement", category: "laundry", monthlyPrice: 249, priceNote: "Varierer", cancellation: "løbende", icon: "👗" },
+
+  // DIGITAL STORAGE
+  { id: "backblaze", name: "Backblaze", category: "digistorage", monthlyPrice: 49, cancellation: "løbende", icon: "💾" },
+  { id: "onedrive-extra", name: "OneDrive 100 GB", category: "digistorage", monthlyPrice: 15, cancellation: "løbende", icon: "☁️" },
 
   // DIVERSE
   { id: "amazon-prime", name: "Amazon Prime", category: "misc", monthlyPrice: 59, cancellation: "løbende", icon: "📦" },

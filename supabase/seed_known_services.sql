@@ -196,6 +196,68 @@ insert into known_services (name, category, current_price, cancellation_period_d
   ('Bumble', 'dating', 199, 0, 0, now()),
   ('Hinge', 'dating', 149, 0, 0, now());
 
+-- APP STORE & IN-APP
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Apple One', 'appstore', 169, 0, 0, now()),
+  ('Google Play Pass', 'appstore', 39, 0, 0, now()),
+  ('Apple Arcade', 'appstore', 69, 0, 0, now());
+
+-- FORENINGER & KLUBBER
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Golfklub', 'clubs', 500, 0, 12, now()),
+  ('Sportsklub', 'clubs', 200, 0, 12, now()),
+  ('Spejder', 'clubs', 100, 0, 0, now()),
+  ('Hobbyforening', 'clubs', 150, 0, 0, now());
+
+-- VELGØRENHED & DONATIONER
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Røde Kors', 'charity', 100, 0, 0, now()),
+  ('UNICEF', 'charity', 150, 0, 0, now()),
+  ('Amnesty International', 'charity', 75, 0, 0, now()),
+  ('Kræftens Bekæmpelse', 'charity', 100, 0, 0, now());
+
+-- KAFFE & DRIKKEVARER
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Nespresso abonnement', 'coffee', 249, 0, 0, now()),
+  ('SimpleCoffee', 'coffee', 199, 0, 0, now()),
+  ('BKI abonnement', 'coffee', 149, 0, 0, now());
+
+-- BIL & VEJHJÆLP
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('FDM Vejhjælp', 'car', 99, 0, 12, now()),
+  ('EasyPark', 'car', 49, 0, 0, now()),
+  ('ParkPark', 'car', 39, 0, 0, now()),
+  ('Spirii Go', 'car', 79, 0, 0, now());
+
+-- TANDLÆGE & SUNDHED
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Tandlæge-abonnement', 'dental', 149, 30, 0, now()),
+  ('Kiropraktor-abonnement', 'dental', 299, 30, 0, now()),
+  ('Mindler', 'dental', 499, 0, 0, now());
+
+-- MAGASINER
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Euroman', 'magazines', 89, 0, 0, now()),
+  ('Femina', 'magazines', 69, 0, 0, now()),
+  ('Illustreret Videnskab', 'magazines', 79, 0, 0, now()),
+  ('Samvirke', 'magazines', 49, 0, 0, now());
+
+-- HAVESERVICE
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('GreenMow', 'garden', 399, 0, 0, now()),
+  ('Plæneklip-abonnement', 'garden', 499, 0, 0, now()),
+  ('Haveservice-abonnement', 'garden', 599, 30, 0, now());
+
+-- VASKERI
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Washa', 'laundry', 299, 0, 0, now()),
+  ('Renseri-abonnement', 'laundry', 249, 0, 0, now());
+
+-- DIGITAL STORAGE
+insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
+  ('Backblaze', 'digistorage', 49, 0, 0, now()),
+  ('OneDrive 100 GB', 'digistorage', 15, 0, 0, now());
+
 -- DIVERSE
 insert into known_services (name, category, current_price, cancellation_period_days, binding_months, price_updated_at) values
   ('Amazon Prime', 'misc', 59, 0, 0, now()),

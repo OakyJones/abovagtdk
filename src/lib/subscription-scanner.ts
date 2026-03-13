@@ -63,6 +63,24 @@ const SUBSCRIPTION_KEYWORDS = [
   "estrid", "dollar shave", "stitch fix", "miinto", "zalando",
   // Elektronik-leje
   "grover", "myway",
+  // Velgørenhed
+  "røde kors", "roede kors", "unicef", "amnesty", "kraeftens",
+  // Bil & vejhjælp
+  "fdm", "easypark", "parkpark", "spirii",
+  // Kaffe
+  "nespresso", "simplecoffee", "bki",
+  // Tandlæge & sundhed
+  "tandlæge", "tandlaege", "kiropraktor", "mindler",
+  // Magasiner
+  "euroman", "femina", "illustreret videnskab", "samvirke",
+  // Haveservice
+  "greenmow", "plæneklip", "plaeneklip", "haveservice",
+  // Vaskeri
+  "washa", "renseri",
+  // Digital storage
+  "backblaze", "onedrive",
+  // Foreninger
+  "golfklub", "spejder",
 ];
 
 /** Normalize a transaction description for matching */

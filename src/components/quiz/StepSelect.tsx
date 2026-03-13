@@ -6,7 +6,7 @@ import {
   Service,
   ServiceTier,
   categoryLabels,
-  categoryOrder,
+  quizPages,
   formatPrice,
   getDefaultTier,
   getEffectivePrice,
@@ -23,19 +23,6 @@ interface Props {
   onNext: () => void;
 }
 
-const categoryIcons: Record<string, string> = {
-  streaming: "🎬",
-  music: "🎵",
-  fitness: "💪",
-  software: "💻",
-  gaming: "🎮",
-  food: "🍽",
-  news: "📰",
-  telecom: "📱",
-  dating: "💜",
-  misc: "📦",
-};
-
 export default function StepSelect({
   selectedServices,
   setSelectedServices,
@@ -45,10 +32,10 @@ export default function StepSelect({
   setCustomServices,
   onNext,
 }: Props) {
-  const [activeCategory, setActiveCategoryState] = useState("streaming");
-  const setActiveCategory = (cat: string) => {
-    setActiveCategoryState(cat);
-    if (typeof umami !== 'undefined') umami.track('quiz_step', { category: cat });
+  const [activePageId, setActivePageIdState] = useState(quizPages[0].id);
+  const setActivePageId = (id: string) => {
+    setActivePageIdState(id);
+    if (typeof umami !== 'undefined') umami.track('quiz_step', { page: id });
   };
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState("");
@@ -56,17 +43,14 @@ export default function StepSelect({
 
   const toggle = (service: Service) => {
     if (selectedServices.includes(service.id)) {
-      // Deselect
       setSelectedServices(selectedServices.filter((s) => s !== service.id));
       const newPlans = { ...selectedPlans };
       delete newPlans[service.id];
       setSelectedPlans(newPlans);
       setTierPickerFor(null);
     } else if (service.tiers) {
-      // Show tier picker
       setTierPickerFor(service.id);
     } else {
-      // Select directly
       setSelectedServices([...selectedServices, service.id]);
     }
   };
@@ -100,11 +84,27 @@ export default function StepSelect({
       .reduce((sum, s) => sum + getEffectivePrice(s, selectedPlans), 0) +
     customServices.reduce((sum, c) => sum + c.price, 0);
 
-  const catServices = services.filter((s) => s.category === activeCategory);
+  const activePage = quizPages.find((p) => p.id === activePageId);
+  const activeCategories = activePage?.categories || [];
+  const pageServices = services.filter((s) => activeCategories.includes(s.category));
 
-  const selectedPerCategory = (cat: string) =>
-    services.filter((s) => s.category === cat && selectedServices.includes(s.id))
-      .length;
+  /** Count selected services in a quiz page */
+  const selectedPerPage = (pageId: string) => {
+    const page = quizPages.find((p) => p.id === pageId);
+    if (!page) return 0;
+    return services.filter(
+      (s) => page.categories.includes(s.category) && selectedServices.includes(s.id)
+    ).length;
+  };
+
+  /** Group services by category for display with sub-headers */
+  const groupedServices = activeCategories
+    .map((cat) => ({
+      category: cat,
+      label: categoryLabels[cat],
+      services: services.filter((s) => s.category === cat),
+    }))
+    .filter((g) => g.services.length > 0);
 
   return (
     <div>
@@ -114,20 +114,20 @@ export default function StepSelect({
           Hvilke abonnementer har du?
         </h1>
         <p className="mt-2 text-gray-600 text-sm sm:text-base">
-          Tryk på en kategori for at se abonnementer
+          Vælg en kategori og markér dine abonnementer
         </p>
       </div>
 
-      {/* Category grid */}
+      {/* Quiz page tabs */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mb-6">
-        {categoryOrder.map((cat) => {
-          const count = selectedPerCategory(cat);
-          const isActive = activeCategory === cat;
+        {quizPages.map((page) => {
+          const count = selectedPerPage(page.id);
+          const isActive = activePageId === page.id;
           return (
             <button
-              key={cat}
+              key={page.id}
               type="button"
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => setActivePageId(page.id)}
               className={`relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-center transition-all border-2 ${
                 isActive
                   ? "bg-[#1B7A6E] text-white border-[#1B7A6E] shadow-md"
@@ -136,9 +136,9 @@ export default function StepSelect({
                   : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
               }`}
             >
-              <span className="text-xl">{categoryIcons[cat]}</span>
+              <span className="text-xl">{page.icon}</span>
               <span className="text-xs font-medium leading-tight">
-                {categoryLabels[cat]}
+                {page.label}
               </span>
               {count > 0 && (
                 <span
@@ -157,9 +157,9 @@ export default function StepSelect({
         {/* Custom / Andet */}
         <button
           type="button"
-          onClick={() => setActiveCategory("custom")}
+          onClick={() => setActivePageIdState("custom")}
           className={`relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl text-center transition-all border-2 ${
-            activeCategory === "custom"
+            activePageId === "custom"
               ? "bg-[#1B7A6E] text-white border-[#1B7A6E] shadow-md"
               : customServices.length > 0
               ? "bg-teal-50 text-[#1B7A6E] border-[#1B7A6E]/30"
@@ -171,7 +171,7 @@ export default function StepSelect({
           {customServices.length > 0 && (
             <span
               className={`absolute -top-1.5 -right-1.5 w-5 h-5 text-[10px] font-bold rounded-full flex items-center justify-center ${
-                activeCategory === "custom"
+                activePageId === "custom"
                   ? "bg-white text-[#1B7A6E]"
                   : "bg-[#1B7A6E] text-white"
               }`}
@@ -182,126 +182,126 @@ export default function StepSelect({
         </button>
       </div>
 
-      {/* Active category label */}
-      <h2 className="text-base font-semibold text-[#1C2B2A] mb-3">
-        {activeCategory === "custom"
-          ? "Tilføj egne abonnementer"
-          : categoryLabels[activeCategory]}
-      </h2>
+      {/* Services for active page */}
+      {activePageId !== "custom" ? (
+        <div className="mb-6">
+          {groupedServices.map((group) => (
+            <div key={group.category} className="mb-5">
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                {group.label}
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {group.services.map((service) => {
+                  const selected = selectedServices.includes(service.id);
+                  const tierLabel = selected && service.tiers && selectedPlans[service.id]
+                    ? service.tiers.find((t) => t.id === selectedPlans[service.id])?.label
+                    : null;
 
-      {/* Service grid */}
-      {activeCategory !== "custom" ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
-          {catServices.map((service) => {
-            const selected = selectedServices.includes(service.id);
-            const tierLabel = selected && service.tiers && selectedPlans[service.id]
-              ? service.tiers.find((t) => t.id === selectedPlans[service.id])?.label
-              : null;
+                  return (
+                    <div key={service.id} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => toggle(service)}
+                        className={`relative w-full flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all text-center ${
+                          selected
+                            ? "border-[#1B7A6E] bg-teal-50 shadow-sm shadow-teal-600/10"
+                            : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                        }`}
+                      >
+                        {selected && (
+                          <div className="absolute top-2 right-2">
+                            <svg className="w-5 h-5 text-[#1B7A6E]" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                            </svg>
+                          </div>
+                        )}
+                        <span className="text-2xl">{service.icon}</span>
+                        <span className="text-sm font-medium text-[#1C2B2A] leading-tight">
+                          {service.name}
+                        </span>
+                        {tierLabel ? (
+                          <span className="text-xs text-[#1B7A6E] font-medium">
+                            {tierLabel} — {getEffectivePrice(service, selectedPlans)} kr/md
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500">
+                            {formatPrice(service)}
+                          </span>
+                        )}
+                        {service.cancellation !== "løbende" && (
+                          <span className="text-[10px] text-orange-600 font-medium">
+                            {service.cancellation}
+                          </span>
+                        )}
+                        {service.tiers && !selected && (
+                          <span className="text-[10px] text-[#1B7A6E] font-medium">
+                            {service.tiers.length} planer
+                          </span>
+                        )}
+                        {selected && service.tiers && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTierPickerFor(tierPickerFor === service.id ? null : service.id);
+                            }}
+                            className="text-[10px] text-[#1B7A6E] font-medium underline underline-offset-2 hover:text-[#155F56]"
+                          >
+                            Skift plan
+                          </button>
+                        )}
+                      </button>
 
-            return (
-              <div key={service.id} className="relative">
-                <button
-                  type="button"
-                  onClick={() => toggle(service)}
-                  className={`relative w-full flex flex-col items-center gap-1.5 p-4 rounded-xl border-2 transition-all text-center ${
-                    selected
-                      ? "border-[#1B7A6E] bg-teal-50 shadow-sm shadow-teal-600/10"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                  }`}
-                >
-                  {selected && (
-                    <div className="absolute top-2 right-2">
-                      <svg className="w-5 h-5 text-[#1B7A6E]" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                      </svg>
+                      {/* Tier picker popup */}
+                      {tierPickerFor === service.id && service.tiers && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setTierPickerFor(null)}
+                          />
+                          <div className="absolute z-50 top-full mt-2 left-0 right-0 bg-white rounded-xl border-2 border-[#1B7A6E] shadow-xl p-3 min-w-[200px]">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                              Vælg din plan
+                            </p>
+                            <div className="space-y-1.5">
+                              {service.tiers.map((tier) => {
+                                const isSelected = selectedPlans[service.id] === tier.id;
+                                const isDefaultTier = tier.id === getDefaultTier(service)?.id;
+                                return (
+                                  <button
+                                    key={tier.id}
+                                    type="button"
+                                    onClick={() => selectTier(service, tier)}
+                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all ${
+                                      isSelected
+                                        ? "bg-[#1B7A6E] text-white"
+                                        : "bg-gray-50 hover:bg-teal-50 text-gray-900"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium">{tier.label}</span>
+                                      {isDefaultTier && !isSelected && (
+                                        <span className="text-[9px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full font-medium">
+                                          Populær
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-[#1C2B2A]"}`}>
+                                      {tier.price} kr/md
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
-                  )}
-                  <span className="text-2xl">{service.icon}</span>
-                  <span className="text-sm font-medium text-[#1C2B2A] leading-tight">
-                    {service.name}
-                  </span>
-                  {tierLabel ? (
-                    <span className="text-xs text-[#1B7A6E] font-medium">
-                      {tierLabel} — {getEffectivePrice(service, selectedPlans)} kr/md
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-500">
-                      {formatPrice(service)}
-                    </span>
-                  )}
-                  {service.cancellation !== "løbende" && (
-                    <span className="text-[10px] text-orange-600 font-medium">
-                      {service.cancellation}
-                    </span>
-                  )}
-                  {service.tiers && !selected && (
-                    <span className="text-[10px] text-[#1B7A6E] font-medium">
-                      {service.tiers.length} planer
-                    </span>
-                  )}
-                  {selected && service.tiers && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTierPickerFor(tierPickerFor === service.id ? null : service.id);
-                      }}
-                      className="text-[10px] text-[#1B7A6E] font-medium underline underline-offset-2 hover:text-[#155F56]"
-                    >
-                      Skift plan
-                    </button>
-                  )}
-                </button>
-
-                {/* Tier picker popup */}
-                {tierPickerFor === service.id && service.tiers && (
-                  <>
-                    {/* Backdrop */}
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setTierPickerFor(null)}
-                    />
-                    {/* Popup */}
-                    <div className="absolute z-50 top-full mt-2 left-0 right-0 bg-white rounded-xl border-2 border-[#1B7A6E] shadow-xl p-3 min-w-[200px]">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                        Vælg din plan
-                      </p>
-                      <div className="space-y-1.5">
-                        {service.tiers.map((tier) => {
-                          const isSelected = selectedPlans[service.id] === tier.id;
-                          const isDefaultTier = tier.id === getDefaultTier(service)?.id;
-                          return (
-                            <button
-                              key={tier.id}
-                              type="button"
-                              onClick={() => selectTier(service, tier)}
-                              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all ${
-                                isSelected
-                                  ? "bg-[#1B7A6E] text-white"
-                                  : "bg-gray-50 hover:bg-teal-50 text-gray-900"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">{tier.label}</span>
-                                {isDefaultTier && !isSelected && (
-                                  <span className="text-[9px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full font-medium">
-                                    Populær
-                                  </span>
-                                )}
-                              </div>
-                              <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-[#1C2B2A]"}`}>
-                                {tier.price} kr/md
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       ) : (
         <div className="mb-6">
