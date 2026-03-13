@@ -80,7 +80,12 @@ export default function Hero() {
           </div>
 
           {/* Engangsscanning — highlighted */}
-          <div className="relative bg-teal-50/60 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-7 shadow-lg hover:shadow-xl transition-shadow flex flex-col md:-mt-2 md:mb-[-8px]">
+          <div className="relative bg-teal-50/60 rounded-2xl border-2 border-[#1B7A6E] p-6 sm:p-7 shadow-lg hover:shadow-xl transition-shadow flex flex-col md:-mt-2 md:mb-[-8px] overflow-visible">
+            <div className="absolute -top-3 -right-3 z-10 pointer-events-none">
+              <div className="bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1.5 rounded-lg shadow-md -rotate-12 whitespace-nowrap">
+                Kommer snart 🚀
+              </div>
+            </div>
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1B7A6E] text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap">
               Mest popul&aelig;r
             </div>
@@ -121,7 +126,12 @@ export default function Hero() {
           </div>
 
           {/* Monitoring */}
-          <div className="relative bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+          <div className="relative bg-white rounded-2xl border border-gray-200 p-6 sm:p-7 shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-visible">
+            <div className="absolute -top-3 -right-3 z-10 pointer-events-none">
+              <div className="bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1.5 rounded-lg shadow-md -rotate-12 whitespace-nowrap">
+                Kommer snart 🚀
+              </div>
+            </div>
             <div className="absolute -top-3 left-5 bg-gray-700 text-white text-[11px] font-bold px-3 py-1 rounded-full">
               L&oslash;bende kontrol
             </div>
