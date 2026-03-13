@@ -1,20 +1,20 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import StepEmail from "@/components/quiz/StepEmail";
 import StepCategories from "@/components/quiz/StepCategories";
+import StepEmail from "@/components/quiz/StepEmail";
 import StepSelect from "@/components/quiz/StepSelect";
 import StepActions from "@/components/quiz/StepActions";
 import StepResult from "@/components/quiz/StepResult";
 import { services, getEffectivePrice, getTierDowngrade } from "@/lib/services";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import type { UserActions } from "@/components/quiz/StepActions";
 
-const stepLabels = ["", "Kategorier", "Abonnementer", "Gennemgå", "Resultat"];
+const stepLabels = ["Kategorier", "Email", "Abonnementer", "Gennemgå", "Resultat"];
 
 export default function QuizPage() {
-  // 0=email, 1=categories, 2=services, 3=actions, 4=result
-  const [step, setStep] = useState(0);
+  // 1=categories, 2=email, 3=services, 4=actions, 5=result
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedPages, setSelectedPages] = useState<string[]>([]);
@@ -53,19 +53,20 @@ export default function QuizPage() {
       if (res.ok && data.userId) {
         setUserId(data.userId);
         localStorage.setItem("abovagt_user_id", data.userId);
+        localStorage.setItem("abovagt_user_email", userEmail);
       }
     } catch {
       // Continue without user — quiz still works
     }
 
-    window.umami?.track("quiz_start");
-    setStep(1);
+    setStep(3);
   };
 
   const saveResults = useCallback(
     async (monthlyCost: number, monthlySavings: number, actions: UserActions) => {
       if (saved) return;
 
+      const supabase = getSupabase();
       const allServices = [
         ...selectedServices,
         ...customServices.map((c) => c.name),
@@ -217,9 +218,10 @@ export default function QuizPage() {
     [saved, selectedServices, selectedPlans, customServices, email, userId]
   );
 
-  // Map internal steps (0-4) to display steps (0-4, where 0 is email/hidden)
   const displayStep = step;
   const totalDisplaySteps = 4;
+  // Map step 1-5 to display 1-4 (step 5=result doesn't show in progress)
+  const progressStep = Math.min(step, 4);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50/30 to-white">
@@ -231,9 +233,9 @@ export default function QuizPage() {
               <span className="text-black">Abo</span>
               <span className="text-[#1B7A6E]">Vagt</span>
             </a>
-            {displayStep > 0 && (
+            {step < 5 && (
               <span className="text-sm text-gray-500">
-                Trin {displayStep} af {totalDisplaySteps}
+                Trin {progressStep} af {totalDisplaySteps}
               </span>
             )}
           </div>
@@ -241,7 +243,7 @@ export default function QuizPage() {
       </header>
 
       {/* Progress bar */}
-      {displayStep > 0 && (
+      {step < 5 && (
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between mb-2">
@@ -249,12 +251,12 @@ export default function QuizPage() {
                 <div key={s} className="flex items-center gap-1.5">
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      displayStep >= s
+                      progressStep >= s
                         ? "bg-[#1B7A6E] text-white"
                         : "bg-gray-200 text-gray-500"
                     }`}
                   >
-                    {displayStep > s ? (
+                    {progressStep > s ? (
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>
@@ -263,9 +265,9 @@ export default function QuizPage() {
                     )}
                   </div>
                   <span className={`text-xs font-medium hidden sm:inline ${
-                    displayStep >= s ? "text-[#1B7A6E]" : "text-gray-400"
+                    progressStep >= s ? "text-[#1B7A6E]" : "text-gray-400"
                   }`}>
-                    {stepLabels[s]}
+                    {stepLabels[s - 1]}
                   </span>
                 </div>
               ))}
@@ -273,7 +275,7 @@ export default function QuizPage() {
             <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
               <div
                 className="bg-[#1B7A6E] h-full rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${(displayStep / totalDisplaySteps) * 100}%` }}
+                style={{ width: `${(progressStep / totalDisplaySteps) * 100}%` }}
               />
             </div>
           </div>
@@ -282,7 +284,6 @@ export default function QuizPage() {
 
       {/* Steps */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {step === 0 && <StepEmail onNext={handleEmailSubmit} />}
         {step === 1 && (
           <StepCategories
             selectedPages={selectedPages}
@@ -294,6 +295,12 @@ export default function QuizPage() {
           />
         )}
         {step === 2 && (
+          <StepEmail
+            onNext={handleEmailSubmit}
+            onBack={() => setStep(1)}
+          />
+        )}
+        {step === 3 && (
           <StepSelect
             selectedPages={selectedPages}
             selectedServices={selectedServices}
@@ -302,29 +309,29 @@ export default function QuizPage() {
             setSelectedPlans={setSelectedPlans}
             customServices={customServices}
             setCustomServices={setCustomServices}
-            onBack={() => setStep(1)}
-            onNext={() => setStep(3)}
+            onBack={() => setStep(2)}
+            onNext={() => setStep(4)}
           />
         )}
-        {step === 3 && (
+        {step === 4 && (
           <StepActions
             selectedServices={selectedServices}
             selectedPlans={selectedPlans}
             customServices={customServices}
-            onBack={() => setStep(2)}
+            onBack={() => setStep(3)}
             onNext={(actions) => {
               setUserActions(actions);
-              setStep(4);
+              setStep(5);
             }}
           />
         )}
-        {step === 4 && (
+        {step === 5 && (
           <StepResult
             selectedServices={selectedServices}
             selectedPlans={selectedPlans}
             customServices={customServices}
             userActions={userActions}
-            onBack={() => setStep(3)}
+            onBack={() => setStep(4)}
             onSave={saveResults}
           />
         )}
