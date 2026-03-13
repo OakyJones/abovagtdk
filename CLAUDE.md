@@ -21,6 +21,7 @@ AboVagt (abovagt.dk) — Danish subscription management service built with Next.
 - Analytics: `window.umami?.track("event_name", { key: value })`
 - Environment variable `NEXT_PUBLIC_LAUNCH_MODE=live` hides "Kommer snart" badges
 - Danish language throughout UI
+- **Lazy-init external SDKs**: Never instantiate `new Resend()`, `new Stripe()`, etc. at module top-level in API routes — use lazy getters to avoid build-time crashes when env vars are missing
 
 ## Git
 - Claude Code environment restricts pushes to `claude/*` branches only (proxy limitation)
