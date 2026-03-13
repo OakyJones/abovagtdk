@@ -302,7 +302,10 @@ export default function StepSelect({
           </div>
           <button
             type="button"
-            onClick={onNext}
+            onClick={() => {
+              window.umami?.track("quiz_services_selected", { count: totalSelected, total_md: monthlyTotal });
+              onNext();
+            }}
             disabled={totalSelected === 0}
             className="px-8 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-teal-600/20"
           >

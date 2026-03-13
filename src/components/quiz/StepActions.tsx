@@ -186,7 +186,10 @@ export default function StepActions({
                 {/* Action buttons */}
                 <div className="flex gap-2 mt-3">
                   <button
-                    onClick={() => setActions((prev) => ({ ...prev, [item.id]: "keep" }))}
+                    onClick={() => {
+                      setActions((prev) => ({ ...prev, [item.id]: "keep" }));
+                      window.umami?.track("quiz_action", { service: item.name, action: "keep" });
+                    }}
                     className={`flex-1 px-3 py-2 text-sm font-semibold rounded-lg border-2 transition-all ${
                       action === "keep"
                         ? "bg-[#1B7A6E] text-white border-[#1B7A6E]"
@@ -197,7 +200,10 @@ export default function StepActions({
                   </button>
                   {canDowngrade && (
                     <button
-                      onClick={() => setActions((prev) => ({ ...prev, [item.id]: "downgrade" }))}
+                      onClick={() => {
+                        setActions((prev) => ({ ...prev, [item.id]: "downgrade" }));
+                        window.umami?.track("quiz_action", { service: item.name, action: "downgrade" });
+                      }}
                       className={`flex-1 px-3 py-2 text-sm font-semibold rounded-lg border-2 transition-all ${
                         action === "downgrade"
                           ? "bg-orange-500 text-white border-orange-500"
@@ -208,7 +214,10 @@ export default function StepActions({
                     </button>
                   )}
                   <button
-                    onClick={() => setActions((prev) => ({ ...prev, [item.id]: "cancel" }))}
+                    onClick={() => {
+                      setActions((prev) => ({ ...prev, [item.id]: "cancel" }));
+                      window.umami?.track("quiz_action", { service: item.name, action: "cancel" });
+                    }}
                     className={`flex-1 px-3 py-2 text-sm font-semibold rounded-lg border-2 transition-all ${
                       action === "cancel"
                         ? "bg-red-500 text-white border-red-500"

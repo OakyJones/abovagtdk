@@ -146,7 +146,7 @@ export default function SupportedBanks({ compact = false }: SupportedBanksProps)
             Vi understøtter disse banker
           </h2>
           <p className="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">
-            Forbind din bank sikkert via Tink og lad os finde dine skjulte abonnementer
+            Forbind din bank sikkert via open banking og lad os finde dine skjulte abonnementer
           </p>
         </div>
 
