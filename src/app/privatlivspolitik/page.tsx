@@ -1,4 +1,5 @@
 import Footer from "@/components/Footer";
+import { COMPANY } from "@/lib/company-info";
 
 export const metadata = {
   title: "Privatlivspolitik – AboVagt",
@@ -24,19 +25,22 @@ export default function PrivatlivspolitikPage() {
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <h1 className="text-3xl sm:text-4xl font-bold text-[#1C2B2A] mb-2">Privatlivspolitik</h1>
-          <p className="text-sm text-gray-500 mb-10">Sidst opdateret: 10. marts 2026</p>
+          <p className="text-sm text-gray-500 mb-10">Sidst opdateret: 14. marts 2026</p>
 
           <div className="prose prose-gray max-w-none space-y-8">
             {/* Dataansvarlig */}
             <section>
               <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Hvem er vi?</h2>
               <p className="text-gray-700 leading-relaxed">
-                AboVagt drives af <strong>Halvfems Procent</strong>, CVR 46314697.
-                Du kan kontakte os på{" "}
-                <a href="mailto:hej@abovagt.dk" className="text-[#1B7A6E] hover:underline">hej@abovagt.dk</a>.
+                AboVagt drives af <strong>{COMPANY.name}</strong>, CVR {COMPANY.cvr}.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
-                Vi er dataansvarlige for de personoplysninger, vi behandler om dig, når du bruger abovagt.dk.
+                Adresse: {COMPANY.address}<br />
+                Telefon: {COMPANY.phone}<br />
+                Email: <a href={`mailto:${COMPANY.email}`} className="text-[#1B7A6E] hover:underline">{COMPANY.email}</a>
+              </p>
+              <p className="text-gray-700 leading-relaxed mt-2">
+                Vi er dataansvarlige for de personoplysninger, vi behandler om dig, n&aring;r du bruger abovagt.dk.
               </p>
             </section>
 
@@ -46,7 +50,7 @@ export default function PrivatlivspolitikPage() {
               <div className="space-y-3">
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                   <p className="font-semibold text-[#1C2B2A] mb-1">Email-adresse</p>
-                  <p className="text-sm text-gray-600">Til at oprette din konto og sende opsigelsesmails på dine vegne.</p>
+                  <p className="text-sm text-gray-600">Til at oprette din konto og sende opsigelsesmails p&aring; dine vegne.</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                   <p className="font-semibold text-[#1C2B2A] mb-1">Quiz-svar</p>
@@ -55,12 +59,12 @@ export default function PrivatlivspolitikPage() {
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                   <p className="font-semibold text-[#1C2B2A] mb-1">Bankdata via open banking</p>
                   <p className="text-sm text-gray-600">
-                    Vi henter dine transaktioner via reguleret open banking (PSD2) for at finde abonnementer. Vi har <strong>kun læseadgang</strong> — vi kan aldrig flytte penge eller ændre noget i din bank.
+                    Vi henter dine transaktioner via reguleret open banking (PSD2) for at finde abonnementer. Vi har <strong>kun l&aelig;seadgang</strong> — vi kan aldrig flytte penge eller &aelig;ndre noget i din bank.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                   <p className="font-semibold text-[#1C2B2A] mb-1">Betalingsoplysninger</p>
-                  <p className="text-sm text-gray-600">Kortoplysninger håndteres af Stripe. Vi ser aldrig dit fulde kortnummer.</p>
+                  <p className="text-sm text-gray-600">Kortoplysninger h&aring;ndteres af Stripe. Vi ser aldrig dit fulde kortnummer.</p>
                 </div>
               </div>
             </section>
@@ -71,7 +75,7 @@ export default function PrivatlivspolitikPage() {
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="text-[#1B7A6E] mt-1 shrink-0">&#10003;</span>
-                  <span>Levere abonnementsanalyse baseret på dine banktransaktioner</span>
+                  <span>Levere abonnementsanalyse baseret p&aring; dine banktransaktioner</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#1B7A6E] mt-1 shrink-0">&#10003;</span>
@@ -99,7 +103,15 @@ export default function PrivatlivspolitikPage() {
                 EU-regulering. Bankdata behandles under den relevante udbyder&apos;s egen licens og privatlivspolitik.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
-                Vi har udelukkende <strong>læseadgang</strong> til dine transaktioner. Vi kan aldrig initiere betalinger, overførsler eller andre ændringer i din bank.
+                Vi har udelukkende <strong>l&aelig;seadgang</strong> til dine transaktioner. Vi kan aldrig initiere betalinger, overf&oslash;rsler eller andre &aelig;ndringer i din bank.
+              </p>
+            </section>
+
+            {/* AI-analyse */}
+            <section>
+              <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">AI-analyse af transaktioner</h2>
+              <p className="text-gray-700 leading-relaxed">
+                Dine banktransaktioner analyseres af AI-tjenester (Anthropic Claude / OpenAI) for at identificere abonnementer og beregne besparelser. Transaktionsdata sendes krypteret til disse tjenester, som fungerer som databehandlere under databehandleraftale. Data bruges udelukkende til din analyse og gemmes ikke af AI-tjenesterne efterf&oslash;lgende.
               </p>
             </section>
 
@@ -115,7 +127,7 @@ export default function PrivatlivspolitikPage() {
                   <p className="text-xs text-gray-500">Database — Frankfurt, Tyskland</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                  <p className="text-sm font-semibold text-[#1C2B2A]">GoCardless (open banking)</p>
+                  <p className="text-sm font-semibold text-[#1C2B2A]">GoCardless Bank Account Data (Nordigen)</p>
                   <p className="text-xs text-gray-500">Bankdata — EU</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
@@ -196,12 +208,20 @@ export default function PrivatlivspolitikPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-[#1B7A6E] mt-1 shrink-0">&#10003;</span>
+                  <span><strong>Begr&aelig;nsning</strong> — f&aring; behandlingen af dine data begr&aelig;nset i visse tilf&aelig;lde</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#1B7A6E] mt-1 shrink-0">&#10003;</span>
+                  <span><strong>Indsigelse</strong> — g&oslash;r indsigelse mod behandling baseret p&aring; vores berettigede interesse</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#1B7A6E] mt-1 shrink-0">&#10003;</span>
                   <span><strong>Klage</strong> — du kan klage til Datatilsynet (datatilsynet.dk)</span>
                 </li>
               </ul>
               <p className="text-gray-700 leading-relaxed mt-3">
                 Kontakt os p&aring;{" "}
-                <a href="mailto:hej@abovagt.dk" className="text-[#1B7A6E] hover:underline">hej@abovagt.dk</a>{" "}
+                <a href={`mailto:${COMPANY.email}`} className="text-[#1B7A6E] hover:underline">{COMPANY.email}</a>{" "}
                 for at ud&oslash;ve dine rettigheder. Vi svarer inden 30 dage.
               </p>
             </section>

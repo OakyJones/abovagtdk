@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { Resend } from "resend";
+import { COMPANY } from "@/lib/company-info";
 
 let _resend: Resend | null = null;
 function getResend() {
@@ -183,15 +184,6 @@ export async function POST(req: NextRequest) {
         </div>
       </div>
 
-      <div style="border-top:1px solid #e5e7eb;padding-top:20px;margin-bottom:20px;">
-        <h2 style="font-size:15px;color:#111;margin:0 0 8px;">Fortrydelsesret</h2>
-        <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">
-          Du har givet samtykke til at ydelsen starter med det samme. Da ydelsen (opsigelsesmails) er leveret digitalt,
-          bortfalder fortrydelsesretten jf. forbrugeraftalelovens &sect; 18, stk. 2, nr. 13, n&aring;r ydelsen er fuldt leveret.
-          S&aring;fremt ydelsen endnu ikke er fuldt leveret, kan du fortryde ved at kontakte os inden 14 dage.
-        </p>
-      </div>
-
       <div style="border-top:1px solid #e5e7eb;padding-top:20px;">
         <h2 style="font-size:15px;color:#111;margin:0 0 8px;">Vilk&aring;r</h2>
         <p style="color:#6b7280;font-size:13px;margin:0;line-height:1.6;">
@@ -201,10 +193,32 @@ export async function POST(req: NextRequest) {
       </div>
     </div>
 
-    <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;line-height:1.8;">
-      <p style="margin:0;">Halvfems Procent &middot; CVR 46314697</p>
-      <p style="margin:0;">Kontakt: <a href="mailto:hej@abovagt.dk" style="color:#1B7A6E;">hej@abovagt.dk</a></p>
+    <hr style="margin: 24px 0; border-color: #e5e7eb;" />
+
+    <h3 style="font-size: 14px; font-weight: bold; color: #1C2B2A;">Fortrydelsesret</h3>
+    <p style="font-size: 13px; color: #4b5563; line-height: 1.5;">
+      Du har 14 dages fortrydelsesret fra aftaletidspunktet. Du har samtykket til at ydelsen p&aring;begyndes straks. N&aring;r ydelsen er fuldt udf&oslash;rt, bortfalder din fortrydelsesret (jf. forbrugeraftalelovens &sect; 18, stk. 2, nr. 2).
+    </p>
+    <p style="font-size: 13px; color: #4b5563; line-height: 1.5;">
+      &Oslash;nsker du at fortryde, send en email til ${COMPANY.email} eller brug nedenstående formular:
+    </p>
+
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-top: 12px;">
+      <p style="font-size: 12px; font-weight: bold; color: #1C2B2A; margin-bottom: 4px;">Standardfortrydelsesformular</p>
+      <p style="font-size: 11px; color: #9ca3af; margin-bottom: 8px;">(Udfyldes kun hvis fortrydelsesretten g&oslash;res g&aelig;ldende)</p>
+      <p style="font-size: 12px; color: #4b5563;">
+        Til: ${COMPANY.name}, ${COMPANY.address}, ${COMPANY.email}<br/>
+        Jeg meddeler herved, at jeg &oslash;nsker at g&oslash;re fortrydelsesretten g&aelig;ldende i forbindelse med min k&oslash;bsaftale om levering af f&oslash;lgende tjenesteydelse: AboVagt abonnementsanalyse.<br/><br/>
+        Bestilt den: ${orderDate}<br/>
+        Navn: ${user.email}<br/>
+        Email: ${user.email}<br/>
+        Dato: _______________
+      </p>
     </div>
+
+    <p style="font-size: 12px; color: #9ca3af; margin-top: 16px;">
+      ${COMPANY.name} &middot; CVR: ${COMPANY.cvr} &middot; ${COMPANY.address} &middot; Tlf: ${COMPANY.phone} &middot; ${COMPANY.email}
+    </p>
   </div>
 </body>
 </html>`.trim(),

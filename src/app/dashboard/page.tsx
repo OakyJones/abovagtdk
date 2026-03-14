@@ -1715,7 +1715,7 @@ function ReservationForm({ onSuccess }: { onSuccess: (consentGivenAt: string) =>
             className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
           />
           <span className="text-sm text-gray-600 leading-relaxed">
-            Jeg anmoder om at ydelsen starter med det samme, og jeg er indforst&aring;et med at min fortrydelsesret bortfalder n&aring;r ydelsen er leveret
+            Jeg anmoder udtrykkeligt om, at tjenesteydelsen p&aring;begyndes inden fortrydelsesfristen udl&oslash;ber, og jeg anerkender, at min fortrydelsesret oph&oslash;rer, n&aring;r tjenesteydelsen er fuldt udf&oslash;rt, jf. forbrugeaftalelovens &sect; 18, stk. 2, nr. 2.
           </span>
         </label>
       </div>
