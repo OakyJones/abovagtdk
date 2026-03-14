@@ -29,14 +29,16 @@ export default function QuizPage() {
     downgradeTargets: {},
     totalSavings: 0,
   });
+  const [newsletterConsent, setNewsletterConsent] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (typeof umami !== 'undefined') umami.track('quiz_start');
   }, []);
 
-  const handleEmailSubmit = async (userEmail: string, newsletterConsent: boolean) => {
+  const handleEmailSubmit = async (userEmail: string, consent: boolean) => {
     setEmail(userEmail);
+    setNewsletterConsent(consent);
     if (typeof umami !== 'undefined') umami.track('quiz_email_entered');
 
     try {
@@ -45,7 +47,7 @@ export default function QuizPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: userEmail,
-          newsletterConsent,
+          newsletterConsent: consent,
           signupPath: "quiz",
         }),
       });
@@ -96,11 +98,13 @@ export default function QuizPage() {
             estimated_savings: monthlySavings,
             converted_to_scan: false,
             user_actions: dbActions,
+            newsletter_consent: newsletterConsent,
+            newsletter_consent_at: newsletterConsent ? new Date().toISOString() : null,
           })
           .select("id")
           .single();
 
-        // Fallback without user_actions if column doesn't exist
+        // Fallback without newer columns if they don't exist yet
         if (quizInsert.error) {
           quizInsert = await supabase
             .from("quiz_results")
@@ -171,6 +175,7 @@ export default function QuizPage() {
               yearlySavings: monthlySavings * 12,
               wastedServices: wastedDetails,
               downgradeSuggestions,
+              newsletterConsent,
             }),
           });
         }
@@ -217,7 +222,7 @@ export default function QuizPage() {
         // Silently fail
       }
     },
-    [saved, selectedServices, selectedPlans, customServices, email, userId]
+    [saved, selectedServices, selectedPlans, customServices, email, userId, newsletterConsent]
   );
 
   const displayStep = step;

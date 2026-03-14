@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       yearlySavings,
       wastedServices,
       downgradeSuggestions,
+      newsletterConsent,
     }: {
       email: string;
       userId: string | null;
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
       yearlySavings: number;
       wastedServices: WastedService[];
       downgradeSuggestions: DowngradeSuggestion[];
+      newsletterConsent?: boolean;
     } = await req.json();
 
     if (!email || !process.env.RESEND_API_KEY) {
@@ -62,6 +64,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const unsubscribeToken = Buffer.from(quizResultId).toString("base64url");
 
     const hasWaste = wastedServices.length > 0;
     const hasDowngrades = downgradeSuggestions.length > 0;
@@ -227,10 +231,9 @@ export async function POST(req: NextRequest) {
     <!-- Footer -->
     <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;">
       <p style="margin:0 0 4px;">Du modtager denne email fordi du tog AboVagt quiz.</p>
-      <p style="margin:0 0 12px;">Du kan altid afmelde dig.</p>
       <p style="margin:0;">
-        <a href="https://abovagt.dk/afmeld?id=${quizResultId}" style="color:#9ca3af;text-decoration:underline;">
-          Afmeld emails
+        <a href="https://abovagt.dk/afmeld?token=${unsubscribeToken}" style="color:#9ca3af;text-decoration:underline;">
+          Afmeld nyhedsbrev
         </a>
       </p>
     </div>

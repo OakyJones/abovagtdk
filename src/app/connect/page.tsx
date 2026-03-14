@@ -25,7 +25,7 @@ function ConnectContent() {
 
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
-  const [newsletter, setNewsletter] = useState(true);
+  const [newsletter, setNewsletter] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [connectError, setConnectError] = useState<string | null>(error || null);
@@ -158,7 +158,7 @@ function ConnectContent() {
                 className="mt-1 w-4 h-4 rounded border-gray-300 text-[#1B7A6E] focus:ring-[#1B7A6E]"
               />
               <span className="text-sm text-gray-600 leading-relaxed">
-                Hold mig opdateret med tips til at spare penge på abonnementer
+                Ja tak, send mig tips til at spare på abonnementer. Du kan altid afmelde dig igen.
               </span>
             </label>
 
