@@ -9,6 +9,7 @@ import StepResult from "@/components/quiz/StepResult";
 import { services, getEffectivePrice, getTierDowngrade } from "@/lib/services";
 import { getSupabase } from "@/lib/supabase";
 import type { UserActions } from "@/components/quiz/StepActions";
+import { trackEvent } from "@/lib/analytics";
 
 const stepLabels = ["Kategorier", "Email", "Abonnementer", "Gennemgå", "Resultat"];
 
@@ -59,6 +60,7 @@ export default function QuizPage() {
       // Continue without user — quiz still works
     }
 
+    trackEvent("quiz_started");
     setStep(3);
   };
 

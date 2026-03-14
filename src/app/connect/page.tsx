@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Inspektoeren from "@/components/Inspektoeren";
+import { trackEvent } from "@/lib/analytics";
 
 export default function ConnectPage() {
   return (
@@ -68,6 +69,7 @@ function ConnectContent() {
 
       window.umami?.track("signup_engang");
       window.umami?.track("payment_email_entered");
+      trackEvent("bank_connect_started");
       // Go to dashboard — card step comes first, then bank connect
       window.location.href = "/dashboard";
     } catch {

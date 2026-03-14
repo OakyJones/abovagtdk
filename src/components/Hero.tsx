@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Inspektoeren from "./Inspektoeren";
+import { trackEvent } from "@/lib/analytics";
 
 const track = (event: string, data?: Record<string, string | number>) => {
   if (typeof umami !== 'undefined') umami.track(event, data);
@@ -115,7 +116,7 @@ export default function Hero() {
 
             <a
               href="/connect"
-              onClick={() => track('click_engang')}
+              onClick={() => { track('click_engang'); trackEvent("cta_click_hero"); }}
               className="block w-full text-center px-5 py-3 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-md shadow-teal-600/20 text-sm"
             >
               Find mine abonnementer &rarr;
@@ -154,7 +155,7 @@ export default function Hero() {
 
             <a
               href="/connect"
-              onClick={() => track('click_monitoring')}
+              onClick={() => { track('click_monitoring'); trackEvent("monitoring_signup_started"); }}
               className="block w-full text-center px-5 py-3 bg-white text-[#1C2B2A] font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
             >
               Start monitoring &rarr;

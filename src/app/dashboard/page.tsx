@@ -8,6 +8,7 @@ import Inspektoeren from "@/components/Inspektoeren";
 import SupportedBanks from "@/components/SupportedBanks";
 import { services, Service, ServiceTier, getCancellationDate, CancellationPeriod } from "@/lib/services";
 import { generateCancelEmail, generateDowngradeEmail, calculateSavingsFromDate } from "@/lib/cancel-templates";
+import { trackEvent } from "@/lib/analytics";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "");
 
@@ -282,6 +283,7 @@ function DashboardContent() {
       const data = await res.json();
       if (!res.ok) {
         setPaymentError(data.detail ? `${data.error}: ${data.detail}` : data.error || "Kunne ikke oprette betaling");
+        trackEvent("payment_failed");
         setPaymentLoading(false);
         return;
       }
@@ -289,8 +291,10 @@ function DashboardContent() {
       if (typeof umami !== 'undefined') umami.track('payment_card_started');
       setClientSecret(data.clientSecret);
       setPaymentIntentId(data.paymentIntentId);
+      trackEvent("payment_started");
     } catch {
       setPaymentError("Kunne ikke oprette betaling — prøv igen");
+      trackEvent("payment_failed");
     }
     setPaymentLoading(false);
   };
@@ -354,6 +358,7 @@ function DashboardContent() {
         return;
       }
       window.umami?.track("bank_redirect");
+      trackEvent("bank_connect_started");
       window.location.href = data.url;
     } catch {
       setScanError("Kunne ikke oprette bankforbindelse");
@@ -364,6 +369,7 @@ function DashboardContent() {
     setStep("scanning");
     setScanError(null);
     window.umami?.track("scan_start");
+    trackEvent("scan_started");
     try {
       const res = await fetch("/api/gocardless/scan", {
         method: "POST",
@@ -381,9 +387,17 @@ function DashboardContent() {
       setTotalMonthlySpend(data.totalMonthlySpend || 0);
       window.umami?.track("bank_callback_success");
       window.umami?.track("scan_complete", { found: (data.subscriptions || []).length, amount: data.totalMonthlySpend || 0 });
+      trackEvent("bank_connect_completed");
+      const subCount = (data.subscriptions || []).length;
+      if (subCount > 0) {
+        trackEvent("scan_completed");
+      } else {
+        trackEvent("scan_no_results");
+      }
       setStep("results");
     } catch {
       setScanError("Scanning fejlede — prøv igen");
+      trackEvent("bank_connect_failed");
       setStep("connect");
     }
   };
@@ -488,8 +502,8 @@ function DashboardContent() {
     item.lowerTiers.length > 0 || !!item.legacyDowngrade;
 
   const setAction = (id: string, action: ActionType) => {
-    if (action === "cancel") window.umami?.track("action_cancel");
-    if (action === "downgrade") window.umami?.track("action_downgrade");
+    if (action === "cancel") trackEvent("cancellation_selected");
+    if (action === "downgrade") trackEvent("cancellation_selected");
     setActions((prev) => ({ ...prev, [id]: action }));
     const item = allItems.find((i) => i.id === id);
     const serviceName = item?.service?.name || item?.name || id;
@@ -537,7 +551,7 @@ function DashboardContent() {
       // Clean up stored PI ID and consent
       localStorage.removeItem("abovagt_payment_intent_id");
       localStorage.removeItem("abovagt_consent_given_at");
-      window.umami?.track("payment_complete", { fee, savings: totalSavings });
+      trackEvent("payment_completed");
       setHasPaid(true);
       setStep("emails");
     } catch {
@@ -566,6 +580,7 @@ function DashboardContent() {
 
   // Open email modal
   const openEmailModal = (item: DashboardItem) => {
+    trackEvent("cancellation_email_generated");
     const serviceId = item.service?.id || "";
     const serviceName = item.service?.name || item.name;
     const cancellation = (item.cancellation || "løbende") as CancellationPeriod;
@@ -662,7 +677,7 @@ function DashboardContent() {
         ? modal.item.price
         : getDowngradeSavingsForItem(modal.item);
 
-      window.umami?.track("email_sent", { type: modal.type, service: modal.item!.service?.name || modal.item!.name });
+      trackEvent("cancellation_email_sent");
       setSentEmails((prev) => [
         ...prev,
         {

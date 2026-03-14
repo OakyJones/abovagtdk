@@ -8,6 +8,7 @@ import {
 } from "@/lib/services";
 import Inspektoeren from "@/components/Inspektoeren";
 import type { UserActions } from "./StepActions";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   selectedServices: string[];
@@ -65,6 +66,8 @@ export default function StepResult({
   useEffect(() => {
     if (saved) return;
     onSave(totalMonthly, totalSavings, userActions);
+    trackEvent("quiz_completed");
+    trackEvent("quiz_result_viewed");
     setSaved(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -237,7 +240,7 @@ export default function StepResult({
 
         <a
           href="/connect"
-          onClick={() => window.umami?.track("quiz_cta_engang", { monthly: totalMonthly, savings: totalSavings })}
+          onClick={() => { window.umami?.track("quiz_cta_engang", { monthly: totalMonthly, savings: totalSavings }); trackEvent("cta_click_pricing"); }}
           className="block w-full text-center px-6 py-4 bg-[#1B7A6E] text-white font-semibold rounded-xl hover:bg-[#155F56] transition-all shadow-lg shadow-teal-600/20 text-lg"
         >
           Find mine abonnementer (35 kr) &rarr;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Inspektoeren from "@/components/Inspektoeren";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   onNext: (email: string, newsletterConsent: boolean) => void;
@@ -31,7 +32,7 @@ export default function StepEmail({ onNext, onBack }: Props) {
 
     setLoading(true);
     setError("");
-    window.umami?.track("quiz_email");
+    trackEvent("quiz_email_submitted");
     onNext(email, newsletter);
   };
 
