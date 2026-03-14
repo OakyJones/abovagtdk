@@ -1,4 +1,5 @@
 import Footer from "@/components/Footer";
+import { COMPANY } from "@/lib/company-info";
 
 export const metadata = {
   title: "Handelsbetingelser – AboVagt",
@@ -24,7 +25,7 @@ export default function HandelsbetingelserPage() {
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <h1 className="text-3xl sm:text-4xl font-bold text-[#1C2B2A] mb-2">Handelsbetingelser</h1>
-          <p className="text-sm text-gray-500 mb-10">Sidst opdateret: 10. marts 2026</p>
+          <p className="text-sm text-gray-500 mb-10">Sidst opdateret: 14. marts 2026</p>
 
           <div className="prose prose-gray max-w-none space-y-8">
             {/* Virksomhed */}
@@ -34,19 +35,27 @@ export default function HandelsbetingelserPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-gray-500">Virksomhed</p>
-                    <p className="font-semibold text-[#1C2B2A]">Halvfems Procent</p>
+                    <p className="font-semibold text-[#1C2B2A]">{COMPANY.name}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">CVR</p>
-                    <p className="font-semibold text-[#1C2B2A]">46314697</p>
+                    <p className="font-semibold text-[#1C2B2A]">{COMPANY.cvr}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Email</p>
-                    <a href="mailto:hej@abovagt.dk" className="font-semibold text-[#1B7A6E] hover:underline">hej@abovagt.dk</a>
+                    <a href={`mailto:${COMPANY.email}`} className="font-semibold text-[#1B7A6E] hover:underline">{COMPANY.email}</a>
                   </div>
                   <div>
                     <p className="text-gray-500">Hjemmeside</p>
-                    <p className="font-semibold text-[#1C2B2A]">abovagt.dk</p>
+                    <p className="font-semibold text-[#1C2B2A]">{COMPANY.website}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Adresse</p>
+                    <p className="font-semibold text-[#1C2B2A]">{COMPANY.address}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Telefon</p>
+                    <p className="font-semibold text-[#1C2B2A]">{COMPANY.phone}</p>
                   </div>
                 </div>
               </div>
@@ -103,11 +112,34 @@ export default function HandelsbetingelserPage() {
             <section>
               <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Betaling</h2>
               <p className="text-gray-700 leading-relaxed">
-                Betaling sker via Stripe (Visa/Mastercard). N&aring;r du betaler, <strong>reserveres</strong> bel&oslash;bet p&aring; dit kort.
-                Bel&oslash;bet tr&aelig;kkes f&oslash;rst, n&aring;r din besparelse er verificeret. Hvis opsigelsen ikke gennemf&oslash;res, refunderer vi automatisk.
+                Betaling sker via Stripe (Visa/Mastercard/Dankort). Ved engangsscanning reserveres 35 kr p&aring; dit kort. Finder vi abonnementer og du godkender, tr&aelig;kkes bel&oslash;bet. Finder vi ingen abonnementer, frigives reservationen automatisk og du betaler ingenting.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
-                Alle priser er inkl. moms.
+                For AboVagt Monitoring tr&aelig;kkes 15 kr/md via Stripe. F&oslash;rste betaling sker ved tilmelding.
+              </p>
+              <p className="text-gray-700 leading-relaxed mt-2">
+                Alle priser er i DKK inkl. 25% moms.
+              </p>
+            </section>
+
+            {/* Opsigelse af Monitoring */}
+            <section>
+              <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Opsigelse af Monitoring</h2>
+              <p className="text-gray-700 leading-relaxed">
+                AboVagt Monitoring kan opsiges n&aring;r som helst uden varsel. Du kan opsige ved at:
+              </p>
+              <ul className="space-y-2 text-gray-700 mt-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-gray-400 shrink-0">&bull;</span>
+                  <span>Sende en email til <a href={`mailto:${COMPANY.email}`} className="text-[#1B7A6E] hover:underline">{COMPANY.email}</a> med emnet &quot;Opsig monitoring&quot;</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-gray-400 shrink-0">&bull;</span>
+                  <span>Bruge opsigelsesknappen i dit dashboard (n&aring;r tilg&aelig;ngelig)</span>
+                </li>
+              </ul>
+              <p className="text-gray-700 leading-relaxed mt-2">
+                Opsigelsen tr&aelig;der i kraft ved udgangen af den igangv&aelig;rende betalingsperiode. Der sker ingen tilbagebetaling for allerede betalt periode. Ingen binding, ingen opsigelsesgebyr.
               </p>
             </section>
 
@@ -115,15 +147,37 @@ export default function HandelsbetingelserPage() {
             <section>
               <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Fortrydelsesret</h2>
               <p className="text-gray-700 leading-relaxed">
-                Som forbruger har du 14 dages fortrydelsesret p&aring; k&oslash;b foretaget online, jf. forbrugeraftaleloven.
+                Som forbruger har du 14 dages fortrydelsesret ved k&oslash;b foretaget online, jf. forbrugeaftaleloven. Fristen l&oslash;ber fra den dag, aftalen indg&aring;s.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
-                Da AboVagt leverer en digital ydelse, der p&aring;begyndes straks efter betaling (du f&aring;r adgang til dine opsigelsesmails med det samme),
-                accepterer du ved k&oslash;b, at ydelsen starter inden fortrydelsesfristen udl&oslash;ber, og at fortrydelsesretten dermed bortfalder, jf. forbrugeraftalelovens &sect; 18, stk. 2, nr. 13.
+                Da AboVagt leverer en digital tjenesteydelse, beder vi dig ved k&oslash;b om udtrykkeligt at samtykke til, at ydelsen p&aring;begyndes inden fortrydelsesfristen udl&oslash;ber. N&aring;r tjenesteydelsen er fuldt udf&oslash;rt (scanning gennemf&oslash;rt og opsigelsesmails leveret), bortfalder din fortrydelsesret, jf. forbrugeraftalelovens &sect; 18, stk. 2, nr. 2.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
-                Har du sp&oslash;rgsm&aring;l, er du velkommen til at kontakte os p&aring;{" "}
-                <a href="mailto:hej@abovagt.dk" className="text-[#1B7A6E] hover:underline">hej@abovagt.dk</a>.
+                Hvis du fortryder inden ydelsen er fuldt udf&oslash;rt, kan du kontakte os p&aring;{' '}
+                <a href={`mailto:${COMPANY.email}`} className="text-[#1B7A6E] hover:underline">{COMPANY.email}</a>.
+                Du skal betale et bel&oslash;b, der st&aring;r i forhold til den del af ydelsen, der allerede er leveret.
+              </p>
+
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 mt-4">
+                <h3 className="font-bold text-[#1C2B2A] text-sm mb-2">Standardfortrydelsesformular</h3>
+                <p className="text-xs text-gray-500 mb-3">(Denne formular udfyldes og returneres kun, hvis fortrydelsesretten g&oslash;res g&aelig;ldende)</p>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>Til: {COMPANY.name}, {COMPANY.address}, {COMPANY.email}:</p>
+                  <p>Jeg meddeler herved, at jeg &oslash;nsker at g&oslash;re fortrydelsesretten g&aelig;ldende i forbindelse med min k&oslash;bsaftale om levering af f&oslash;lgende tjenesteydelse: AboVagt abonnementsanalyse</p>
+                  <p className="mt-2">Bestilt den: _______________</p>
+                  <p>Forbrugerens navn: _______________</p>
+                  <p>Forbrugerens adresse: _______________</p>
+                  <p>Forbrugerens underskrift (kun ved papir): _______________</p>
+                  <p>Dato: _______________</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Lovvalg og tvister */}
+            <section>
+              <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Lovvalg og tvister</h2>
+              <p className="text-gray-700 leading-relaxed">
+                Aftalen er underlagt dansk ret. Eventuelle tvister afg&oslash;res ved danske domstole.
               </p>
             </section>
 
@@ -151,7 +205,7 @@ export default function HandelsbetingelserPage() {
               <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Klage</h2>
               <p className="text-gray-700 leading-relaxed">
                 Har du en klage, s&aring; kontakt os f&oslash;rst p&aring;{" "}
-                <a href="mailto:hej@abovagt.dk" className="text-[#1B7A6E] hover:underline">hej@abovagt.dk</a>.
+                <a href={`mailto:${COMPANY.email}`} className="text-[#1B7A6E] hover:underline">{COMPANY.email}</a>.
                 Vi g&oslash;r vores bedste for at l&oslash;se det.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">

@@ -1,4 +1,5 @@
 import Inspektoeren from "./Inspektoeren";
+import { COMPANY } from "@/lib/company-info";
 
 export default function Footer() {
   return (
@@ -13,9 +14,9 @@ export default function Footer() {
                 <span className="text-[#1B7A6E]">Vagt</span>
               </a>
               <p className="mt-1 text-sm">
-                Halvfems Procent &middot; CVR: 46314697 &middot;{" "}
-                <a href="mailto:hej@abovagt.dk" className="text-[#4ECDC4] hover:text-white transition-colors">
-                  hej@abovagt.dk
+                {COMPANY.name} &middot; CVR: {COMPANY.cvr} &middot; {COMPANY.address} &middot; Tlf: {COMPANY.phone} &middot;{" "}
+                <a href={`mailto:${COMPANY.email}`} className="text-[#4ECDC4] hover:text-white transition-colors">
+                  {COMPANY.email}
                 </a>
               </p>
             </div>

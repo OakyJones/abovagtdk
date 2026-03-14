@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     </div>
 
     <div style="text-align:center;margin-top:32px;color:#9ca3af;font-size:12px;">
-      <p>Halvfems Procent · CVR [pending]</p>
+      <p>Halvfems Procent &middot; CVR: 46314697 &middot; hej@abovagt.dk</p>
       <p>
         <a href="https://abovagt.dk/afmeld?id=${quizResultId}" style="color:#9ca3af;">
           Afmeld emails
