@@ -95,11 +95,18 @@ export default function PrivatlivspolitikPage() {
             <section>
               <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">Bankdata og open banking</h2>
               <p className="text-gray-700 leading-relaxed">
-                Vi bruger reguleret open banking (PSD2) til at hente dine banktransaktioner via en autoriseret AISP (Account Information Service Provider) under
-                EU-regulering. Bankdata behandles under den relevante udbyder&apos;s egen licens og privatlivspolitik.
+                Vi bruger GoCardless Bank Account Data (tidligere Nordigen) til at hente dine banktransaktioner. GoCardless er en autoriseret AISP (Account Information Service Provider) med licens i EU under PSD2-regulering. Halvfems Procent har ikke egen AISP-licens &mdash; vi opererer under GoCardless&apos; licens. Bankdata behandles under GoCardless&apos; egen privatlivspolitik.
               </p>
               <p className="text-gray-700 leading-relaxed mt-2">
                 Vi har udelukkende <strong>læseadgang</strong> til dine transaktioner. Vi kan aldrig initiere betalinger, overførsler eller andre ændringer i din bank.
+              </p>
+            </section>
+
+            {/* AI-analyse */}
+            <section>
+              <h2 className="text-xl font-bold text-[#1C2B2A] mb-3">AI-analyse af transaktioner</h2>
+              <p className="text-gray-700 leading-relaxed">
+                Dine banktransaktioner analyseres af Anthropic Claude (AI) for at identificere abonnementer og beregne besparelser. Transaktionsdata sendes krypteret til Anthropic, som behandler data udelukkende til din analyse. Vi arbejder p&aring; at etablere en formel databehandleraftale med Anthropic. Data gemmes ikke af AI-tjenesten efterf&oslash;lgende.
               </p>
             </section>
 

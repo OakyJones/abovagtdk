@@ -7,7 +7,7 @@ export default function SikkerhedPage() {
       icon: "\uD83D\uDD10",
       title: "Hvordan virker det?",
       content: [
-        "Vi bruger sikker open banking til at forbinde din bank. Forbindelsen er reguleret under EU\u2019s PSD2-lovgivning og er godkendt af de relevante finanstilsyn.",
+        "Vi bruger GoCardless (Nordigen) til at forbinde din bank. GoCardless er en PSD2-reguleret open banking-udbyder med egen AISP-licens i EU. Halvfems Procent har ikke egen AISP-licens — vi opererer under GoCardless\u2019 licens.",
         "Du v\u00e6lger selv din bank og logger ind via bankens egen loginside (fx MitID). Vi f\u00e5r kun adgang til det vi har brug for: dine transaktioner.",
         "Alle data overf\u00f8res krypteret og vi har kun l\u00e6seadgang (AISP) \u2014 vi kan aldrig flytte penge.",
       ],
