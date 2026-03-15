@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-
-let _supabase: SupabaseClient | null = null;
-function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-    );
-  }
-  return _supabase;
-}
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
@@ -26,7 +15,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 400 });
     }
 
-    const { error } = await getSupabase()
+    const { error } = await getSupabaseAdmin()
       .from("quiz_results")
       .update({
         newsletter_consent: false,
@@ -40,14 +29,14 @@ export async function GET(req: NextRequest) {
     }
 
     // Also update user's newsletter_consent if we can find them
-    const { data: quizResult } = await getSupabase()
+    const { data: quizResult } = await getSupabaseAdmin()
       .from("quiz_results")
       .select("user_id")
       .eq("id", quizResultId)
       .maybeSingle();
 
     if (quizResult?.user_id) {
-      await getSupabase()
+      await getSupabaseAdmin()
         .from("users")
         .update({ newsletter_consent: false })
         .eq("id", quizResult.user_id);

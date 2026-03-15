@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 let _resend: Resend | null = null;
 function getResend() {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || "");
   return _resend;
-}
-
-let _supabase: SupabaseClient | null = null;
-function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-    );
-  }
-  return _supabase;
 }
 
 interface WastedService {
@@ -246,7 +235,7 @@ export async function POST(req: NextRequest) {
     // Track in drip_emails table (day=0 = immediate quiz result email)
     if (userId) {
       try {
-        await getSupabase().from("drip_emails").insert({
+        await getSupabaseAdmin().from("drip_emails").insert({
           user_id: userId,
           quiz_result_id: quizResultId,
           day: 0,
