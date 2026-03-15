@@ -200,7 +200,7 @@ function UserDetailPanel({ userId, onClose }: { userId: string; onClose: () => v
             <p className="text-sm text-gray-400">Ingen abonnementer fundet</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="text-left text-xs text-gray-500 border-b">
                     <th className="pb-2 pr-4">Navn</th>
@@ -351,7 +351,7 @@ export default function AdminUsersPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-gray-50 text-left">
                 <th
