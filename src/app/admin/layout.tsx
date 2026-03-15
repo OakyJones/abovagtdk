@@ -9,7 +9,8 @@ const navItems = [
   { label: "Brugere", href: "/admin/users" },
   { label: "Email liste", href: "/admin/email-list" },
   { label: "Emails", href: "/admin/emails" },
-  { label: "Indbakke", href: "/admin/inbox", badge: true },
+  { label: "Indbakke", href: "/admin/inbox", badge: "inbox" as const },
+  { label: "Chat", href: "/admin/chat", badge: "chat" as const },
   { label: "Forslag", href: "/admin/suggestions" },
   { label: "Betalinger", href: "/admin/payments" },
   { label: "Email Test", href: "/admin/email-test" },
@@ -19,14 +20,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [chatUnread, setChatUnread] = useState(0);
 
   useEffect(() => {
     async function fetchUnread() {
       try {
-        const res = await fetch("/api/admin/inbox");
-        if (res.ok) {
-          const data = await res.json();
+        const [inboxRes, chatRes] = await Promise.all([
+          fetch("/api/admin/inbox"),
+          fetch("/api/admin/chat"),
+        ]);
+        if (inboxRes.ok) {
+          const data = await inboxRes.json();
           setUnreadCount(data.unreadCount || 0);
+        }
+        if (chatRes.ok) {
+          const data = await chatRes.json();
+          const unread = (data.messages || []).filter(
+            (m: { sender: string; read_by_mik: boolean }) => m.sender === "mik" && !m.read_by_mik
+          ).length;
+          setChatUnread(unread);
         }
       } catch {
         // silently fail
@@ -37,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => clearInterval(interval);
   }, []);
 
-  // Refresh count when navigating to inbox
+  // Refresh counts when navigating to inbox or chat
   useEffect(() => {
     if (pathname === "/admin/inbox") {
       const timer = setTimeout(async () => {
@@ -52,6 +64,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       }, 2000);
       return () => clearTimeout(timer);
+    }
+    if (pathname === "/admin/chat") {
+      setChatUnread(0);
     }
   }, [pathname]);
 
@@ -104,9 +119,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   }`}
                 >
                   {item.label}
-                  {item.badge && unreadCount > 0 && (
+                  {item.badge === "inbox" && unreadCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">
                       {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                  {item.badge === "chat" && chatUnread > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-[#4ECDC4] text-[#1C2B2A] text-[10px] font-bold rounded-full px-1">
+                      {chatUnread > 99 ? "99+" : chatUnread}
                     </span>
                   )}
                 </a>
